@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>災害支援シフト調整プラットフォーム｜株式会社NAGARA</title>
+<style>
+  :root{
+    --ink:#25312c; --sub:#5d6b65; --bg:#f7f5f0; --card:#ffffff;
+    --brand:#1a7f6e; --brand-deep:#0e5a4d; --brand-pale:#e3f2ef;
+    --accent:#e07a3f; --accent-pale:#fdeee3;
+    --line:#e2ddd2;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html{scroll-behavior:smooth;}
+  body{font-family:"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;
+    background:var(--bg); color:var(--ink); line-height:1.85; font-size:16px;}
+  .wrap{max-width:880px; margin:0 auto; padding:0 24px;}
+
+  .hero{background:linear-gradient(160deg, var(--brand-deep) 0%, var(--brand) 70%); color:#fff; padding:72px 0 64px;}
+  .hero .kicker{display:inline-block; background:rgba(255,255,255,.16); border-radius:999px; padding:4px 16px; font-size:13px; letter-spacing:.08em; margin-bottom:22px;}
+  .hero h1{font-size:clamp(26px, 4.6vw, 40px); font-weight:800; line-height:1.45; text-wrap:balance; margin-bottom:18px;}
+  .hero p.lead{font-size:17px; opacity:.92; max-width:620px; margin-bottom:34px;}
+  .cta-row{display:flex; gap:14px; flex-wrap:wrap;}
+  .btn{display:inline-block; border-radius:12px; padding:14px 26px; font-size:16px; font-weight:700; text-decoration:none; transition:transform .12s ease;}
+  .btn:hover{transform:translateY(-2px);}
+  .btn-w{background:#fff; color:var(--brand-deep);}
+  .btn-o{background:var(--accent); color:#fff;}
+  .hero .note{font-size:12px; opacity:.75; margin-top:16px;}
+
+  section{padding:64px 0 8px;}
+  .eyebrow{color:var(--brand); font-weight:800; font-size:13px; letter-spacing:.14em; margin-bottom:8px;}
+  h2{font-size:26px; font-weight:800; line-height:1.5; margin-bottom:26px; text-wrap:balance;}
+
+  .grid{display:grid; grid-template-columns:repeat(3, 1fr); gap:16px;}
+  @media(max-width:760px){.grid{grid-template-columns:1fr;}}
+  .card{background:var(--card); border:1px solid var(--line); border-radius:16px; padding:22px;}
+  .card .icon{font-size:26px; margin-bottom:10px;}
+  .card h3{font-size:16.5px; margin-bottom:8px; line-height:1.5;}
+  .card p{font-size:14px; color:var(--sub);}
+
+  .flow{counter-reset:step; display:grid; gap:14px;}
+  .step{background:var(--card); border:1px solid var(--line); border-radius:16px; padding:20px 22px 20px 74px; position:relative;}
+  .step::before{counter-increment:step; content:counter(step);
+    position:absolute; left:20px; top:50%; transform:translateY(-50%);
+    width:38px; height:38px; border-radius:50%; background:var(--brand); color:#fff;
+    display:flex; align-items:center; justify-content:center; font-weight:800; font-size:17px;}
+  .step h3{font-size:16px; margin-bottom:4px;}
+  .step p{font-size:14px; color:var(--sub);}
+
+  .two{display:grid; grid-template-columns:1fr 1fr; gap:16px;}
+  @media(max-width:760px){.two{grid-template-columns:1fr;}}
+  .tint{background:var(--brand-pale); border-color:transparent;}
+  .tint h3{color:var(--brand-deep);}
+  ul.checks{list-style:none; font-size:14px; color:var(--sub);}
+  ul.checks li{padding:5px 0 5px 26px; position:relative;}
+  ul.checks li::before{content:"✓"; position:absolute; left:2px; color:var(--brand); font-weight:800;}
+
+  .banner{background:var(--accent-pale); border-radius:16px; padding:26px 28px; margin-top:26px;}
+  .banner b{color:var(--accent);}
+
+  .demo-cta{background:var(--card); border:2px solid var(--brand); border-radius:20px; padding:36px; text-align:center; margin:56px 0;}
+  .demo-cta h2{margin-bottom:8px;}
+  .demo-cta p{color:var(--sub); font-size:14px; margin-bottom:22px;}
+
+  footer{background:var(--ink); color:#cfd8d3; padding:38px 0 46px; margin-top:70px; font-size:13px;}
+  footer b{color:#fff; font-size:15px;}
+  footer .small{font-size:11.5px; opacity:.7; margin-top:14px;}
+  table.spec{width:100%; border-collapse:collapse; background:var(--card); border-radius:14px; overflow:hidden; font-size:14px;}
+  table.spec th{background:var(--brand-pale); color:var(--brand-deep); text-align:left; padding:10px 16px; width:180px; font-size:13px;}
+  table.spec td{padding:10px 16px; border-top:1px solid var(--line); color:var(--sub);}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="wrap">
+    <span class="kicker">全国介護事業者連盟さま向けご提案｜プロトタイプ稼働中</span>
+    <h1>災害時の介護応援を、<br>電話とホワイトボードから解放する。</h1>
+    <p class="lead">全国の会員法人から集まる支援人材の「誰が・いつ・どこへ」を一元管理。
+    依頼メッセージを貼るだけでAI秘書が分配案をつくる、災害支援のための人材調整プラットフォームです。</p>
+    <div class="cta-row">
+      <a class="btn btn-w" href="index.html">▶ 連盟側デモを触ってみる</a>
+      <a class="btn btn-o" href="supporter.html">🙋 支援者側デモを見る</a>
+    </div>
+    <p class="note">※ デモは架空データで動作しています。実際にAI分配・シフト提出・勤怠入力まで操作できます。</p>
+  </div>
+</div>
+
+<section>
+  <div class="wrap">
+    <p class="eyebrow">課題</p>
+    <h2>災害のたびに繰り返される、人員調整の限界</h2>
+    <div class="grid">
+      <div class="card"><div class="icon">📞</div><h3>把握できない支援人材</h3>
+        <p>全国の法人から「行けます」の連絡が電話・FAX・メールでバラバラに届き、資格・期間・運転可否を一覧できない。</p></div>
+      <div class="card"><div class="icon">🧻</div><h3>属人化する分配調整</h3>
+        <p>ホワイトボードと手書きの線で管理するシフトは、担当者にしか読めず、引き継げず、消えたら終わり。</p></div>
+      <div class="card"><div class="icon">🧾</div><h3>残らない支援実績</h3>
+        <p>誰が何日支援したかの記録が残らず、支援証明の発行や助成金申請のたびに記憶と紙をたどることになる。</p></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <p class="eyebrow">ソリューション</p>
+    <h2>3つの画面で、受付から実績記録までワンストップ</h2>
+    <div class="grid">
+      <div class="card tint"><div class="icon">🤖</div><h3>AI秘書</h3>
+        <p>施設から届いた依頼メッセージを<b>そのまま貼るだけ</b>。施設・期間・必要資格×人数を読み取り、条件に合う支援者の分配案を提示。承認ボタンひとつで割当が確定します。</p></div>
+      <div class="card tint"><div class="icon">🗂</div><h3>連盟本部ダッシュボード</h3>
+        <p>動かせる人の一覧、支援先ごとの充足状況、手書きホワイトボードを再現した<b>タイムライン表示</b>。分配の決定権は本部に集約される設計です。</p></div>
+      <div class="card tint"><div class="icon">📱</div><h3>支援者マイページ</h3>
+        <p>スマホから<b>行ける期間を複数提出</b>（8/4〜8/6と8/9〜8/13など）。確定した行き先の確認と、日々の支援実績（勤怠）の入力もここで完結。</p></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <p class="eyebrow">使い方</p>
+    <h2>導入したその日から、3ステップで回る</h2>
+    <div class="flow">
+      <div class="step"><h3>支援者がシフトを提出する</h3><p>会員法人の職員がマイページから「行ける期間・資格・運転レベル・宿泊先」を登録。</p></div>
+      <div class="step"><h3>依頼をAI秘書に渡す</h3><p>被災施設からの電話メモやLINEの文面を貼り付けると、AIが内容を整理して分配案を作成。</p></div>
+      <div class="step"><h3>本部が承認して確定</h3><p>本部が分配案を確認・承認。支援者には確定シフトが表示され、支援実績が自動で蓄積されます。</p></div>
+    </div>
+    <div class="banner">
+      <b>実績データはそのまま資産に。</b>　勤怠記録はCSV出力でき、支援証明書の発行や助成金申請の基礎資料になります。
+      災害が終わっても記録はアーカイブされ、次の災害への備えになります。
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <p class="eyebrow">安心の設計</p>
+    <h2>個人情報とAIの判断を、きちんと管理する</h2>
+    <div class="two">
+      <div class="card"><h3>🔐 個人情報の保護</h3>
+        <ul class="checks">
+          <li>閲覧範囲をロールで制御（本部＝全件／法人窓口＝自法人のみ／支援者＝自分のみ）</li>
+          <li>データベース層でのアクセス制御（Row Level Security）</li>
+          <li>国内リージョン（東京）でのデータ保管</li>
+        </ul></div>
+      <div class="card"><h3>📋 AIの監査ログ</h3>
+        <ul class="checks">
+          <li>依頼の原文とAIの読み取り結果をすべて台帳に記録</li>
+          <li>誰がいつ承認したかの証跡が残る</li>
+          <li>最終決定は必ず人（連盟本部）が行う設計</li>
+        </ul></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <p class="eyebrow">概要</p>
+    <h2>プロダクト概要</h2>
+    <table class="spec">
+      <tr><th>現在の状態</th><td>プロトタイプ稼働中（本ページのデモがそのまま動きます）</td></tr>
+      <tr><th>対応デバイス</th><td>PC・スマートフォンのブラウザ（アプリインストール不要）</td></tr>
+      <tr><th>AI解析</th><td>大規模言語モデルによる依頼文の構造化（読み取り結果は台帳に全件記録）</td></tr>
+      <tr><th>拡張予定</th><td>ログイン（本部・法人・支援者のロール別）／割当確定の通知／LINE連携／「ながらかいご議事録」との連携</td></tr>
+      <tr><th>提供</th><td>株式会社NAGARA（介護記録ソフト「ながらかいご」開発元）</td></tr>
+    </table>
+  </div>
+</section>
+
+<div class="wrap">
+  <div class="demo-cta">
+    <h2>まずは触ってみてください</h2>
+    <p>架空のデモデータ入りで、AI分配から勤怠入力まで実際に操作できます。</p>
+    <div class="cta-row" style="justify-content:center;">
+      <a class="btn btn-o" href="index.html">▶ 連盟側デモをひらく</a>
+      <a class="btn" href="supporter.html" style="background:var(--brand); color:#fff;">🙋 支援者側デモをひらく</a>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div class="wrap">
+    <b>株式会社NAGARA</b><br>
+    介護記録ソフト「ながらかいご」／「ながらかいご議事録」開発元<br>
+    お問い合わせ: 代表取締役 岡田一輝（itsuki.okada@nagarainc.co.jp）
+    <p class="small">本デモに表示される人名・法人名・施設名はすべて架空のものです。本資料はプロトタイプ段階のご提案資料であり、正式な仕様は協議のうえ決定します。</p>
+  </div>
+</footer>
+
+</body>
+</html>

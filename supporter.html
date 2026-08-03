@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>支援者マイページ（プロトタイプ）</title>
+<style>
+  :root{
+    --bg:#f6f4ef; --card:#ffffff; --ink:#2b2b2b; --sub:#6b6b6b;
+    --brand:#2f6db3; --brand-dark:#24568e; --brand-pale:#e7f0fa;
+    --green:#1a7f6e; --green-pale:#e3f2ef;
+    --accent:#e07a3f; --accent-pale:#fdeee3;
+    --line:#e3ded4; --ok:#2e7d32;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{font-family:"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;
+    background:var(--bg); color:var(--ink); font-size:17px; line-height:1.7;}
+  header{background:var(--brand); color:#fff; padding:16px 20px;}
+  header h1{font-size:20px;}
+  header .small{font-size:12px; opacity:.85;}
+  main{padding:16px; max-width:640px; margin:0 auto;}
+  .demo-banner{background:#fff6d9; color:#7a5b00; text-align:center; padding:6px; font-size:12px;}
+  .card{background:var(--card); border:1px solid var(--line); border-radius:16px; padding:18px; margin-bottom:16px;}
+  h2{font-size:17px; color:var(--brand-dark); margin-bottom:10px;}
+  label{font-size:13px; font-weight:700; color:var(--sub); display:block; margin:10px 0 4px;}
+  input, select, textarea{border:1.5px solid var(--line); border-radius:12px; padding:12px; font-size:17px; font-family:inherit; width:100%; background:#fff;}
+  textarea{min-height:70px; resize:vertical;}
+  .btn{border:none; border-radius:14px; padding:14px 22px; font-size:17px; font-weight:700; cursor:pointer; font-family:inherit; width:100%;}
+  .btn-main{background:var(--brand); color:#fff;}
+  .btn-green{background:var(--green); color:#fff;}
+  .btn-sm{width:auto; padding:8px 16px; font-size:14px; border-radius:10px;}
+  .badge{display:inline-block; padding:2px 10px; border-radius:999px; font-size:13px; font-weight:600; margin:1px 2px;}
+  .b-qual{background:var(--green-pale); color:var(--green);}
+  .b-drive{background:var(--brand-pale); color:var(--brand);}
+  .b-active{background:var(--accent-pale); color:var(--accent);}
+  .b-planned{background:var(--brand-pale); color:var(--brand);}
+  .b-done{background:#e8f5e9; color:var(--ok);}
+  .assign{border:1.5px solid var(--line); border-radius:14px; padding:14px; margin-bottom:12px;}
+  .assign b{font-size:16px;}
+  .rec{display:flex; justify-content:space-between; font-size:14px; padding:4px 0; border-top:1px dashed var(--line); gap:8px;}
+  .row{display:flex; gap:10px;} .row > *{flex:1;}
+  .small{font-size:13px; color:var(--sub);}
+  .saved{color:var(--ok); font-weight:700; font-size:14px; margin-top:8px; display:none;}
+  .hidden{display:none;}
+</style>
+</head>
+<body>
+<div class="demo-banner">⚠️ プロトタイプ版 — 架空のデモデータです</div>
+<header>
+  <h1>🙋 支援者マイページ</h1>
+  <div class="small">熊本地震 介護施設支援｜全国介護事業者連盟（デモ）</div>
+</header>
+<main>
+
+  <div class="card">
+    <h2>お名前を選んでください</h2>
+    <select id="who" onchange="pick()"></select>
+    <p class="small" style="margin-top:8px;">※製品版ではLINE・スマホ番号でのかんたんログインを想定</p>
+  </div>
+
+  <div id="mypage" class="hidden">
+
+    <div class="card" id="profile-card">
+      <h2>📅 シフト提出（支援に行ける期間）</h2>
+      <label>行ける期間（複数OK。例: 8/4〜8/6 と 8/9〜8/13）</label>
+      <div id="ranges"></div>
+      <button class="btn btn-sm" style="background:var(--brand-pale); color:var(--brand-dark);" onclick="addRange()">＋ 期間を追加する</button>
+      <label>備考（夜勤可・日勤のみ など）</label>
+      <input type="text" id="f-note" placeholder="例）夜勤可">
+      <label>宿泊先（決まっていれば）</label>
+      <input type="text" id="f-lodging" placeholder="例）益城町 ホテルさくら">
+      <div class="row">
+        <div id="drive-wrap">
+          <label>運転技術レベル（5段階）</label>
+          <select id="f-drive">
+            <option value="">運転しない</option>
+            <option value="1">1（あまり自信なし）</option>
+            <option value="2">2</option>
+            <option value="3">3（ふつう）</option>
+            <option value="4">4</option>
+            <option value="5">5（大型・長距離もOK）</option>
+          </select>
+        </div>
+        <div>
+          <label>レンタカー手配</label>
+          <select id="f-rentacar"><option value="no">不要</option><option value="yes">希望する</option></select>
+        </div>
+      </div>
+      <div style="margin-top:14px;"><button class="btn btn-main" onclick="saveProfile()">この内容でシフトを提出する</button></div>
+      <div class="saved" id="saved1">✅ 提出しました。連盟側の一覧に反映されています</div>
+    </div>
+
+    <div class="card">
+      <h2>🏥 確定した支援先（あなたのシフト）</h2>
+      <p class="small">連盟が調整して決まった行き先です。決まるとここに表示されます。</p>
+      <div id="my-assigns"></div>
+    </div>
+
+    <div class="card">
+      <h2>✏️ 支援実績を記録する（勤怠）</h2>
+      <p class="small">支援に入った日の記録です。証明書の発行に使われます。</p>
+      <label>どの支援先ですか？</label>
+      <select id="r-assign"></select>
+      <div class="row">
+        <div><label>日付</label><input type="date" id="r-date"></div>
+        <div><label>働いた時間</label>
+          <select id="r-hours"><option>2</option><option>4</option><option>6</option><option selected>8</option><option>10</option><option>12</option></select>
+        </div>
+      </div>
+      <label>やったこと（かんたんでOK）</label>
+      <input type="text" id="r-note" placeholder="例）入浴介助・送迎運転">
+      <div style="margin-top:14px;"><button class="btn btn-green" onclick="saveRecord()">この内容で記録する</button></div>
+      <div class="saved" id="saved2">✅ 記録しました</div>
+    </div>
+
+  </div>
+  <p class="small" style="text-align:center;">連盟側の管理画面は <a href="index.html">こちら</a></p>
+</main>
+
+<script>
+'use strict';
+const API = ['localhost','127.0.0.1'].includes(location.hostname) ? '' : 'https://dwbzwdvumxkcaqdwggml.supabase.co/functions/v1/app';
+const TODAY = new Date().toISOString().slice(0,10);
+let DATA = null;
+let ME = null;
+let ranges = [];
+
+function renderRanges(){
+  document.getElementById('ranges').innerHTML = ranges.map((r,i)=>`
+    <div class="row" style="margin-bottom:8px; align-items:center;">
+      <input type="date" value="${r.from||''}" onchange="ranges[${i}].from=this.value">
+      <span style="flex:0 0 auto;">〜</span>
+      <input type="date" value="${r.to||''}" onchange="ranges[${i}].to=this.value">
+      <button class="btn btn-sm" style="flex:0 0 auto; background:#fdeee3; color:#c0392b;" onclick="ranges.splice(${i},1);renderRanges()">✕</button>
+    </div>`).join('') || '<p class="small">「＋ 期間を追加する」から入力してください</p>';
+}
+function addRange(){ ranges.push({from:'', to:''}); renderRanges(); }
+
+function fmtD(d){ if(!d) return '?'; const [y,m,dd]=d.split('-'); return `${Number(m)}/${Number(dd)}`; }
+function esc(s){ return String(s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function assignStatus(a){
+  if(a.to < TODAY) return {label:'完了', cls:'b-done'};
+  if(a.from <= TODAY) return {label:'支援中', cls:'b-active'};
+  return {label:'予定', cls:'b-planned'};
+}
+async function save(){
+  const res = await (await fetch(API + '/api/data', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(DATA)})).json();
+  if(res.data){
+    DATA = res.data;
+    if(ME) ME = DATA.people.find(p=>p.id===ME.id) || ME;
+  }
+}
+
+async function init(){
+  DATA = await (await fetch(API + '/api/data')).json();
+  const sel = document.getElementById('who');
+  sel.innerHTML = '<option value="">— 選択してください —</option>' +
+    DATA.people.map(p=>`<option value="${p.id}">${esc(p.name)}（${esc(p.corp)}）</option>`).join('');
+  const savedId = localStorage.getItem('supporter-id');
+  if(savedId && DATA.people.some(p=>p.id===savedId)){ sel.value = savedId; pick(); }
+}
+
+function pick(){
+  const id = document.getElementById('who').value;
+  if(!id){ document.getElementById('mypage').classList.add('hidden'); return; }
+  localStorage.setItem('supporter-id', id);
+  ME = DATA.people.find(p=>p.id===id);
+  document.getElementById('mypage').classList.remove('hidden');
+  ranges = (ME.avail || (ME.from ? [{from:ME.from, to:ME.to}] : [])).map(r=>({from:r.from, to:r.to}));
+  renderRanges();
+  document.getElementById('f-note').value = ME.note || '';
+  document.getElementById('f-lodging').value = ME.lodging || '';
+  document.getElementById('f-drive').value = ME.driveLv || '';
+  document.getElementById('f-rentacar').value = ME.rentacar ? 'yes' : 'no';
+  renderAssigns();
+}
+
+function renderAssigns(){
+  const mine = DATA.assignments.filter(a=>a.personId===ME.id).sort((a,b)=>a.from.localeCompare(b.from));
+  document.getElementById('my-assigns').innerHTML = mine.length ? mine.map(a=>{
+    const s = DATA.sites.find(x=>x.id===a.siteId);
+    const st = assignStatus(a);
+    const recs = (a.records||[]).map(r=>`<div class="rec"><span>${fmtD(r.date)}　${r.hours}時間</span><span>${esc(r.note||'')}</span></div>`).join('');
+    return `<div class="assign">
+      <div><b>🏥 ${esc(s.name)}</b> <span class="badge ${st.cls}">${st.label}</span></div>
+      <div class="small">📍 ${esc(s.area)}｜期間 ${fmtD(a.from)} 〜 ${fmtD(a.to)}</div>
+      ${s.note?`<div class="small">📝 ${esc(s.note)}</div>`:''}
+      ${recs ? `<div style="margin-top:8px;"><b class="small">記録済みの実績（${a.records.length}日）</b>${recs}</div>` : ''}
+    </div>`;
+  }).join('') : '<p class="small">確定した支援先はまだありません。シフトを提出いただくと、連盟が調整のうえここに表示されます。</p>';
+
+  const active = mine.filter(a=>a.from <= TODAY);
+  document.getElementById('r-assign').innerHTML = active.length
+    ? active.map(a=>`<option value="${a.id}">${esc(DATA.sites.find(x=>x.id===a.siteId).name)}（${fmtD(a.from)}〜${fmtD(a.to)}）</option>`).join('')
+    : '<option value="">記録できる支援がまだありません</option>';
+  document.getElementById('r-date').value = TODAY;
+}
+
+async function saveProfile(){
+  const valid = ranges.filter(r=>r.from && r.to && r.from<=r.to);
+  if(!valid.length){ alert('行ける期間を1つ以上入れてください（開始≦終了）'); return; }
+  ME.avail = valid.sort((a,b)=>a.from.localeCompare(b.from));
+  delete ME.from; delete ME.to;
+  ME.note = document.getElementById('f-note').value.trim();
+  ME.lodging = document.getElementById('f-lodging').value.trim();
+  const dv = document.getElementById('f-drive').value;
+  ME.driveLv = dv ? Number(dv) : null;
+  if(dv && !ME.quals.includes('運転可')) ME.quals.push('運転可');
+  if(!dv) ME.quals = ME.quals.filter(q=>q!=='運転可');
+  ME.rentacar = document.getElementById('f-rentacar').value === 'yes';
+  await save();
+  flash('saved1');
+}
+
+async function saveRecord(){
+  const aid = document.getElementById('r-assign').value;
+  if(!aid){ alert('記録できる支援がありません'); return; }
+  const a = DATA.assignments.find(x=>x.id===aid);
+  a.records = a.records || [];
+  a.records.push({
+    date: document.getElementById('r-date').value || TODAY,
+    hours: Number(document.getElementById('r-hours').value),
+    note: document.getElementById('r-note').value.trim(),
+  });
+  document.getElementById('r-note').value = '';
+  await save();
+  renderAssigns();
+  flash('saved2');
+}
+
+function flash(id){
+  const el = document.getElementById(id);
+  el.style.display = 'block';
+  setTimeout(()=>{ el.style.display='none'; }, 2500);
+}
+
+init();
+</script>
+</body>
+</html>
