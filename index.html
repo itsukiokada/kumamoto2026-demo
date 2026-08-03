@@ -176,10 +176,10 @@
   <!-- ============ AI秘書 ============ -->
   <section id="tab-ai" class="tabpane">
     <h2>AI秘書に依頼する</h2>
-    <p class="hint">施設や連盟事務局から届いたメッセージ（LINE・メール等）をそのまま貼り付けてください。AI秘書が内容を読み取り、条件に合う支援者の分配案を作ります。</p>
+    <p class="hint">届いたメッセージ（LINE・Messenger・メール等）をそのまま貼り付けてください。施設からの応援依頼なら分配案を、支援者からの「行けます」の申し出なら支援者登録を、AI秘書が作ります。</p>
     <div class="card">
       <div class="chatlog" id="chatlog">
-        <div class="msg ai">こんにちは、AI秘書です 🤖\n支援の依頼メッセージを貼り付けていただければ、「どの施設に・いつ・どんな資格の人が何名必要か」を読み取って、条件の合う支援者をご提案します。</div>
+        <div class="msg ai">こんにちは、AI秘書です 🤖\n施設からの「応援がほしい」依頼も、支援者からの「行けます」の申し出も、届いたメッセージをそのまま貼り付けてください。内容を読み取って、分配案の作成や支援者登録までお手伝いします。</div>
       </div>
       <textarea id="ai-input" placeholder="例）阿蘇みどりの丘さんから連絡があり、8月10日から2週間ほど介護福祉士2名と運転できる方1名をお願いしたいとのことです。"></textarea>
       <div class="flex" style="margin-top:10px;">
@@ -507,8 +507,9 @@ function dropOn(sid){
 /* ---------------- AI秘書 ---------------- */
 const EXAMPLES = [
   'グループホームすずらんさんより。職員がまだ戻れず、8月12日から8月20日まで介護のできる方を2名お願いできないでしょうか。できれば運転できる方だと助かります。',
+  'キャンナス浜松の杉村です。8/7〜11まで熊本へ行けます。',
   '益城町のひかりの里です。送迎の運転手さんが足りません。8/8から1週間、運転できる方1名と看護師さん1名お願いします。',
-  '新しく八代市の特養さくら荘さんから支援要請。8月15日〜8月末まで介護福祉士3名。夜勤対応できる方希望とのこと。'
+  'キャンナス犬山、現在のところ明日以降8月9日までは困難です。10日から13日、1名調整可能です。'
 ];
 let exIdx = 0;
 function fillExample(){ document.getElementById('ai-input').value = EXAMPLES[exIdx % EXAMPLES.length]; exIdx++; }
@@ -609,6 +610,44 @@ function fromApiParse(x){
   };
 }
 
+/* 支援者からの「行けます」申し出 → 支援者一覧へ登録 */
+let currentOffer = null;
+function showOfferProposal(o){
+  currentOffer = o;
+  const periods = (o.periods||[]).filter(p=>p.from&&p.to).map(p=>`${fmtD(p.from)}〜${fmtD(p.to)}`).join('、');
+  addMsg('ai',
+    `🙋 支援の「申し出」として読み取りました\n・お名前: ${o.person_name||'（記載なし）'}\n・所属: ${o.organization||'（記載なし）'}\n・人数: ${o.headcount||1}名\n・行ける期間: ${periods||'（記載なし）'}${o.quals&&o.quals.length?`\n・資格: ${o.quals.join('、')}`:''}${o.can_drive?'\n・🚗 運転可':''}${o.night_shift_ok?'\n・夜勤可':''}${o.notes?`\n・特記: ${o.notes}`:''}`);
+  document.getElementById('ai-proposal').innerHTML = `
+    <div class="proposal">
+      <h4>🙋 支援者として登録します（${o.headcount||1}名）</h4>
+      <p class="small">${esc(o.organization||'所属未登録')}｜${esc(o.person_name||'氏名未登録')}｜${periods||'期間未定'}</p>
+      <p class="small">登録後は「支援者一覧」に待機中として表示され、分配の候補になります。氏名・資格が未記載の場合は後から支援者ページで補完できます。</p>
+      <div class="flex" style="margin-top:10px;">
+        <button class="btn btn-sub" onclick="document.getElementById('ai-proposal').innerHTML='';currentOffer=null;">やり直す</button>
+        <button class="btn btn-main right" onclick="approveOffer()">✅ 支援者一覧に登録する</button>
+      </div>
+    </div>`;
+}
+async function approveOffer(){
+  if(!currentOffer) return;
+  const o = currentOffer;
+  const n = Math.max(1, o.headcount||1);
+  const periods = (o.periods||[]).filter(p=>p.from&&p.to).map(p=>({from:p.from, to:p.to}));
+  const quals = (o.quals||[]).filter(q=>QUALS.includes(q));
+  if(o.can_drive && !quals.includes('運転可')) quals.push('運転可');
+  const note = [o.night_shift_ok?'夜勤可':null, o.notes||null].filter(Boolean).join('・').slice(0,80);
+  for(let i=0; i<n; i++){
+    const name = (i===0 && o.person_name) ? o.person_name
+      : `${o.organization||'所属未登録'} スタッフ${n>1? i+1 : ''}（氏名未登録）`;
+    DATA.people.push({id:uid('p'), name, corp:o.organization||'（所属未登録）', office:'',
+      quals:[...quals], note, driveLv:null, lodging:'', rentacar:false, avail: periods.map(p=>({...p}))});
+  }
+  document.getElementById('ai-proposal').innerHTML = '';
+  currentOffer = null;
+  await save();
+  addMsg('ai', `✅ ${n}名を支援者一覧に登録しました（待機中）。\n分配ボードとAI分配の候補に含まれます。`);
+}
+
 let currentProposal = null;
 async function runAI(){
   const text = document.getElementById('ai-input').value.trim();
@@ -616,12 +655,20 @@ async function runAI(){
   addMsg('user', text);
   document.getElementById('ai-input').value = '';
   const waitEl = addMsg('ai', '🤖 読み取り中です…');
-  let parsed = null, aiReply = null, usedApi = false;
+  let parsed = null, aiReply = null, usedApi = false, apiRaw = null;
   try{
     const res = await (await fetch(API + '/api/ai-parse', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({message:text})})).json();
-    if(res.ok){ usedApi = true; parsed = fromApiParse(res.parsed); aiReply = res.parsed.reply; }
+    if(res.ok){
+      usedApi = true; apiRaw = res.parsed; aiReply = apiRaw.reply;
+      if(apiRaw.message_type !== 'offer') parsed = fromApiParse(apiRaw);
+    }
   }catch(e){ /* サーバー未起動等 → 簡易解析へ */ }
   waitEl.remove();
+  if(usedApi && apiRaw && apiRaw.message_type === 'offer' && apiRaw.offer){
+    if(aiReply) addMsg('ai', aiReply);
+    showOfferProposal(apiRaw.offer);
+    return;
+  }
   if(!parsed) parsed = parseMessage(text);
   if(!parsed.matchedSite && !parsed.newSiteName){
     addMsg('ai','ごめんなさい、どの施設への支援かが読み取れませんでした 🙏\n施設名を含めてもう一度送っていただけますか？');
