@@ -396,8 +396,28 @@ function renderSites(){
             <button class="btn btn-sub btn-sm" onclick="unassign('${a.id}')">解除</button></span></div>`;
         }).join('') : '<div class="small" style="padding:4px 0;">まだ割当がありません</div>'}
       </div>
+      ${siteHistory(s)}
     </div>`;
   }).join('');
+}
+
+/* 支援先ごとの依頼履歴 (AI秘書が受けた依頼の台帳から) */
+function siteHistory(s){
+  const logs = (DATA.requests||[]).filter(r=>r.siteId===s.id);
+  if(!logs.length) return '';
+  return `<div class="assign-list"><b class="small">📜 依頼履歴（${logs.length}件）</b>
+    ${logs.slice(0,5).map(r=>{
+      const p = r.parsed || {};
+      const reqtxt = (p.requirements||[]).map(x=>`${x.qual}×${x.count}`).join('、');
+      const period = p.date_from ? `${fmtD(p.date_from)}〜${fmtD(p.date_to)}` : '';
+      const day = (r.createdAt||'').slice(5,10).replace('-','/');
+      const raw = r.raw || '';
+      return `<div class="small" style="padding:3px 0; border-top:1px dotted var(--line);" title="${esc(raw)}">
+        <b>${day}</b>　${period}${reqtxt?`｜${reqtxt}`:''}${p.driver_preferred?'｜🚗運転優先':''}<br>
+        <span style="opacity:.75;">「${esc(raw.slice(0,48))}${raw.length>48?'…':''}」</span></div>`;
+    }).join('')}
+    ${logs.length>5?`<div class="small" style="opacity:.6;">ほか${logs.length-5}件</div>`:''}
+  </div>`;
 }
 function closeSite(sid){
   if(confirm('この支援先を「終了」にしますか？')){ site(sid).active=false; save(); }
@@ -536,7 +556,7 @@ function parseMessage(text){
   return {matchedSite, newSiteName, newSiteArea, from, to, reqs, nightWanted};
 }
 
-function rankCandidates(req, from, to, taken, nightWanted){
+function rankCandidates(req, from, to, taken, nightWanted, driverPreferred){
   const QUAL_COVERS = { '初任者研修': ['初任者研修','実務者研修','介護福祉士'] };
   const acceptable = QUAL_COVERS[req.qual] || [req.qual];
   return DATA.people
@@ -551,6 +571,10 @@ function rankCandidates(req, from, to, taken, nightWanted){
       const an = nightWanted && /夜勤/.test(a.note) ? 1 : 0;
       const bn = nightWanted && /夜勤/.test(b.note) ? 1 : 0;
       if(an!==bn) return bn-an;
+      if(driverPreferred){
+        const ad = a.quals.includes('運転可') ? 1 : 0, bd = b.quals.includes('運転可') ? 1 : 0;
+        if(ad!==bd) return bd-ad;
+      }
       const cover = p => availCovers(p, from, to) ? 1 : 0;
       if(cover(a)!==cover(b)) return cover(b)-cover(a);
       return availRanges(a)[0].from.localeCompare(availRanges(b)[0].from);
@@ -572,6 +596,7 @@ function fromApiParse(x){
     from, to,
     reqs: (x.requirements||[]).map(r=>({qual:r.qual, count:r.count})),
     nightWanted: !!x.night_shift,
+    driverPreferred: !!x.driver_preferred,
     notes: x.notes || ''
   };
 }
@@ -601,7 +626,7 @@ async function runAI(){
   const siteName = parsed.matchedSite ? parsed.matchedSite.name : parsed.newSiteName;
   const taken = new Set();
   const plan = parsed.reqs.map(req=>{
-    const cands = rankCandidates(req, parsed.from, parsed.to, taken, parsed.nightWanted);
+    const cands = rankCandidates(req, parsed.from, parsed.to, taken, parsed.nightWanted, parsed.driverPreferred);
     const chosen = cands.slice(0, req.count);
     chosen.forEach(c=>taken.add(c.id));
     return {req, chosen, alternatives: cands.slice(req.count, req.count+2), shortage: req.count - chosen.length};
@@ -611,7 +636,7 @@ async function runAI(){
   const totalShort = plan.reduce((n,x)=>n+Math.max(0,x.shortage),0);
   if(aiReply) addMsg('ai', aiReply);
   addMsg('ai',
-    `📋 読み取り結果${usedApi?'（AI解析）':'（簡易解析 — APIキー未設定）'}\n・支援先: ${siteName}${parsed.matchedSite?'':'（新規登録します）'}\n・期間: ${fmtD(parsed.from)} 〜 ${fmtD(parsed.to)}\n・必要人員: ${parsed.reqs.map(r=>`${r.qual}×${r.count}名`).join('、')}${parsed.nightWanted?'（夜勤対応希望）':''}${parsed.notes?`\n・状況: ${parsed.notes}`:''}\n\n条件に合う支援者をご提案します。${totalShort?`\n⚠️ ${totalShort}名分は条件に合う待機者が見つかりませんでした。`:''}`);
+    `📋 読み取り結果${usedApi?'（AI解析）':'（簡易解析 — APIキー未設定）'}\n・支援先: ${siteName}${parsed.matchedSite?'':'（新規登録します）'}\n・期間: ${fmtD(parsed.from)} 〜 ${fmtD(parsed.to)}\n・必要人員: ${parsed.reqs.map(r=>`${r.qual}×${r.count}名`).join('、')}${parsed.nightWanted?'（夜勤対応希望）':''}${parsed.driverPreferred?'（🚗 運転できる方を優先）':''}${parsed.notes?`\n・状況: ${parsed.notes}`:''}\n\n条件に合う支援者をご提案します。${totalShort?`\n⚠️ ${totalShort}名分は条件に合う待機者が見つかりませんでした。`:''}`);
 
   document.getElementById('ai-proposal').innerHTML = `
     <div class="proposal">
@@ -637,9 +662,20 @@ function approveProposal(){
   if(!currentProposal) return;
   const {parsed} = currentProposal;
   let s = parsed.matchedSite;
+  let needsUpdated = false;
   if(!s){
     s = {id:uid('s'), name:parsed.newSiteName, area:parsed.newSiteArea||'熊本県', needs:parsed.reqs.map(r=>({qual:r.qual,count:r.count})), from:parsed.from, to:parsed.to, note:parsed.notes||'AI秘書がメッセージから登録', active:true};
     DATA.sites.push(s);
+  }else{
+    // 既存支援先: 追加依頼の内容で支援先情報を更新（必要人員を積み増し・期間を拡張・状況を最新化）
+    parsed.reqs.forEach(r=>{
+      const ex = s.needs.find(n=>n.qual===r.qual);
+      if(ex) ex.count += r.count; else s.needs.push({qual:r.qual, count:r.count});
+    });
+    if(parsed.from < s.from) s.from = parsed.from;
+    if(parsed.to > s.to) s.to = parsed.to;
+    if(parsed.notes) s.note = parsed.notes;   // 過去の状況は「依頼履歴」に残る
+    needsUpdated = true;
   }
   const pids = [...document.querySelectorAll('#ai-proposal input[type=checkbox]:checked')].map(c=>c.dataset.pid);
   let n = 0;
@@ -652,7 +688,7 @@ function approveProposal(){
     if(from<=to && isFreeFor(p, from, to)){ DATA.assignments.push({id:uid('a'), personId:pid, siteId:s.id, from, to, records:[]}); n++; }
   });
   document.getElementById('ai-proposal').innerHTML = '';
-  addMsg('ai', `✅ ${s.name} に ${n}名を割り当てました。\n「支援先」タブと「支援履歴」に反映済みです。所属法人への打診連絡もここから自動送信できるようになる予定です。`);
+  addMsg('ai', `✅ ${s.name} に ${n}名を割り当てました。${needsUpdated?`\n📋 支援先の必要人員を更新しました → ${s.needs.map(x=>`${x.qual}×${x.count}`).join('、')}（期間 ${fmtD(s.from)}〜${fmtD(s.to)}）`:''}\n「支援先」タブと「支援履歴」に反映済みです。所属法人への打診連絡もここから自動送信できるようになる予定です。`);
   currentProposal = null; save();
 }
 
