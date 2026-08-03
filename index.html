@@ -213,7 +213,7 @@
 <!-- 支援先追加モーダル -->
 <div class="modal-bg" id="site-modal">
   <div class="modal">
-    <h3>支援先を追加</h3>
+    <h3 id="site-modal-title">支援先を追加</h3>
     <div class="form-row"><label>施設名</label><input type="text" id="sf-name" placeholder="例）特別養護老人ホーム〇〇"></div>
     <div class="form-row"><label>所在地</label><input type="text" id="sf-area" placeholder="例）熊本県益城町"></div>
     <div class="grid2">
@@ -391,6 +391,7 @@ function renderSites(){
         <div class="flex">
           ${s.active
             ? `<span class="badge ${f.cnt>=f.need?'b-done':'b-active'}">${f.cnt>=f.need?'充足':'募集中'}</span>
+               <button class="btn btn-sub btn-sm" onclick="openSiteModal('${s.id}')">✏️ 編集</button>
                <button class="btn btn-warn btn-sm" onclick="closeSite('${s.id}')">支援終了</button>`
             : '<span class="badge b-wait">終了</span>'}
         </div>
@@ -436,14 +437,20 @@ function unassign(aid){
   DATA.assignments = DATA.assignments.filter(a=>a.id!==aid); save();
 }
 
-/* --- 支援先追加モーダル --- */
+/* --- 支援先追加/編集モーダル --- */
 let newNeeds = [];
-function openSiteModal(){
-  newNeeds = [];
+let editingSiteId = null;
+function openSiteModal(siteId){
+  editingSiteId = siteId || null;
+  const s = siteId ? site(siteId) : null;
+  newNeeds = s ? s.needs.map(n=>({...n})) : [];
+  document.getElementById('site-modal-title').textContent = s ? `支援先を編集 — ${s.name}` : '支援先を追加';
   document.getElementById('sf-qual').innerHTML = QUALS.map(q=>`<option>${q}</option>`).join('');
-  ['sf-name','sf-area','sf-note'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('sf-from').value = TODAY;
-  document.getElementById('sf-to').value = '';
+  document.getElementById('sf-name').value = s ? s.name : '';
+  document.getElementById('sf-area').value = s ? s.area : '';
+  document.getElementById('sf-note').value = s ? s.note : '';
+  document.getElementById('sf-from').value = s ? s.from : TODAY;
+  document.getElementById('sf-to').value = s ? s.to : '';
   renderNeeds();
   document.getElementById('site-modal').classList.add('show');
 }
@@ -458,10 +465,20 @@ function renderNeeds(){
 function saveSite(){
   const name = document.getElementById('sf-name').value.trim();
   if(!name){ alert('施設名を入れてください'); return; }
-  DATA.sites.push({id:uid('s'), name, area:document.getElementById('sf-area').value.trim(),
-    needs:newNeeds.length?newNeeds:[{qual:'介護福祉士',count:1}],
-    from:document.getElementById('sf-from').value||TODAY, to:document.getElementById('sf-to').value||TODAY,
-    note:document.getElementById('sf-note').value.trim(), active:true});
+  const fields = {
+    name,
+    area: document.getElementById('sf-area').value.trim(),
+    needs: newNeeds.length ? newNeeds : [{qual:'介護福祉士', count:1}],
+    from: document.getElementById('sf-from').value || TODAY,
+    to: document.getElementById('sf-to').value || TODAY,
+    note: document.getElementById('sf-note').value.trim(),
+  };
+  if(editingSiteId){
+    Object.assign(site(editingSiteId), fields);
+  }else{
+    DATA.sites.push({id:uid('s'), ...fields, active:true});
+  }
+  editingSiteId = null;
   closeModal('site-modal'); save();
 }
 
