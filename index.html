@@ -297,6 +297,16 @@ function siteFilled(s){
   const need = s.needs.reduce((n,x)=>n+x.count,0);
   return {cnt, need};
 }
+/* 「〜以上」の資格読み替え (例: 初任者研修の枠は実務者研修・介護福祉士でも充足) */
+const QUAL_COVERS = {
+  '初任者研修': ['初任者研修','実務者研修','介護福祉士'],
+  '実務者研修': ['実務者研修','介護福祉士'],
+  '准看護師': ['准看護師','看護師'],
+};
+function qualMatches(p, qual){
+  const acc = QUAL_COVERS[qual] || [qual];
+  return p.quals.some(q=>acc.includes(q));
+}
 function qualBadges(p){
   return p.quals.map(q=>`<span class="badge ${q==='運転可'?'b-drive':'b-qual'}">${q==='運転可'?`🚗 運転可${p.driveLv?' Lv'+p.driveLv:''}`:q}</span>`).join('');
 }
@@ -368,7 +378,7 @@ function renderSites(){
   el.innerHTML = list.map(s=>{
     const assigned = siteAssigned(s.id);
     const needsHtml = s.needs.map(n=>{
-      const have = assigned.filter(a=>person(a.personId).quals.includes(n.qual)).length;
+      const have = assigned.filter(a=>qualMatches(person(a.personId), n.qual)).length;
       const pct = Math.min(100, Math.round(have/n.count*100));
       return `<div class="need-row"><span class="badge ${n.qual==='運転可'?'b-drive':'b-qual'}">${n.qual}</span>
         <div class="meter ${have>=n.count?'full':''}"><i style="width:${pct}%"></i></div>
@@ -557,11 +567,9 @@ function parseMessage(text){
 }
 
 function rankCandidates(req, from, to, taken, nightWanted, driverPreferred){
-  const QUAL_COVERS = { '初任者研修': ['初任者研修','実務者研修','介護福祉士'] };
-  const acceptable = QUAL_COVERS[req.qual] || [req.qual];
   return DATA.people
     .filter(p=>!taken.has(p.id))
-    .filter(p=>p.quals.some(q=>acceptable.includes(q)))
+    .filter(p=>qualMatches(p, req.qual))
     .filter(p=>from && to && availOverlap(p, from, to))
     .filter(p=>{
       const r = availOverlap(p, from, to);
