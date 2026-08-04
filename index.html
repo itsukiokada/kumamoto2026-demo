@@ -75,6 +75,10 @@
   .tl-bar.b-done{background:#9aa39b;}
   .tl-bar.b-free{background:#3f9e50;}
   .tl-bar.b-free.selected{outline:3px solid var(--accent); box-shadow:0 0 0 2px #fff inset;}
+  .tl-bar.flash{outline:3px solid #f2b60d; box-shadow:0 0 0 4px rgba(242,182,13,.30); animation:flashpulse .9s ease-in-out infinite alternate;}
+  .tl-sitehead.flash{outline:3px solid #f2b60d; box-shadow:0 0 0 4px rgba(242,182,13,.25);}
+  @keyframes flashpulse{from{filter:brightness(1);} to{filter:brightness(1.3);}}
+  #sync{transition:opacity .3s;}
   .sel-banner{background:var(--accent-pale); border:1.5px solid var(--accent); border-radius:10px; padding:8px 14px; font-size:14px; margin-bottom:10px; display:flex; gap:10px; align-items:center; flex-wrap:wrap;}
   .modal-bg{position:fixed; inset:0; background:rgba(0,0,0,.4); display:none; align-items:center; justify-content:center; z-index:50; padding:20px;}
   .modal-bg.show{display:flex;}
@@ -93,6 +97,7 @@
 <header>
   <h1>🤝 災害支援シフト調整</h1>
   <span class="tag">熊本地震 介護施設支援</span>
+  <span class="tag" id="sync" style="display:none;"></span>
   <a href="about.html" style="color:#fff; font-size:12px;">📄 説明資料</a>
   <div class="stats">
     <div class="stat"><b id="stat-avail">-</b><span>動かせる人（7日以内）</span></div>
@@ -124,8 +129,8 @@
       <button class="btn btn-sub btn-sm right" onclick="resetData()">デモデータを初期化</button>
     </div>
     <div id="sel-banner"></div>
-    <div class="card" style="overflow-x:auto;"><div id="boardgrid"></div></div>
-    <p class="hint">🟢 緑 = 動かせる期間（バーをクリックで選択 → 支援先の行をクリックで割当）｜🟠 支援中・🔵 予定・グレー = 完了（バーをクリックで解除）｜名前クリックで詳細・編集</p>
+    <div class="card" style="overflow-x:auto;"><div id="boardgrid"><p class="small">データを読み込んでいます…</p></div></div>
+    <p class="hint">🟢 緑 = 動かせる期間（バーをクリックで選択 → 支援先の行をクリックで割当）｜🟠 支援中・🔵 予定・グレー = 完了（バーをクリックで解除）｜名前クリックで詳細・編集｜<b style="color:#b8860b;">黄色い枠 = いま反映した項目</b></p>
   </section>
 
   <!-- ============ AI秘書 ============ -->
@@ -204,7 +209,7 @@
   </div>
 </div>
 
-<footer>災害支援シフト調整プロトタイプ v1.0 — 株式会社NAGARA（デモ用架空データ）</footer>
+<footer>災害支援シフト調整プロトタイプ v1.1 — 株式会社NAGARA（デモ用架空データ）</footer>
 
 <script>
 'use strict';
@@ -219,18 +224,49 @@ async function load(){
   DATA = await (await fetch(API + '/api/data')).json();
   renderAll();
 }
+/* 楽観保存: 先に画面へ反映し、サーバー同期は裏で行う。後続保存が走ったら古い応答は破棄 */
+let saveSeq = 0;
+function setSync(txt, hold){
+  const el = document.getElementById('sync');
+  if(!txt){ el.style.display='none'; return; }
+  el.textContent = txt; el.style.display = 'inline-block';
+  clearTimeout(setSync._t);
+  if(!hold) setSync._t = setTimeout(()=>{ el.style.display='none'; }, 2500);
+}
 async function save(){
-  const res = await (await fetch(API + '/api/data', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(DATA)})).json();
-  if(res.data) DATA = res.data;   // サーバー採番のID(UUID)で置き換え
-  renderAll();
+  renderAll();                        // ← 即時反映（体感速度）
+  const seq = ++saveSeq;
+  setSync('⏳ 保存中…', true);
+  try{
+    const res = await (await fetch(API + '/api/data', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(DATA)})).json();
+    if(seq !== saveSeq) return;       // より新しい保存が進行中 → この応答は捨てる
+    if(res.data){ DATA = res.data; renderAll(); }   // サーバー採番のID(UUID)で置き換え
+    setSync(res.ok !== false ? '✓ 保存しました' : '⚠️ 保存に失敗しました');
+  }catch(e){
+    if(seq === saveSeq) setSync('⚠️ 保存に失敗 — 通信環境を確認して再操作してください', true);
+  }
 }
 async function resetData(){
   if(confirm('デモデータを最初の状態に戻します。よろしいですか？')){
+    setSync('⏳ 初期化中…', true);
     await fetch(API + '/api/reset', {method:'POST'});
     await load();
+    setSync('✓ 初期化しました');
   }
 }
 function uid(pfx){ return pfx + Math.random().toString(36).slice(2,8); }
+
+/* いま反映した項目のハイライト (内容キーで管理: サーバー採番でIDが変わっても追従) */
+const flashKeys = new Set();
+function flash(...keys){
+  keys.forEach(k=>flashKeys.add(k));
+  clearTimeout(flash._t);
+  flash._t = setTimeout(()=>{ flashKeys.clear(); renderBoard(); }, 8000);
+}
+function akey(a){
+  const p = person(a.personId), s = site(a.siteId);
+  return `a|${p?p.name:''}|${s?s.name:''}|${a.from}|${a.to}`;
+}
 
 /* ---------------- 共通ロジック ---------------- */
 function person(id){ return DATA.people.find(p=>p.id===id); }
@@ -327,6 +363,7 @@ function assignTo(sid){
   if(from > to){ alert(`${p.name}さんの期間（${fmtD(selEntry.from)}〜${fmtD(selEntry.to)}）と ${s.name} の支援期間（${fmtD(s.from)}〜${fmtD(s.to)}）が重なっていません`); return; }
   if(!isFreeFor(p, from, to)){ alert(`${p.name}さんはこの期間、別の支援先に割当済みです`); return; }
   DATA.assignments.push({id:uid('a'), personId:p.id, siteId:sid, from, to, records:[]});
+  flash(`a|${p.name}|${s.name}|${from}|${to}`);
   selEntry = null; save();
 }
 function unassignBar(aid){
@@ -397,7 +434,7 @@ function renderBoard(){
       const have = assigned.filter(a=>qualMatches(person(a.personId), n.qual)).length;
       return `${n.qual} ${have}/${n.count}`;
     }).join('・');
-    html += `<div class="tl-sitehead ${selEntry?'droppable':''}" style="grid-row:${row}; grid-column:1 / -1;" onclick="assignTo('${s.id}')">
+    html += `<div class="tl-sitehead ${selEntry?'droppable':''} ${flashKeys.has('s|'+s.name)?'flash':''}" style="grid-row:${row}; grid-column:1 / -1;" onclick="assignTo('${s.id}')">
       🏥 ${esc(s.name)}
       <span style="font-weight:400; font-size:11px;">📍${esc(s.area)}｜${fmtD(s.from)}〜${fmtD(s.to)}｜${needTxt}</span>
       ${s.note?`<span style="font-weight:400; font-size:11px;">📝${esc(s.note)}</span>`:''}
@@ -416,7 +453,7 @@ function renderBoard(){
       const p = person(a.personId), st = assignStatus(a);
       html += `<div class="tl-name" style="grid-row:${row}; grid-column:1;" onclick="openPerson('${p.id}')">${esc(p.name)} <span class="small">${esc(p.corp)}</span></div>`;
       const {c1, c2} = clip(a.from, a.to);
-      html += `<div class="tl-bar ${st.cls}" style="grid-row:${row}; grid-column:${c1+2} / ${c2+3};" title="${esc(p.name)} ${fmtRange(a)}（クリックで解除）" onclick="unassignBar('${a.id}')">${fmtRange(a)}</div>`;
+      html += `<div class="tl-bar ${st.cls} ${flashKeys.has(akey(a))?'flash':''}" style="grid-row:${row}; grid-column:${c1+2} / ${c2+3};" title="${esc(p.name)} ${fmtRange(a)}（クリックで解除）" onclick="unassignBar('${a.id}')">${fmtRange(a)}</div>`;
       row++;
     }
   }
@@ -433,7 +470,7 @@ function renderBoard(){
     const vis = {from: e.seg.from<first?first:e.seg.from, to: e.seg.to>last?last:e.seg.to};
     if(vis.from<=vis.to){
       const {c1, c2} = clip(vis.from, vis.to);
-      html += `<div class="tl-bar b-free ${sel?'selected':''}" style="grid-row:${row}; grid-column:${c1+2} / ${c2+3};" title="${esc(e.p.name)} ${fmtD(e.seg.from)}〜${fmtD(e.seg.to)} ${e.p.quals.join('・')}" onclick="selectEntry('${e.p.id}','${e.seg.from}','${e.seg.to}')">${fmtD(e.seg.from)}〜${fmtD(e.seg.to)} ${esc(e.p.quals.filter(q=>q!=='運転可').slice(0,1).join(''))}${e.p.quals.includes('運転可')?'🚗':''}</div>`;
+      html += `<div class="tl-bar b-free ${sel?'selected':''} ${flashKeys.has('p|'+e.p.name)?'flash':''}" style="grid-row:${row}; grid-column:${c1+2} / ${c2+3};" title="${esc(e.p.name)} ${fmtD(e.seg.from)}〜${fmtD(e.seg.to)} ${e.p.quals.join('・')}" onclick="selectEntry('${e.p.id}','${e.seg.from}','${e.seg.to}')">${fmtD(e.seg.from)}〜${fmtD(e.seg.to)} ${esc(e.p.quals.filter(q=>q!=='運転可').slice(0,1).join(''))}${e.p.quals.includes('運転可')?'🚗':''}</div>`;
     }
     row++;
   }
@@ -531,6 +568,7 @@ function savePerson(){
   }else{
     DATA.people.push({id:uid('p'), office:'', lodging:'', rentacar:false, ...fields});
   }
+  flash('p|'+fields.name);
   editingPersonId = null;
   closeModal('person-form-modal'); save();
 }
@@ -605,6 +643,7 @@ function saveSite(){
   }else{
     DATA.sites.push({id:uid('s'), ...fields, active:true});
   }
+  flash('s|'+fields.name);
   editingSiteId = null;
   closeModal('site-modal'); save();
 }
@@ -746,6 +785,7 @@ async function approveOffer(){
       : `${o.organization||'所属未登録'} スタッフ${n>1? i+1 : ''}（氏名未登録）`;
     DATA.people.push({id:uid('p'), name, corp:o.organization||'（所属未登録）', office:'',
       quals:[...quals], note, driveLv:null, lodging:'', rentacar:false, avail: periods.map(p=>({...p}))});
+    flash('p|'+name);
   }
   document.getElementById('ai-proposal').innerHTML = '';
   currentOffer = null;
@@ -845,8 +885,13 @@ function approveProposal(){
     if(!r) return;
     const from = r.from > parsed.from ? r.from : parsed.from;
     const to = r.to < parsed.to ? r.to : parsed.to;
-    if(from<=to && isFreeFor(p, from, to)){ DATA.assignments.push({id:uid('a'), personId:pid, siteId:s.id, from, to, records:[]}); n++; }
+    if(from<=to && isFreeFor(p, from, to)){
+      DATA.assignments.push({id:uid('a'), personId:pid, siteId:s.id, from, to, records:[]});
+      flash(`a|${p.name}|${s.name}|${from}|${to}`);
+      n++;
+    }
   });
+  flash('s|'+s.name);
   document.getElementById('ai-proposal').innerHTML = '';
   addMsg('ai', `✅ ${s.name} に ${n}名を割り当てました。${needsUpdated?`\n📋 支援先の必要人員を更新しました → ${s.needs.map(x=>`${x.qual}×${x.count}`).join('、')}（期間 ${fmtD(s.from)}〜${fmtD(s.to)}）`:''}\n調整ボードのタイムラインに反映済みです。`);
   currentProposal = null; save();
