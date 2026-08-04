@@ -28,15 +28,11 @@
     color:var(--sub); cursor:pointer; border-radius:10px 10px 0 0; border-bottom:3px solid transparent;}
   nav button:hover{background:var(--brand-pale);}
   nav button.active{color:var(--brand-dark); border-bottom-color:var(--brand); background:var(--brand-pale);}
-  main{padding:20px 24px 60px; max-width:1200px; margin:0 auto;}
+  main{padding:20px 24px 60px; max-width:1280px; margin:0 auto;}
   .tabpane{display:none;} .tabpane.show{display:block;}
   h2{font-size:18px; margin:6px 0 14px; color:var(--brand-dark);}
   .hint{font-size:13px; color:var(--sub); margin-bottom:12px;}
   .card{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:16px 18px; margin-bottom:14px;}
-  table{width:100%; border-collapse:collapse; background:var(--card); border-radius:12px; overflow:hidden;}
-  th{background:var(--brand-pale); color:var(--brand-dark); font-size:13px; text-align:left; padding:10px 12px;}
-  td{padding:10px 12px; border-top:1px solid var(--line); font-size:14px; vertical-align:top;}
-  tr.clickable{cursor:pointer;} tr.clickable:hover td{background:#fbfaf6;}
   .badge{display:inline-block; padding:2px 10px; border-radius:999px; font-size:12px; font-weight:600; margin:1px 2px;}
   .b-qual{background:var(--brand-pale); color:var(--brand-dark);}
   .b-drive{background:var(--blue-pale); color:var(--blue);}
@@ -44,7 +40,7 @@
   .b-active{background:var(--accent-pale); color:var(--accent);}
   .b-planned{background:var(--blue-pale); color:var(--blue);}
   .b-done{background:#e8f5e9; color:var(--ok);}
-  .chips{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px; align-items:center;}
+  .chips{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px; align-items:center;}
   .chip{border:1.5px solid var(--line); background:#fff; border-radius:999px; padding:6px 16px; font-size:14px; cursor:pointer; font-weight:600; color:var(--sub);}
   .chip.on{background:var(--brand); border-color:var(--brand); color:#fff;}
   input[type=text], textarea, input[type=date], input[type=number], select{
@@ -57,24 +53,7 @@
   .btn-sm{padding:5px 12px; font-size:13px; border-radius:8px;}
   .grid2{display:grid; grid-template-columns:1fr 1fr; gap:16px;}
   @media(max-width:860px){.grid2{grid-template-columns:1fr;}}
-  .site-card{border-left:6px solid var(--accent);}
-  .site-card.closed{border-left-color:#bbb; opacity:.65;}
-  .site-head{display:flex; justify-content:space-between; align-items:flex-start; gap:10px; flex-wrap:wrap;}
-  .site-head h3{font-size:17px;}
-  .need-row{display:flex; align-items:center; gap:8px; margin:4px 0; font-size:14px;}
-  .meter{flex:1; max-width:200px; height:10px; background:#eee; border-radius:99px; overflow:hidden;}
-  .meter i{display:block; height:100%; background:var(--brand); border-radius:99px;}
-  .meter.full i{background:var(--ok);}
-  .assign-list{margin-top:10px; padding-top:10px; border-top:1px dashed var(--line);}
   .assign-item{display:flex; justify-content:space-between; align-items:center; padding:5px 0; font-size:14px; gap:8px; flex-wrap:wrap;}
-  .board{display:grid; grid-template-columns:340px 1fr; gap:18px;}
-  @media(max-width:900px){.board{grid-template-columns:1fr;}}
-  .person-pick{border:1.5px solid var(--line); border-radius:12px; padding:10px 12px; margin-bottom:8px; cursor:pointer; background:#fff;}
-  .person-pick:hover{border-color:var(--brand);}
-  .person-pick.selected{border-color:var(--brand); background:var(--brand-pale); box-shadow:0 0 0 2px var(--brand-pale);}
-  .person-pick .nm{font-weight:700;} .person-pick .meta{font-size:12px; color:var(--sub);}
-  .drop-site{border:2px dashed var(--line); border-radius:14px; padding:14px 16px; margin-bottom:12px; background:var(--card);}
-  .drop-site.ready{border-color:var(--brand); background:var(--brand-pale); cursor:pointer;}
   .chatlog{max-height:320px; overflow-y:auto; display:flex; flex-direction:column; gap:10px; margin-bottom:14px;}
   .msg{max-width:85%; padding:10px 14px; border-radius:14px; font-size:14px; white-space:pre-wrap;}
   .msg.user{background:var(--blue-pale); align-self:flex-end; border-bottom-right-radius:4px;}
@@ -84,12 +63,19 @@
   .prop-cand{display:flex; align-items:center; gap:8px; padding:5px 0; font-size:14px;}
   .tl-day{font-size:10px; text-align:center; color:var(--sub); font-weight:700; padding:2px 0; border-left:1px solid #f0ece3;}
   .tl-day.today{color:var(--accent); background:var(--accent-pale); border-radius:6px 6px 0 0;}
-  .tl-sitehead{background:var(--brand-pale); color:var(--brand-dark); font-weight:700; padding:5px 10px; border-radius:8px; margin-top:12px; font-size:13px;}
-  .tl-name{font-size:12px; padding:2px 6px 2px 2px; white-space:nowrap;}
-  .tl-bar{height:20px; border-radius:99px; font-size:10px; font-weight:700; display:flex; align-items:center; justify-content:center; margin:3px 1px; color:#fff; overflow:hidden; white-space:nowrap;}
+  .tl-sitehead{background:var(--brand-pale); color:var(--brand-dark); font-weight:700; padding:6px 10px; border-radius:8px; margin-top:12px; font-size:13px; display:flex; gap:8px; align-items:center; flex-wrap:wrap;}
+  .tl-sitehead.droppable{cursor:pointer; outline:2px dashed var(--brand);}
+  .tl-sitehead.droppable:hover{background:#d2eae4;}
+  .tl-freehead{background:var(--accent-pale); color:#8a4a1d; font-weight:700; padding:6px 10px; border-radius:8px; margin-top:18px; font-size:13px;}
+  .tl-name{font-size:12px; padding:2px 6px 2px 2px; white-space:nowrap; cursor:pointer;}
+  .tl-name:hover{color:var(--brand-dark); text-decoration:underline;}
+  .tl-bar{height:20px; border-radius:99px; font-size:10px; font-weight:700; display:flex; align-items:center; justify-content:center; margin:3px 1px; color:#fff; overflow:hidden; white-space:nowrap; cursor:pointer;}
   .tl-bar.b-active{background:var(--accent);}
   .tl-bar.b-planned{background:var(--blue);}
   .tl-bar.b-done{background:#9aa39b;}
+  .tl-bar.b-free{background:#3f9e50;}
+  .tl-bar.b-free.selected{outline:3px solid var(--accent); box-shadow:0 0 0 2px #fff inset;}
+  .sel-banner{background:var(--accent-pale); border:1.5px solid var(--accent); border-radius:10px; padding:8px 14px; font-size:14px; margin-bottom:10px; display:flex; gap:10px; align-items:center; flex-wrap:wrap;}
   .modal-bg{position:fixed; inset:0; background:rgba(0,0,0,.4); display:none; align-items:center; justify-content:center; z-index:50; padding:20px;}
   .modal-bg.show{display:flex;}
   .modal{background:#fff; border-radius:16px; padding:22px 24px; max-width:640px; width:100%; max-height:85vh; overflow-y:auto;}
@@ -98,6 +84,7 @@
   .flex{display:flex; gap:10px; align-items:center; flex-wrap:wrap;}
   .right{margin-left:auto;}
   .small{font-size:12px; color:var(--sub);}
+  .range-row{display:flex; gap:8px; align-items:center; margin-bottom:6px;}
   footer{padding:20px 24px; text-align:center; font-size:12px; color:var(--sub);}
 </style>
 </head>
@@ -106,8 +93,6 @@
 <header>
   <h1>🤝 災害支援シフト調整</h1>
   <span class="tag">熊本地震 介護施設支援</span>
-  <span class="tag">全国介護事業者連盟（デモ）</span>
-  <a href="supporter.html" style="color:#fff; font-size:12px;">🙋 支援者用ページ →</a>
   <a href="about.html" style="color:#fff; font-size:12px;">📄 説明資料</a>
   <div class="stats">
     <div class="stat"><b id="stat-avail">-</b><span>動かせる人（7日以内）</span></div>
@@ -116,92 +101,49 @@
   </div>
 </header>
 <nav>
-  <button data-tab="people" class="active">👥 支援者一覧</button>
-  <button data-tab="sites">🏥 支援先</button>
-  <button data-tab="board">📋 分配ボード</button>
-  <button data-tab="timeline">📅 タイムライン</button>
+  <button data-tab="board" class="active">📋 調整ボード</button>
   <button data-tab="ai">🤖 AI秘書</button>
-  <button data-tab="history">📖 支援履歴</button>
 </nav>
 <main>
 
-  <!-- ============ 支援者一覧 ============ -->
-  <section id="tab-people" class="tabpane show">
-    <h2>支援者一覧</h2>
-    <p class="hint">全国の会員法人から登録された支援可能人材です。行をクリックすると詳細と支援履歴が見られます。</p>
-    <div class="chips" id="qual-filter"></div>
+  <!-- ============ 調整ボード（統合画面） ============ -->
+  <section id="tab-board" class="tabpane show">
     <div class="chips">
-      <input type="text" id="people-search" placeholder="名前・法人名・事業所名で検索" style="max-width:320px;">
+      <b class="small" style="font-size:13px;">📅 期間で絞り込み</b>
+      <input type="date" id="f-from" style="max-width:160px;">
+      <span class="small">〜</span>
+      <input type="date" id="f-to" style="max-width:160px;">
+      <button class="btn btn-sub btn-sm" onclick="clearDates()">クリア</button>
+      <input type="text" id="board-search" placeholder="名前・法人名で検索" style="max-width:240px;">
+    </div>
+    <div class="chips" id="board-qual-filter"></div>
+    <div class="chips">
+      <button class="btn btn-main btn-sm" onclick="openPersonForm()">＋ 支援者を追加</button>
+      <button class="btn btn-main btn-sm" onclick="openSiteModal()">＋ 支援先を追加</button>
+      <button class="btn btn-sub btn-sm" onclick="exportCSV()">📄 実績CSV</button>
       <button class="btn btn-sub btn-sm right" onclick="resetData()">デモデータを初期化</button>
     </div>
-    <table>
-      <thead><tr><th>氏名</th><th>所属法人</th><th>事業所</th><th>資格</th><th>調整可能シフト</th><th>状態</th></tr></thead>
-      <tbody id="people-body"></tbody>
-    </table>
-  </section>
-
-  <!-- ============ 支援先 ============ -->
-  <section id="tab-sites" class="tabpane">
-    <div class="flex" style="margin-bottom:10px;">
-      <h2 style="margin:0;">支援先（受け入れ施設）</h2>
-      <button class="btn btn-main right" onclick="openSiteModal()">＋ 支援先を追加</button>
-    </div>
-    <p class="hint">支援先は状況に応じて増減します。必要な人員と充足状況がひと目でわかります。</p>
-    <div id="sites-list"></div>
-  </section>
-
-  <!-- ============ 分配ボード ============ -->
-  <section id="tab-board" class="tabpane">
-    <h2>分配ボード</h2>
-    <p class="hint">① 左から支援者を選ぶ → ② 右の支援先をクリックすると割り当てられます。</p>
-    <div class="chips" id="board-qual-filter"></div>
-    <div class="board">
-      <div>
-        <div class="card" style="padding:12px;">
-          <b style="font-size:14px;">🟢 いま動かせる人（未割当）</b>
-          <div id="board-people" style="margin-top:10px;"></div>
-        </div>
-      </div>
-      <div id="board-sites"></div>
-    </div>
-  </section>
-
-  <!-- ============ タイムライン ============ -->
-  <section id="tab-timeline" class="tabpane">
-    <h2>タイムライン</h2>
-    <p class="hint">支援先ごとに「誰が・いつからいつまで」入るかをひと目で確認できます。オレンジ=支援中、青=予定、グレー=完了。</p>
-    <div class="card" style="overflow-x:auto;"><div id="timeline"></div></div>
+    <div id="sel-banner"></div>
+    <div class="card" style="overflow-x:auto;"><div id="boardgrid"></div></div>
+    <p class="hint">🟢 緑 = 動かせる期間（バーをクリックで選択 → 支援先の行をクリックで割当）｜🟠 支援中・🔵 予定・グレー = 完了（バーをクリックで解除）｜名前クリックで詳細・編集</p>
   </section>
 
   <!-- ============ AI秘書 ============ -->
   <section id="tab-ai" class="tabpane">
     <h2>AI秘書に依頼する</h2>
-    <p class="hint">届いたメッセージ（LINE・Messenger・メール等）をそのまま貼り付けてください。施設からの応援依頼なら分配案を、支援者からの「行けます」の申し出なら支援者登録を、AI秘書が作ります。</p>
+    <p class="hint">届いたメッセージ（Messenger・LINE・メール等）をそのまま貼り付けてください。施設からの応援依頼なら分配案を、支援者からの「行けます」の申し出なら支援者登録を、AI秘書が作ります。</p>
     <div class="card">
       <div class="chatlog" id="chatlog">
         <div class="msg ai">こんにちは、AI秘書です 🤖\n施設からの「応援がほしい」依頼も、支援者からの「行けます」の申し出も、届いたメッセージをそのまま貼り付けてください。内容を読み取って、分配案の作成や支援者登録までお手伝いします。</div>
       </div>
-      <textarea id="ai-input" placeholder="例）阿蘇みどりの丘さんから連絡があり、8月10日から2週間ほど介護福祉士2名と運転できる方1名をお願いしたいとのことです。"></textarea>
+      <textarea id="ai-input" placeholder="例）キャンナス浜松の杉村です。8/7〜11まで熊本へ行けます。"></textarea>
       <div class="flex" style="margin-top:10px;">
         <button class="btn btn-sub" onclick="fillExample()">例文を入れる</button>
         <button class="btn btn-main right" onclick="runAI()">🤖 AI秘書に依頼する</button>
       </div>
       <div id="ai-proposal"></div>
     </div>
-    <p class="small">※ OpenAI API（gpt-5.1）で解析しています。APIキー未設定時は簡易解析にフォールバックします。議事録は「ながらかいご議事録」と連携予定です。</p>
-  </section>
-
-  <!-- ============ 支援履歴 ============ -->
-  <section id="tab-history" class="tabpane">
-    <div class="flex" style="margin-bottom:10px;">
-      <h2 style="margin:0;">支援履歴（勤怠記録）</h2>
-      <button class="btn btn-sub right" onclick="exportCSV()">📄 CSVで書き出す</button>
-    </div>
-    <p class="hint">誰が・どこに・いつからいつまで支援に入ったかの記録です。証明書発行や助成金申請の基礎資料になります。</p>
-    <table>
-      <thead><tr><th>支援者</th><th>所属法人</th><th>支援先</th><th>期間</th><th>日数</th><th>実績</th><th>状態</th><th></th></tr></thead>
-      <tbody id="history-body"></tbody>
-    </table>
+    <p class="small">※ OpenAI API（gpt-5.1）で解析しています。APIキー未設定時は簡易解析にフォールバックします。現場の日報・アセスメントの記録は「ながらかいご議事録」で行います。</p>
   </section>
 </main>
 
@@ -210,12 +152,37 @@
   <div class="modal" id="person-modal-body"></div>
 </div>
 
-<!-- 支援先追加モーダル -->
+<!-- 支援者追加/編集モーダル -->
+<div class="modal-bg" id="person-form-modal">
+  <div class="modal">
+    <h3 id="pf-title">支援者を追加</h3>
+    <div class="grid2">
+      <div class="form-row"><label>氏名</label><input type="text" id="pf-name" placeholder="例）田中 美咲"></div>
+      <div class="form-row"><label>所属法人・団体</label><input type="text" id="pf-corp" placeholder="例）キャンナス浜松"></div>
+    </div>
+    <div class="form-row"><label>資格（あてはまるものをタップ）</label><div class="chips" id="pf-quals" style="margin-bottom:0;"></div></div>
+    <div class="grid2">
+      <div class="form-row"><label>運転レベル（任意）</label>
+        <select id="pf-drivelv"><option value="">—</option><option value="1">Lv1 近場のみ</option><option value="2">Lv2</option><option value="3">Lv3 一般道OK</option><option value="4">Lv4</option><option value="5">Lv5 長距離・山道OK</option></select></div>
+      <div class="form-row"><label>メモ（夜勤可・経験など）</label><input type="text" id="pf-note" placeholder="例）夜勤可・災害支援経験あり"></div>
+    </div>
+    <div class="form-row"><label>行ける期間（複数可）</label>
+      <div id="pf-ranges"></div>
+      <button class="btn btn-sub btn-sm" onclick="addPfRange()">＋ 期間を追加</button>
+    </div>
+    <div class="flex" style="justify-content:flex-end;">
+      <button class="btn btn-sub" onclick="closeModal('person-form-modal')">やめる</button>
+      <button class="btn btn-main" onclick="savePerson()">保存する</button>
+    </div>
+  </div>
+</div>
+
+<!-- 支援先追加/編集モーダル -->
 <div class="modal-bg" id="site-modal">
   <div class="modal">
     <h3 id="site-modal-title">支援先を追加</h3>
-    <div class="form-row"><label>施設名</label><input type="text" id="sf-name" placeholder="例）特別養護老人ホーム〇〇"></div>
-    <div class="form-row"><label>所在地</label><input type="text" id="sf-area" placeholder="例）熊本県益城町"></div>
+    <div class="form-row"><label>施設名</label><input type="text" id="sf-name" placeholder="例）福祉避難所〇〇"></div>
+    <div class="form-row"><label>所在地</label><input type="text" id="sf-area" placeholder="例）熊本県八代市"></div>
     <div class="grid2">
       <div class="form-row"><label>支援開始日</label><input type="date" id="sf-from"></div>
       <div class="form-row"><label>支援終了日</label><input type="date" id="sf-to"></div>
@@ -229,6 +196,7 @@
       <div id="sf-needs" style="margin-top:6px;"></div>
     </div>
     <div class="form-row"><label>状況メモ</label><input type="text" id="sf-note" placeholder="例）断水が続いており夜勤帯の人員が不足"></div>
+    <div id="sf-history"></div>
     <div class="flex" style="justify-content:flex-end;">
       <button class="btn btn-sub" onclick="closeModal('site-modal')">やめる</button>
       <button class="btn btn-main" onclick="saveSite()">保存する</button>
@@ -236,7 +204,7 @@
   </div>
 </div>
 
-<footer>災害支援シフト調整プロトタイプ v0.1 — 株式会社NAGARA（デモ用架空データ）</footer>
+<footer>災害支援シフト調整プロトタイプ v1.0 — 株式会社NAGARA（デモ用架空データ）</footer>
 
 <script>
 'use strict';
@@ -245,7 +213,7 @@ const API = ['localhost','127.0.0.1'].includes(location.hostname) ? '' : 'https:
 const TODAY = new Date().toISOString().slice(0,10);
 const QUALS = ['介護福祉士','看護師','准看護師','ケアマネ','実務者研修','初任者研修','運転可'];
 
-/* ---------------- データ (サーバー data.json が正本) ---------------- */
+/* ---------------- データ (サーバーが正本) ---------------- */
 let DATA = {people:[], sites:[], assignments:[]};
 async function load(){
   DATA = await (await fetch(API + '/api/data')).json();
@@ -270,6 +238,7 @@ function site(id){ return DATA.sites.find(s=>s.id===id); }
 function fmtD(d){ if(!d) return '?'; const [y,m,dd]=d.split('-'); return `${Number(m)}/${Number(dd)}`; }
 function fmtRange(a){ return `${fmtD(a.from)} 〜 ${fmtD(a.to)}`; }
 function days(a){ return Math.round((new Date(a.to)-new Date(a.from))/86400000)+1; }
+function addDays(iso, n){ const d = new Date(iso+'T00:00:00Z'); d.setUTCDate(d.getUTCDate()+n); return d.toISOString().slice(0,10); }
 function assignStatus(a){
   if(a.to < TODAY) return {label:'完了', cls:'b-done'};
   if(a.from <= TODAY) return {label:'支援中', cls:'b-active'};
@@ -291,12 +260,21 @@ function availCovers(p, from, to){ return availRanges(p).some(r=>r.from<=from &&
 function isFreeFor(p, from, to){
   return personAssignments(p.id).every(a=>!overlaps(a.from,a.to,from,to));
 }
-function siteAssigned(sid){ return DATA.assignments.filter(a=>a.siteId===sid && a.to>=TODAY); }
-function siteFilled(s){
-  const cnt = siteAssigned(s.id).length;
-  const need = s.needs.reduce((n,x)=>n+x.count,0);
-  return {cnt, need};
+/* 行ける期間から割当済み区間を差し引いた「まだ動かせる区間」 */
+function freeSegments(p, r){
+  let segs = [{from:r.from, to:r.to}];
+  for(const a of personAssignments(p.id)){
+    segs = segs.flatMap(s=>{
+      if(!overlaps(a.from,a.to,s.from,s.to)) return [s];
+      const out = [];
+      if(a.from > s.from) out.push({from:s.from, to:addDays(a.from,-1)});
+      if(a.to < s.to) out.push({from:addDays(a.to,1), to:s.to});
+      return out;
+    });
+  }
+  return segs.filter(s=>s.from<=s.to);
 }
+function siteAssigned(sid){ return DATA.assignments.filter(a=>a.siteId===sid && a.to>=TODAY); }
 /* 「〜以上」の資格読み替え (例: 初任者研修の枠は実務者研修・介護福祉士でも充足) */
 const QUAL_COVERS = {
   '初任者研修': ['初任者研修','実務者研修','介護福祉士'],
@@ -322,32 +300,158 @@ document.querySelectorAll('nav button').forEach(b=>{
   };
 });
 
-/* ---------------- 支援者一覧 ---------------- */
-let peopleQualFilter = null;
+/* ---------------- 調整ボード（統合画面） ---------------- */
+let boardQualFilter = null;
+let selEntry = null;   // {pid, from, to} 選択中の「動かせる期間」
 function renderQualChips(elId, current, onpick){
   const el = document.getElementById(elId);
   el.innerHTML = `<button class="chip ${current===null?'on':''}" data-q="">すべて</button>` +
     QUALS.map(q=>`<button class="chip ${current===q?'on':''}" data-q="${q}">${q}</button>`).join('');
   el.querySelectorAll('.chip').forEach(c=>c.onclick=()=>onpick(c.dataset.q||null));
 }
-function renderPeople(){
-  renderQualChips('qual-filter', peopleQualFilter, q=>{peopleQualFilter=q; renderPeople();});
-  const kw = (document.getElementById('people-search').value||'').trim();
-  const body = document.getElementById('people-body');
-  body.innerHTML = DATA.people
-    .filter(p=>!peopleQualFilter || p.quals.includes(peopleQualFilter))
-    .filter(p=>!kw || (p.name+p.corp+p.office).includes(kw))
-    .map(p=>{
-      const st = personStatus(p);
-      return `<tr class="clickable" onclick="openPerson('${p.id}')">
-        <td><b>${esc(p.name)}</b></td><td>${esc(p.corp)}</td><td>${esc(p.office)}</td>
-        <td>${qualBadges(p)}</td>
-        <td>${availText(p)}${p.note?`<div class="small">${esc(p.note)}</div>`:''}</td>
-        <td><span class="badge ${st.cls}">${st.label}</span></td></tr>`;
-    }).join('') || '<tr><td colspan="6">該当する支援者がいません</td></tr>';
+function clearDates(){
+  document.getElementById('f-from').value = '';
+  document.getElementById('f-to').value = '';
+  renderBoard();
 }
-document.getElementById('people-search').addEventListener('input', renderPeople);
+function selectEntry(pid, from, to){
+  if(selEntry && selEntry.pid===pid && selEntry.from===from && selEntry.to===to) selEntry = null;
+  else selEntry = {pid, from, to};
+  renderBoard();
+}
+function assignTo(sid){
+  if(!selEntry) return;
+  const p = person(selEntry.pid), s = site(sid);
+  const from = selEntry.from > s.from ? selEntry.from : s.from;
+  const to = selEntry.to < s.to ? selEntry.to : s.to;
+  if(from > to){ alert(`${p.name}さんの期間（${fmtD(selEntry.from)}〜${fmtD(selEntry.to)}）と ${s.name} の支援期間（${fmtD(s.from)}〜${fmtD(s.to)}）が重なっていません`); return; }
+  if(!isFreeFor(p, from, to)){ alert(`${p.name}さんはこの期間、別の支援先に割当済みです`); return; }
+  DATA.assignments.push({id:uid('a'), personId:p.id, siteId:sid, from, to, records:[]});
+  selEntry = null; save();
+}
+function unassignBar(aid){
+  const a = DATA.assignments.find(x=>x.id===aid);
+  if(!a) return;
+  const p = person(a.personId), s = site(a.siteId);
+  if(confirm(`${p.name}さんの ${s.name}（${fmtRange(a)}）への割当を解除しますか？`)){
+    DATA.assignments = DATA.assignments.filter(x=>x.id!==aid); save();
+  }
+}
+function renderBoard(){
+  renderQualChips('board-qual-filter', boardQualFilter, q=>{boardQualFilter=q; renderBoard();});
+  const kw = (document.getElementById('board-search').value||'').trim();
+  const fF = document.getElementById('f-from').value || null;
+  const fT = document.getElementById('f-to').value || null;
+  const sites = DATA.sites.filter(s=>s.active);
 
+  /* 動かせる人 = 人×期間 の行 (割当済み区間は差し引き) */
+  const entries = [];
+  const noAvail = [];
+  DATA.people
+    .filter(p=>!boardQualFilter || p.quals.includes(boardQualFilter))
+    .filter(p=>!kw || (p.name + p.corp).includes(kw))
+    .forEach(p=>{
+      const rs = availRanges(p);
+      if(!rs.length){ noAvail.push(p); return; }
+      rs.forEach(r=>freeSegments(p, r).forEach(seg=>{
+        if(seg.to < TODAY) return;               // 過去の期間は出さない
+        if(fF && seg.to < fF) return;
+        if(fT && seg.from > fT) return;
+        entries.push({p, seg});
+      }));
+    });
+  entries.sort((a,b)=>a.seg.from.localeCompare(b.seg.from) || a.p.name.localeCompare(b.p.name));
+
+  /* 選択バナー */
+  const sb = document.getElementById('sel-banner');
+  if(selEntry){
+    const p = person(selEntry.pid);
+    sb.innerHTML = `<div class="sel-banner">👉 <b>${esc(p.name)}</b>（${fmtD(selEntry.from)}〜${fmtD(selEntry.to)}）を選択中 — 割り当てたい<b>支援先の行</b>をクリックしてください
+      <button class="btn btn-sub btn-sm right" onclick="selEntry=null;renderBoard();">選択をやめる</button></div>`;
+  }else sb.innerHTML = '';
+
+  /* 日付軸: 絞り込みがあればその範囲、なければデータから自動 (最大31日) */
+  let min = fF || TODAY, max = fT || TODAY;
+  if(!fF || !fT){
+    sites.forEach(s=>{ if(s.from<min) min=s.from; if(s.to>max) max=s.to; });
+    DATA.assignments.forEach(a=>{ const s=site(a.siteId); if(s&&s.active){ if(a.from<min) min=a.from; if(a.to>max) max=a.to; } });
+    entries.forEach(e=>{ if(e.seg.from<min) min=e.seg.from; if(e.seg.to>max) max=e.seg.to; });
+    if(fF) min = fF; if(fT) max = fT;
+  }
+  const daysArr = [];
+  let d = min;
+  for(let i=0; i<31; i++){ daysArr.push(d); if(d>=max) break; d = addDays(d,1); }
+  const first = daysArr[0], last = daysArr[daysArr.length-1];
+  const colOf = iso => iso<=first ? 0 : (iso>=last ? daysArr.length-1 : daysArr.indexOf(iso));
+  const clip = (f,t) => ({c1: colOf(f<first?first:f), c2: colOf(t>last?last:t)});
+
+  const el = document.getElementById('boardgrid');
+  let html = `<div style="display:grid; grid-template-columns:190px repeat(${daysArr.length}, minmax(24px,1fr)); align-items:center; min-width:${190+daysArr.length*26}px;">`;
+  html += `<div></div>` + daysArr.map(iso=>`<div class="tl-day ${iso===TODAY?'today':''}">${fmtD(iso)}</div>`).join('');
+  let row = 2;
+
+  /* --- 支援先レーン --- */
+  for(const s of sites){
+    const assigned = siteAssigned(s.id);
+    const needTxt = s.needs.map(n=>{
+      const have = assigned.filter(a=>qualMatches(person(a.personId), n.qual)).length;
+      return `${n.qual} ${have}/${n.count}`;
+    }).join('・');
+    html += `<div class="tl-sitehead ${selEntry?'droppable':''}" style="grid-row:${row}; grid-column:1 / -1;" onclick="assignTo('${s.id}')">
+      🏥 ${esc(s.name)}
+      <span style="font-weight:400; font-size:11px;">📍${esc(s.area)}｜${fmtD(s.from)}〜${fmtD(s.to)}｜${needTxt}</span>
+      ${s.note?`<span style="font-weight:400; font-size:11px;">📝${esc(s.note)}</span>`:''}
+      ${selEntry?'<span style="font-size:12px;">▶ ここに割り当てる</span>':''}
+      <span class="right flex" style="gap:4px;">
+        <button class="btn btn-sub btn-sm" onclick="event.stopPropagation();openSiteModal('${s.id}')">✏️ 編集</button>
+        <button class="btn btn-warn btn-sm" onclick="event.stopPropagation();closeSite('${s.id}')">支援終了</button>
+      </span></div>`;
+    row++;
+    const as = DATA.assignments.filter(a=>a.siteId===s.id).sort((x,y)=>x.from.localeCompare(y.from));
+    if(!as.length){
+      html += `<div class="small" style="grid-row:${row}; grid-column:1 / -1; padding:4px 8px;">（まだ割当がありません）</div>`;
+      row++; continue;
+    }
+    for(const a of as){
+      const p = person(a.personId), st = assignStatus(a);
+      html += `<div class="tl-name" style="grid-row:${row}; grid-column:1;" onclick="openPerson('${p.id}')">${esc(p.name)} <span class="small">${esc(p.corp)}</span></div>`;
+      const {c1, c2} = clip(a.from, a.to);
+      html += `<div class="tl-bar ${st.cls}" style="grid-row:${row}; grid-column:${c1+2} / ${c2+3};" title="${esc(p.name)} ${fmtRange(a)}（クリックで解除）" onclick="unassignBar('${a.id}')">${fmtRange(a)}</div>`;
+      row++;
+    }
+  }
+  if(!sites.length){
+    html += `<div class="small" style="grid-row:${row}; grid-column:1 / -1; padding:6px;">支援先がありません（「＋ 支援先を追加」から登録）</div>`; row++;
+  }
+
+  /* --- 動かせる人レーン --- */
+  html += `<div class="tl-freehead" style="grid-row:${row}; grid-column:1 / -1;">🟢 動かせる人（${entries.length}枠）— バーをクリックして選択 → 上の支援先へ</div>`;
+  row++;
+  for(const e of entries){
+    const sel = selEntry && selEntry.pid===e.p.id && selEntry.from===e.seg.from && selEntry.to===e.seg.to;
+    html += `<div class="tl-name" style="grid-row:${row}; grid-column:1;" onclick="openPerson('${e.p.id}')">${esc(e.p.name)} <span class="small">${esc(e.p.corp)}</span></div>`;
+    const vis = {from: e.seg.from<first?first:e.seg.from, to: e.seg.to>last?last:e.seg.to};
+    if(vis.from<=vis.to){
+      const {c1, c2} = clip(vis.from, vis.to);
+      html += `<div class="tl-bar b-free ${sel?'selected':''}" style="grid-row:${row}; grid-column:${c1+2} / ${c2+3};" title="${esc(e.p.name)} ${fmtD(e.seg.from)}〜${fmtD(e.seg.to)} ${e.p.quals.join('・')}" onclick="selectEntry('${e.p.id}','${e.seg.from}','${e.seg.to}')">${fmtD(e.seg.from)}〜${fmtD(e.seg.to)} ${esc(e.p.quals.filter(q=>q!=='運転可').slice(0,1).join(''))}${e.p.quals.includes('運転可')?'🚗':''}</div>`;
+    }
+    row++;
+  }
+  if(!entries.length){
+    html += `<div class="small" style="grid-row:${row}; grid-column:1 / -1; padding:6px;">条件に合う動かせる人がいません</div>`; row++;
+  }
+  if(noAvail.length){
+    html += `<div class="small" style="grid-row:${row}; grid-column:1 / -1; padding:6px;">📮 期間未提出: ${noAvail.map(p=>`<a href="#" onclick="openPerson('${p.id}');return false;">${esc(p.name)}</a>`).join('、')}</div>`;
+    row++;
+  }
+  html += '</div>';
+  el.innerHTML = html;
+}
+document.getElementById('board-search').addEventListener('input', renderBoard);
+document.getElementById('f-from').addEventListener('change', renderBoard);
+document.getElementById('f-to').addEventListener('change', renderBoard);
+
+/* ---------------- 支援者 詳細/追加/編集 ---------------- */
 function openPerson(pid){
   const p = person(pid);
   const st = personStatus(p);
@@ -356,88 +460,92 @@ function openPerson(pid){
   document.getElementById('person-modal-body').innerHTML = `
     <div class="flex"><h3>${esc(p.name)}</h3><span class="badge ${st.cls}">${st.label}</span>
       <button class="btn btn-sub btn-sm right" onclick="closeModal('person-modal')">閉じる</button></div>
-    <p class="small">${esc(p.corp)} ／ ${esc(p.office)}</p>
+    <p class="small">${esc(p.corp)}</p>
     <p style="margin:8px 0;">${qualBadges(p)}</p>
-    <p>調整可能シフト: <b>${availText(p)}</b> ${p.note?`（${esc(p.note)}）`:''}</p>
-    <p class="small">🏨 宿泊先: ${p.lodging?esc(p.lodging):'未定'} ｜ 🚙 レンタカー: ${p.rentacar?'手配希望':'不要'}</p>
+    <p>行ける期間: <b>${availText(p)}</b> ${p.note?`（${esc(p.note)}）`:''}</p>
     <h4 style="margin:14px 0 6px; color:var(--brand-dark);">支援履歴（累計 ${total} 日）</h4>
     ${hist.length ? hist.map(a=>{
       const s = assignStatus(a);
       return `<div class="assign-item"><span>🏥 ${esc(site(a.siteId).name)}</span>
         <span>${fmtRange(a)}（${days(a)}日間）</span><span class="badge ${s.cls}">${s.label}</span></div>`;
-    }).join('') : '<p class="small">まだ支援履歴はありません</p>'}`;
+    }).join('') : '<p class="small">まだ支援履歴はありません</p>'}
+    <div class="flex" style="justify-content:flex-end; margin-top:14px;">
+      <button class="btn btn-warn btn-sm" onclick="deletePerson('${p.id}')">🗑 削除</button>
+      <button class="btn btn-main btn-sm" onclick="openPersonForm('${p.id}')">✏️ 編集する</button>
+    </div>`;
   document.getElementById('person-modal').classList.add('show');
 }
 function closeModal(id){ document.getElementById(id).classList.remove('show'); }
 document.querySelectorAll('.modal-bg').forEach(m=>m.addEventListener('click', e=>{ if(e.target===m) m.classList.remove('show'); }));
 
-/* ---------------- 支援先 ---------------- */
-function renderSites(){
-  const el = document.getElementById('sites-list');
-  const list = [...DATA.sites].sort((a,b)=>(b.active?1:0)-(a.active?1:0));
-  el.innerHTML = list.map(s=>{
-    const assigned = siteAssigned(s.id);
-    const needsHtml = s.needs.map(n=>{
-      const have = assigned.filter(a=>qualMatches(person(a.personId), n.qual)).length;
-      const pct = Math.min(100, Math.round(have/n.count*100));
-      return `<div class="need-row"><span class="badge ${n.qual==='運転可'?'b-drive':'b-qual'}">${n.qual}</span>
-        <div class="meter ${have>=n.count?'full':''}"><i style="width:${pct}%"></i></div>
-        <span class="small"><b>${have}</b> / ${n.count} 名</span></div>`;
-    }).join('');
-    const f = siteFilled(s);
-    return `<div class="card site-card ${s.active?'':'closed'}">
-      <div class="site-head">
-        <div><h3>🏥 ${esc(s.name)}</h3><span class="small">📍 ${esc(s.area)} ｜ 支援期間 ${fmtD(s.from)} 〜 ${fmtD(s.to)}</span></div>
-        <div class="flex">
-          ${s.active
-            ? `<span class="badge ${f.cnt>=f.need?'b-done':'b-active'}">${f.cnt>=f.need?'充足':'募集中'}</span>
-               <button class="btn btn-sub btn-sm" onclick="openSiteModal('${s.id}')">✏️ 編集</button>
-               <button class="btn btn-warn btn-sm" onclick="closeSite('${s.id}')">支援終了</button>`
-            : '<span class="badge b-wait">終了</span>'}
-        </div>
-      </div>
-      ${s.note?`<p class="small" style="margin:6px 0;">📝 ${esc(s.note)}</p>`:''}
-      ${needsHtml}
-      <div class="assign-list">
-        <b class="small">割当メンバー（${assigned.length}名）</b>
-        ${assigned.length ? assigned.map(a=>{
-          const p = person(a.personId); const st = assignStatus(a);
-          return `<div class="assign-item"><span><b>${esc(p.name)}</b> <span class="small">${esc(p.corp)}</span> ${qualBadges(p)}</span>
-            <span class="flex">${fmtRange(a)} <span class="badge ${st.cls}">${st.label}</span>
-            <button class="btn btn-sub btn-sm" onclick="unassign('${a.id}')">解除</button></span></div>`;
-        }).join('') : '<div class="small" style="padding:4px 0;">まだ割当がありません</div>'}
-      </div>
-      ${siteHistory(s)}
-    </div>`;
-  }).join('');
+let editingPersonId = null;
+let pfRanges = [];
+let pfQuals = [];
+function openPersonForm(pid){
+  closeModal('person-modal');
+  editingPersonId = pid || null;
+  const p = pid ? person(pid) : null;
+  document.getElementById('pf-title').textContent = p ? `支援者を編集 — ${p.name}` : '支援者を追加';
+  document.getElementById('pf-name').value = p ? p.name : '';
+  document.getElementById('pf-corp').value = p ? p.corp : '';
+  document.getElementById('pf-note').value = p ? (p.note||'') : '';
+  document.getElementById('pf-drivelv').value = p && p.driveLv ? String(p.driveLv) : '';
+  pfQuals = p ? [...p.quals] : [];
+  pfRanges = p ? availRanges(p).map(r=>({...r})) : [{from:TODAY, to:addDays(TODAY,4)}];
+  renderPfQuals(); renderPfRanges();
+  document.getElementById('person-form-modal').classList.add('show');
+}
+function renderPfQuals(){
+  document.getElementById('pf-quals').innerHTML = QUALS.map(q=>
+    `<button class="chip ${pfQuals.includes(q)?'on':''}" onclick="togglePfQual('${q}')">${q}</button>`).join('');
+}
+function togglePfQual(q){
+  pfQuals = pfQuals.includes(q) ? pfQuals.filter(x=>x!==q) : [...pfQuals, q];
+  renderPfQuals();
+}
+function addPfRange(){ pfRanges.push({from:TODAY, to:addDays(TODAY,4)}); renderPfRanges(); }
+function renderPfRanges(){
+  document.getElementById('pf-ranges').innerHTML = pfRanges.map((r,i)=>`
+    <div class="range-row">
+      <input type="date" value="${r.from}" onchange="pfRanges[${i}].from=this.value" style="max-width:170px;">
+      <span class="small">〜</span>
+      <input type="date" value="${r.to}" onchange="pfRanges[${i}].to=this.value" style="max-width:170px;">
+      <button class="btn btn-sub btn-sm" onclick="pfRanges.splice(${i},1);renderPfRanges();">✕</button>
+    </div>`).join('');
+}
+function savePerson(){
+  const name = document.getElementById('pf-name').value.trim();
+  if(!name){ alert('氏名を入れてください'); return; }
+  const ranges = pfRanges.filter(r=>r.from && r.to && r.from<=r.to);
+  const fields = {
+    name,
+    corp: document.getElementById('pf-corp').value.trim() || '（所属未登録）',
+    quals: [...pfQuals],
+    note: document.getElementById('pf-note').value.trim(),
+    driveLv: Number(document.getElementById('pf-drivelv').value) || null,
+    avail: ranges,
+  };
+  if(fields.driveLv && !fields.quals.includes('運転可')) fields.quals.push('運転可');
+  if(editingPersonId){
+    Object.assign(person(editingPersonId), fields);
+  }else{
+    DATA.people.push({id:uid('p'), office:'', lodging:'', rentacar:false, ...fields});
+  }
+  editingPersonId = null;
+  closeModal('person-form-modal'); save();
+}
+function deletePerson(pid){
+  const p = person(pid);
+  if(!confirm(`${p.name}さんを削除しますか？（割当も一緒に削除されます）`)) return;
+  DATA.assignments = DATA.assignments.filter(a=>a.personId!==pid);
+  DATA.people = DATA.people.filter(x=>x.id!==pid);
+  closeModal('person-modal'); save();
 }
 
-/* 支援先ごとの依頼履歴 (AI秘書が受けた依頼の台帳から) */
-function siteHistory(s){
-  const logs = (DATA.requests||[]).filter(r=>r.siteId===s.id);
-  if(!logs.length) return '';
-  return `<div class="assign-list"><b class="small">📜 依頼履歴（${logs.length}件）</b>
-    ${logs.slice(0,5).map(r=>{
-      const p = r.parsed || {};
-      const reqtxt = (p.requirements||[]).map(x=>`${x.qual}×${x.count}`).join('、');
-      const period = p.date_from ? `${fmtD(p.date_from)}〜${fmtD(p.date_to)}` : '';
-      const day = (r.createdAt||'').slice(5,10).replace('-','/');
-      const raw = r.raw || '';
-      return `<div class="small" style="padding:3px 0; border-top:1px dotted var(--line);" title="${esc(raw)}">
-        <b>${day}</b>　${period}${reqtxt?`｜${reqtxt}`:''}${p.driver_preferred?'｜🚗運転優先':''}<br>
-        <span style="opacity:.75;">「${esc(raw.slice(0,48))}${raw.length>48?'…':''}」</span></div>`;
-    }).join('')}
-    ${logs.length>5?`<div class="small" style="opacity:.6;">ほか${logs.length-5}件</div>`:''}
-  </div>`;
-}
+/* ---------------- 支援先 追加/編集 ---------------- */
 function closeSite(sid){
   if(confirm('この支援先を「終了」にしますか？')){ site(sid).active=false; save(); }
 }
-function unassign(aid){
-  DATA.assignments = DATA.assignments.filter(a=>a.id!==aid); save();
-}
-
-/* --- 支援先追加/編集モーダル --- */
 let newNeeds = [];
 let editingSiteId = null;
 function openSiteModal(siteId){
@@ -451,8 +559,27 @@ function openSiteModal(siteId){
   document.getElementById('sf-note').value = s ? s.note : '';
   document.getElementById('sf-from').value = s ? s.from : TODAY;
   document.getElementById('sf-to').value = s ? s.to : '';
+  document.getElementById('sf-history').innerHTML = s ? siteHistory(s) : '';
   renderNeeds();
   document.getElementById('site-modal').classList.add('show');
+}
+/* 支援先ごとの依頼履歴 (AI秘書が受けた依頼の台帳から) */
+function siteHistory(s){
+  const logs = (DATA.requests||[]).filter(r=>r.siteId===s.id);
+  if(!logs.length) return '';
+  return `<div class="form-row"><label>📜 依頼履歴（${logs.length}件）</label>
+    ${logs.slice(0,5).map(r=>{
+      const p = r.parsed || {};
+      const reqtxt = (p.requirements||[]).map(x=>`${x.qual}×${x.count}`).join('、');
+      const period = p.date_from ? `${fmtD(p.date_from)}〜${fmtD(p.date_to)}` : '';
+      const day = (r.createdAt||'').slice(5,10).replace('-','/');
+      const raw = r.raw || '';
+      return `<div class="small" style="padding:3px 0; border-top:1px dotted var(--line);" title="${esc(raw)}">
+        <b>${day}</b>　${period}${reqtxt?`｜${reqtxt}`:''}${p.driver_preferred?'｜🚗運転優先':''}<br>
+        <span style="opacity:.75;">「${esc(raw.slice(0,48))}${raw.length>48?'…':''}」</span></div>`;
+    }).join('')}
+    ${logs.length>5?`<div class="small" style="opacity:.6;">ほか${logs.length-5}件</div>`:''}
+  </div>`;
 }
 function addNeed(){
   newNeeds.push({qual:document.getElementById('sf-qual').value, count:Number(document.getElementById('sf-count').value)||1});
@@ -482,51 +609,12 @@ function saveSite(){
   closeModal('site-modal'); save();
 }
 
-/* ---------------- 分配ボード ---------------- */
-let boardQualFilter = null;
-let selectedPerson = null;
-function renderBoard(){
-  renderQualChips('board-qual-filter', boardQualFilter, q=>{boardQualFilter=q; renderBoard();});
-  const free = DATA.people.filter(p=>{
-    if(boardQualFilter && !p.quals.includes(boardQualFilter)) return false;
-    return personStatus(p).label !== '支援中';
-  });
-  document.getElementById('board-people').innerHTML = free.map(p=>`
-    <div class="person-pick ${selectedPerson===p.id?'selected':''}" onclick="pickPerson('${p.id}')">
-      <div class="nm">${esc(p.name)} <span style="font-weight:400;">${qualBadges(p)}</span></div>
-      <div class="meta">${esc(p.corp)} ｜ ${availText(p)} ${p.note?`｜${esc(p.note)}`:''}</div>
-    </div>`).join('') || '<p class="small">条件に合う待機者がいません</p>';
-  document.getElementById('board-sites').innerHTML = DATA.sites.filter(s=>s.active).map(s=>{
-    const f = siteFilled(s);
-    const assigned = siteAssigned(s.id);
-    return `<div class="drop-site ${selectedPerson?'ready':''}" onclick="dropOn('${s.id}')">
-      <div class="flex"><b>🏥 ${esc(s.name)}</b><span class="small">${esc(s.area)}</span>
-        <span class="right badge ${f.cnt>=f.need?'b-done':'b-active'}">${f.cnt} / ${f.need} 名</span></div>
-      <div class="small">期間 ${fmtD(s.from)}〜${fmtD(s.to)} ｜ 必要: ${s.needs.map(n=>`${n.qual}×${n.count}`).join('、')}</div>
-      ${assigned.length?`<div class="small" style="margin-top:4px;">割当済: ${assigned.map(a=>esc(person(a.personId).name)).join('、')}</div>`:''}
-      ${selectedPerson?'<div class="small" style="color:var(--brand-dark); font-weight:700; margin-top:4px;">▶ ここをクリックして割り当て</div>':''}
-    </div>`;
-  }).join('');
-}
-function pickPerson(pid){ selectedPerson = selectedPerson===pid ? null : pid; renderBoard(); }
-function dropOn(sid){
-  if(!selectedPerson) return;
-  const p = person(selectedPerson), s = site(sid);
-  const r = availOverlap(p, s.from, s.to);
-  if(!r){ alert(`${p.name}さんの調整可能シフト（${availText(p)}）と支援期間が重なっていません`); return; }
-  const from = r.from > s.from ? r.from : s.from;
-  const to = r.to < s.to ? r.to : s.to;
-  if(!isFreeFor(p, from, to)){ alert(`${p.name}さんはこの期間、別の支援先に割当済みです`); return; }
-  DATA.assignments.push({id:uid('a'), personId:p.id, siteId:s.id, from, to, records:[]});
-  selectedPerson = null; save();
-}
-
 /* ---------------- AI秘書 ---------------- */
 const EXAMPLES = [
-  'グループホームすずらんさんより。職員がまだ戻れず、8月12日から8月20日まで介護のできる方を2名お願いできないでしょうか。できれば運転できる方だと助かります。',
   'キャンナス浜松の杉村です。8/7〜11まで熊本へ行けます。',
-  '益城町のひかりの里です。送迎の運転手さんが足りません。8/8から1週間、運転できる方1名と看護師さん1名お願いします。',
-  'キャンナス犬山、現在のところ明日以降8月9日までは困難です。10日から13日、1名調整可能です。'
+  '福祉避難所さくらの丘さんより。職員がまだ戻れず、8月12日から8月20日まで介護のできる方を2名お願いできないでしょうか。できれば運転できる方だと助かります。',
+  'キャンナス犬山、現在のところ明日以降8月9日までは困難です。10日から13日、1名調整可能です。',
+  '八代市のひかりの里です。送迎の運転手さんが足りません。8/8から1週間、運転できる方1名と看護師さん1名お願いします。'
 ];
 let exIdx = 0;
 function fillExample(){ document.getElementById('ai-input').value = EXAMPLES[exIdx % EXAMPLES.length]; exIdx++; }
@@ -540,14 +628,14 @@ function addMsg(cls, text){
 function parseMessage(text){
   // --- 支援先の特定（既存優先、なければ施設名らしき語を抽出） ---
   let matchedSite = DATA.sites.find(s=>{
-    const short = s.name.replace(/特別養護老人ホーム|介護老人保健施設|グループホーム|デイサービスセンター|\s/g,'');
+    const short = s.name.replace(/特別養護老人ホーム|介護老人保健施設|グループホーム|デイサービスセンター|福祉避難所|\s/g,'');
     return text.includes(short) || text.includes(s.name);
   });
   let newSiteName = null, newSiteArea = '';
   if(!matchedSite){
-    const m = text.match(/([^\s、。（）「」]{2,14}(?:苑|園|荘|ホーム|の里|の丘|センター|ハウス))/);
+    const m = text.match(/([^\s、。（）「」]{2,14}(?:苑|園|荘|ホーム|の里|の丘|の杜|センター|ハウス|避難所[^\s、。]{0,8}))/);
     if(m) newSiteName = m[1].replace(/^(?:新しく|新規|また|今回|先ほど)/,'').replace(/^[^\s]{1,6}[市町村区]の/,'');
-    const am = text.match(/(熊本市(?:[^\s、。]{1,3}区)?|阿蘇市|益城町|御船町|八代市|宇城市|南阿蘇村|甲佐町|嘉島町|西原村)/);
+    const am = text.match(/(熊本市(?:[^\s、。]{1,3}区)?|阿蘇市|益城町|御船町|八代市|宇城市|氷川町|南阿蘇村|甲佐町|嘉島町|西原村)/);
     if(am) newSiteArea = (am[1].startsWith('熊本市') ? '' : '熊本県') + am[1];
   }
   // --- 期間 ---
@@ -607,10 +695,10 @@ function rankCandidates(req, from, to, taken, nightWanted, driverPreferred){
     });
 }
 
-/* Claude API (サーバー経由) の抽出結果を内部形式に変換 */
+/* AI API (サーバー経由) の抽出結果を内部形式に変換 */
 function fromApiParse(x){
   const matchedSite = DATA.sites.find(s=>s.active && s.name===x.site_name) || DATA.sites.find(s=>{
-    const short = s.name.replace(/特別養護老人ホーム|介護老人保健施設|グループホーム|デイサービスセンター|\s/g,'');
+    const short = s.name.replace(/特別養護老人ホーム|介護老人保健施設|グループホーム|デイサービスセンター|福祉避難所|\s/g,'');
     return s.active && (x.site_name.includes(short) || short.includes(x.site_name));
   }) || null;
   let from = x.date_from, to = x.date_to;
@@ -627,7 +715,7 @@ function fromApiParse(x){
   };
 }
 
-/* 支援者からの「行けます」申し出 → 支援者一覧へ登録 */
+/* 支援者からの「行けます」申し出 → 動かせる人一覧へ登録 */
 let currentOffer = null;
 function showOfferProposal(o){
   currentOffer = o;
@@ -638,10 +726,10 @@ function showOfferProposal(o){
     <div class="proposal">
       <h4>🙋 支援者として登録します（${o.headcount||1}名）</h4>
       <p class="small">${esc(o.organization||'所属未登録')}｜${esc(o.person_name||'氏名未登録')}｜${periods||'期間未定'}</p>
-      <p class="small">登録後は「支援者一覧」に待機中として表示され、分配の候補になります。氏名・資格が未記載の場合は後から支援者ページで補完できます。</p>
+      <p class="small">登録後は調整ボードの「動かせる人」に緑のバーで表示され、分配の候補になります。氏名・資格はあとから名前クリック→編集で補完できます。</p>
       <div class="flex" style="margin-top:10px;">
         <button class="btn btn-sub" onclick="document.getElementById('ai-proposal').innerHTML='';currentOffer=null;">やり直す</button>
-        <button class="btn btn-main right" onclick="approveOffer()">✅ 支援者一覧に登録する</button>
+        <button class="btn btn-main right" onclick="approveOffer()">✅ 動かせる人に登録する</button>
       </div>
     </div>`;
 }
@@ -662,7 +750,7 @@ async function approveOffer(){
   document.getElementById('ai-proposal').innerHTML = '';
   currentOffer = null;
   await save();
-  addMsg('ai', `✅ ${n}名を支援者一覧に登録しました（待機中）。\n分配ボードとAI分配の候補に含まれます。`);
+  addMsg('ai', `✅ ${n}名を「動かせる人」に登録しました。\n調整ボードの緑バーとAI分配の候補に含まれます。`);
 }
 
 let currentProposal = null;
@@ -760,74 +848,23 @@ function approveProposal(){
     if(from<=to && isFreeFor(p, from, to)){ DATA.assignments.push({id:uid('a'), personId:pid, siteId:s.id, from, to, records:[]}); n++; }
   });
   document.getElementById('ai-proposal').innerHTML = '';
-  addMsg('ai', `✅ ${s.name} に ${n}名を割り当てました。${needsUpdated?`\n📋 支援先の必要人員を更新しました → ${s.needs.map(x=>`${x.qual}×${x.count}`).join('、')}（期間 ${fmtD(s.from)}〜${fmtD(s.to)}）`:''}\n「支援先」タブと「支援履歴」に反映済みです。所属法人への打診連絡もここから自動送信できるようになる予定です。`);
+  addMsg('ai', `✅ ${s.name} に ${n}名を割り当てました。${needsUpdated?`\n📋 支援先の必要人員を更新しました → ${s.needs.map(x=>`${x.qual}×${x.count}`).join('、')}（期間 ${fmtD(s.from)}〜${fmtD(s.to)}）`:''}\n調整ボードのタイムラインに反映済みです。`);
   currentProposal = null; save();
 }
 
-/* ---------------- 履歴 ---------------- */
-function renderHistory(){
-  const rows = [...DATA.assignments].sort((a,b)=>b.from.localeCompare(a.from));
-  document.getElementById('history-body').innerHTML = rows.map(a=>{
-    const p = person(a.personId), s = site(a.siteId), st = assignStatus(a);
-    const rec = (a.records||[]).length;
-    return `<tr><td><b>${esc(p.name)}</b></td><td>${esc(p.corp)}</td><td>${esc(s.name)}</td>
-      <td>${fmtRange(a)}</td><td>${days(a)}日</td><td>${rec?`<b>${rec}日</b>`:'<span class="small">未入力</span>'}</td>
-      <td><span class="badge ${st.cls}">${st.label}</span></td>
-      <td><button class="btn btn-sub btn-sm" onclick="unassign('${a.id}')">取消</button></td></tr>`;
-  }).join('') || '<tr><td colspan="8">履歴がありません</td></tr>';
-}
+/* ---------------- 実績CSV ---------------- */
 function exportCSV(){
-  const head = '支援者,所属法人,事業所,支援先,開始日,終了日,予定日数,実績日数,実績時間,状態\n';
+  const head = '支援者,所属法人,支援先,開始日,終了日,予定日数,実績日数,実績時間,状態\n';
   const body = DATA.assignments.map(a=>{
     const p = person(a.personId), s = site(a.siteId);
     const recs = a.records||[];
     const hours = recs.reduce((n,r)=>n+(r.hours||0),0);
-    return [p.name,p.corp,p.office,s.name,a.from,a.to,days(a),recs.length,hours,assignStatus(a).label].join(',');
+    return [p.name,p.corp,s.name,a.from,a.to,days(a),recs.length,hours,assignStatus(a).label].join(',');
   }).join('\n');
   const blob = new Blob(['﻿'+head+body], {type:'text/csv'});
   const url = URL.createObjectURL(blob);
-  const aEl = document.createElement('a'); aEl.href=url; aEl.download='支援履歴.csv'; aEl.click();
+  const aEl = document.createElement('a'); aEl.href=url; aEl.download='支援実績.csv'; aEl.click();
   URL.revokeObjectURL(url);
-}
-
-/* ---------------- タイムライン ---------------- */
-function renderTimeline(){
-  const el = document.getElementById('timeline');
-  const sites = DATA.sites.filter(s=>s.active);
-  if(!sites.length){ el.innerHTML = '<p class="small">支援先がありません</p>'; return; }
-  let min = TODAY, max = TODAY;
-  sites.forEach(s=>{ if(s.from<min) min=s.from; if(s.to>max) max=s.to; });
-  DATA.assignments.forEach(a=>{ const s=site(a.siteId); if(s&&s.active){ if(a.from<min) min=a.from; if(a.to>max) max=a.to; } });
-  const days = [];
-  const d = new Date(min+'T00:00:00Z');
-  for(let i=0; i<31; i++){
-    const iso = d.toISOString().slice(0,10);
-    days.push(iso);
-    if(iso>=max) break;
-    d.setUTCDate(d.getUTCDate()+1);
-  }
-  const colOf = iso => iso<=days[0] ? 0 : (iso>=days[days.length-1] ? days.length-1 : days.indexOf(iso));
-  let html = `<div style="display:grid; grid-template-columns:150px repeat(${days.length}, minmax(24px,1fr)); align-items:center; min-width:${150+days.length*26}px;">`;
-  html += `<div></div>` + days.map(iso=>`<div class="tl-day ${iso===TODAY?'today':''}">${fmtD(iso)}</div>`).join('');
-  let row = 2;
-  for(const s of sites){
-    html += `<div class="tl-sitehead" style="grid-row:${row}; grid-column:1 / -1;">🏥 ${esc(s.name)}　<span style="font-weight:400; font-size:11px;">${fmtD(s.from)}〜${fmtD(s.to)}｜必要: ${s.needs.map(n=>`${n.qual}×${n.count}`).join('、')}</span></div>`;
-    row++;
-    const as = DATA.assignments.filter(a=>a.siteId===s.id).sort((x,y)=>x.from.localeCompare(y.from));
-    if(!as.length){
-      html += `<div class="small" style="grid-row:${row}; grid-column:1 / -1; padding:4px 8px;">（まだ割当がありません）</div>`;
-      row++; continue;
-    }
-    for(const a of as){
-      const p = person(a.personId), st = assignStatus(a);
-      html += `<div class="tl-name" style="grid-row:${row}; grid-column:1;">${esc(p.name)} ${qualBadges(p)}</div>`;
-      const c1 = colOf(a.from), c2 = colOf(a.to);
-      html += `<div class="tl-bar ${st.cls}" style="grid-row:${row}; grid-column:${c1+2} / ${c2+3};" title="${esc(p.name)} ${fmtRange(a)}">${fmtRange(a)}</div>`;
-      row++;
-    }
-  }
-  html += '</div>';
-  el.innerHTML = html;
 }
 
 /* ---------------- 全体描画 ---------------- */
@@ -840,7 +877,7 @@ function renderStats(){
   document.getElementById('stat-active').textContent = act;
   document.getElementById('stat-sites').textContent = DATA.sites.filter(s=>s.active).length;
 }
-function renderAll(){ renderStats(); renderPeople(); renderSites(); renderBoard(); renderTimeline(); renderHistory(); }
+function renderAll(){ renderStats(); renderBoard(); }
 load();
 </script>
 </body>
