@@ -54,11 +54,32 @@
   .grid2{display:grid; grid-template-columns:1fr 1fr; gap:16px;}
   @media(max-width:860px){.grid2{grid-template-columns:1fr;}}
   .assign-item{display:flex; justify-content:space-between; align-items:center; padding:5px 0; font-size:14px; gap:8px; flex-wrap:wrap;}
-  .chatlog{max-height:320px; overflow-y:auto; display:flex; flex-direction:column; gap:10px; margin-bottom:14px;}
-  .msg{max-width:85%; padding:10px 14px; border-radius:14px; font-size:14px; white-space:pre-wrap;}
-  .msg.user{background:var(--blue-pale); align-self:flex-end; border-bottom-right-radius:4px;}
-  .msg.ai{background:#fff; border:1px solid var(--line); align-self:flex-start; border-bottom-left-radius:4px;}
-  .proposal{border:2px solid var(--brand); border-radius:14px; padding:14px 16px; background:var(--brand-pale); margin-top:12px;}
+  /* --- AI相談チャット (GPT/Claude風) --- */
+  .ai-layout{display:grid; grid-template-columns:240px 1fr; gap:16px; align-items:start;}
+  @media(max-width:860px){.ai-layout{grid-template-columns:1fr;}}
+  .thread-side{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:12px;}
+  .thread-side h3{font-size:12px; color:var(--sub); margin:12px 4px 6px; font-weight:700;}
+  .thread-item{padding:8px 10px; border-radius:9px; font-size:13px; cursor:pointer; color:var(--sub); overflow:hidden; white-space:nowrap; text-overflow:ellipsis;}
+  .thread-item:hover{background:var(--brand-pale);}
+  .thread-item.on{background:var(--brand-pale); color:var(--brand-dark); font-weight:700;}
+  .thread-item .d{font-size:11px; opacity:.65; margin-left:6px;}
+  .chat-card{background:var(--card); border:1px solid var(--line); border-radius:14px; overflow:hidden; display:flex; flex-direction:column; height:min(70vh, 620px);}
+  .chatwrap{flex:1; overflow-y:auto; padding:20px 22px 10px;}
+  .crow{display:flex; gap:10px; margin-bottom:18px; align-items:flex-start;}
+  .crow .avatar{width:30px; height:30px; border-radius:50%; flex:none; display:flex; align-items:center; justify-content:center; font-size:15px; background:var(--brand-pale);}
+  .crow.user{flex-direction:row-reverse;}
+  .crow.user .avatar{background:#e9e6df;}
+  .crow .body{max-width:80%; font-size:14.5px; line-height:1.75; white-space:pre-wrap; overflow-wrap:anywhere;}
+  .crow.user .body{background:var(--blue-pale); padding:10px 14px; border-radius:16px 16px 4px 16px;}
+  .chat-input{border-top:1px solid var(--line); padding:12px 14px; display:flex; gap:10px; align-items:flex-end; background:#fff;}
+  .chat-input textarea{flex:1; border:1.5px solid var(--line); border-radius:14px; resize:none; min-height:46px; max-height:140px; padding:11px 14px;}
+  .send-btn{width:46px; height:46px; border-radius:50%; border:none; background:var(--brand); color:#fff; font-size:19px; cursor:pointer; flex:none; font-family:inherit;}
+  .send-btn:hover{background:var(--brand-dark);}
+  details.usage{background:var(--card); border:1px solid var(--line); border-radius:14px; margin-top:20px; padding:0 18px;}
+  details.usage summary{cursor:pointer; font-weight:700; color:var(--brand-dark); padding:14px 0; font-size:15px; list-style-position:inside;}
+  details.usage[open] summary{border-bottom:1px dashed var(--line); margin-bottom:12px;}
+  details.usage .inner{padding-bottom:16px;}
+  .proposal{border:2px solid var(--brand); border-radius:14px; padding:14px 16px; background:var(--brand-pale); margin:4px 0 14px 40px;}
   .proposal h4{color:var(--brand-dark); margin-bottom:8px; font-size:15px;}
   .prop-cand{display:flex; align-items:center; gap:8px; padding:5px 0; font-size:14px;}
   .tl-day{font-size:10px; text-align:center; color:var(--sub); font-weight:700; padding:2px 0; border-left:1px solid #f0ece3;}
@@ -125,7 +146,6 @@
     <div class="chips">
       <button class="btn btn-main btn-sm" onclick="openPersonForm()">＋ 支援者を追加</button>
       <button class="btn btn-main btn-sm" onclick="openSiteModal()">＋ 支援先を追加</button>
-      <button class="btn btn-sub btn-sm" onclick="exportCSV()">📄 実績CSV</button>
       <button class="btn btn-sub btn-sm right" onclick="resetData()">デモデータを初期化</button>
     </div>
     <div id="sel-banner"></div>
@@ -135,34 +155,39 @@
 
   <!-- ============ AI秘書 ============ -->
   <section id="tab-ai" class="tabpane">
-    <div class="flex" style="margin-bottom:12px;">
-      <h2 style="margin:0;">AI秘書に相談する</h2>
-      <select id="thread-sel" style="max-width:300px;" onchange="pickThread(this.value)"></select>
-      <button class="btn btn-sub btn-sm" onclick="newThread()">＋ 新しい相談</button>
-    </div>
-    <div class="card">
-      <div class="chatlog" id="chatlog"></div>
-      <textarea id="ai-input" placeholder="届いたメッセージをそのまま貼り付け。続けて「運転もできるそうです」のような追加・修正もOK"></textarea>
-      <div class="flex" style="margin-top:10px;">
-        <button class="btn btn-sub" onclick="fillExample()">例文を入れる</button>
-        <button class="btn btn-main right" onclick="runAI()">🤖 AI秘書に依頼する</button>
-      </div>
-      <div id="ai-proposal"></div>
-    </div>
+    <div class="ai-layout">
+      <aside class="thread-side">
+        <button class="btn btn-main" style="width:100%;" onclick="newThread()">＋ 新しい相談</button>
+        <h3>過去の相談</h3>
+        <div id="thread-list"><p class="small" style="padding:4px 8px;">まだありません</p></div>
+      </aside>
+      <div>
+        <div class="chat-card">
+          <div class="chatwrap" id="chatwrap">
+            <div id="chatlog"></div>
+            <div id="ai-proposal"></div>
+          </div>
+          <div class="chat-input">
+            <textarea id="ai-input" rows="1" placeholder="届いたメッセージを貼り付け（Enterで送信・Shift+Enterで改行）"></textarea>
+            <button class="send-btn" onclick="runAI()" title="送信">↑</button>
+          </div>
+        </div>
 
-    <!-- 使い方（下部） -->
-    <div class="card" style="margin-top:24px;">
-      <h2 style="margin-top:0;">使い方</h2>
-      <div class="flow-usage">
-        <p style="margin-bottom:8px;"><b>1️⃣ 届いたメッセージを貼る</b>　MessengerやLINEの文面をコピーして、上の入力欄に貼り付けるだけ。下のサンプルをタップしても試せます。</p>
-        <div class="chips" id="usage-samples"></div>
-        <p style="margin:12px 0 8px;"><b>2️⃣ AIの提案を確認する</b>　「行けます」の申し出は支援者登録の提案に、施設からの依頼は分配案になります。提案には3つの選択肢があります：</p>
-        <p style="margin:0 0 8px 16px;">🚫 <b>却下</b>（読み取りが違うとき。続けて「◯◯が正しいです」と送れば読み取り直します）／ ✏️ <b>手で編集</b>（編集画面を開いて微修正してから保存）／ ✅ <b>保存</b>（そのまま反映）</p>
-        <img src="usage-proposal.png" alt="AI提案カードの例" onerror="this.style.display='none'" style="max-width:100%; border:1px solid var(--line); border-radius:10px; margin:6px 0;">
-        <p style="margin:12px 0 8px;"><b>3️⃣ 調整ボードで確認</b>　保存すると調整ボードに即反映され、いま反映した項目は<b style="color:#b8860b;">黄色い枠</b>で光ります。</p>
-        <img src="usage-board.png" alt="調整ボードへの反映例" onerror="this.style.display='none'" style="max-width:100%; border:1px solid var(--line); border-radius:10px; margin:6px 0;">
-        <p class="small" style="margin-top:10px;">💡 相談はスレッドごとに履歴が残ります。「この情報も追加して」のような続きの依頼は、同じスレッドでそのまま送ってください。<br>
-        ※ OpenAI API（gpt-5.1）で解析。APIキー未設定時は簡易解析にフォールバック。現場の日報・アセスメントの記録は「ながらかいご議事録」で行います。</p>
+        <!-- 使い方（トグル・デフォルト閉） -->
+        <details class="usage">
+          <summary>📖 使い方をみる（サンプル文面つき）</summary>
+          <div class="inner">
+            <p style="margin-bottom:8px;"><b>1️⃣ 届いたメッセージを貼る</b>　MessengerやLINEの文面をコピーして、上の入力欄に貼り付けるだけ。下のサンプルをタップしても試せます。</p>
+            <div class="chips" id="usage-samples"></div>
+            <p style="margin:12px 0 8px;"><b>2️⃣ AIの提案を確認する</b>　「行けます」の申し出は支援者登録の提案に、施設からの依頼は分配案になります。提案には3つの選択肢があります：</p>
+            <p style="margin:0 0 8px 16px;">🚫 <b>却下</b>（読み取りが違うとき。続けて「◯◯が正しいです」と送れば読み取り直します）／ ✏️ <b>手で編集</b>（編集画面を開いて微修正してから保存）／ ✅ <b>保存</b>（そのまま反映）</p>
+            <img src="usage-proposal.png" alt="AI提案カードの例" onerror="this.style.display='none'" style="max-width:100%; border:1px solid var(--line); border-radius:10px; margin:6px 0;">
+            <p style="margin:12px 0 8px;"><b>3️⃣ 調整ボードで確認</b>　保存すると調整ボードに即反映され、いま反映した項目は<b style="color:#b8860b;">黄色い枠</b>で光ります。</p>
+            <img src="usage-board.png" alt="調整ボードへの反映例" onerror="this.style.display='none'" style="max-width:100%; border:1px solid var(--line); border-radius:10px; margin:6px 0;">
+            <p class="small" style="margin-top:10px;">💡 相談はスレッドごとに履歴が残ります。「この情報も追加して」のような続きの依頼は、同じスレッドでそのまま送ってください。<br>
+            ※ OpenAI API（gpt-5.1）で解析。APIキー未設定時は簡易解析にフォールバック。現場の日報・アセスメントの記録は「ながらかいご議事録」で行います。</p>
+          </div>
+        </details>
       </div>
     </div>
   </section>
@@ -179,7 +204,7 @@
     <h3 id="pf-title">支援者を追加</h3>
     <div class="grid2">
       <div class="form-row"><label>氏名</label><input type="text" id="pf-name" placeholder="例）田中 美咲"></div>
-      <div class="form-row"><label>所属法人・団体</label><input type="text" id="pf-corp" placeholder="例）キャンナス浜松"></div>
+      <div class="form-row"><label>所属法人・団体</label><input type="text" id="pf-corp" placeholder="例）青空ケアネット浜野"></div>
     </div>
     <div class="form-row"><label>資格（あてはまるものをタップ）</label><div class="chips" id="pf-quals" style="margin-bottom:0;"></div></div>
     <div class="grid2">
@@ -225,7 +250,7 @@
   </div>
 </div>
 
-<footer>災害支援シフト調整プロトタイプ v1.2 — 株式会社NAGARA（デモ用架空データ）</footer>
+<footer>災害支援シフト調整プロトタイプ v1.3 — 株式会社NAGARA（デモ用架空データ）</footer>
 
 <script>
 'use strict';
@@ -680,10 +705,10 @@ async function loadThreads(){
   renderThreadSel();
 }
 function renderThreadSel(){
-  const sel = document.getElementById('thread-sel');
-  sel.innerHTML = '<option value="">📂 過去の相談をひらく…</option>' +
-    threads.map(t=>`<option value="${t.id}">${esc((t.title||'無題').slice(0,28))}（${(t.updated_at||'').slice(5,10).replace('-','/')}）</option>`).join('');
-  sel.value = curThread.id || '';
+  const el = document.getElementById('thread-list');
+  el.innerHTML = threads.map(t=>
+    `<div class="thread-item ${curThread.id===t.id?'on':''}" onclick="pickThread('${t.id}')" title="${esc(t.title||'無題')}">${esc((t.title||'無題').slice(0,20))}<span class="d">${(t.updated_at||'').slice(5,10).replace('-','/')}</span></div>`
+  ).join('') || '<p class="small" style="padding:4px 8px;">まだありません</p>';
 }
 function newThread(){
   curThread = {id:null, title:'', messages:[]};
@@ -697,16 +722,22 @@ function pickThread(id){
   curThread = {id:t.id, title:t.title, messages:(t.messages||[]).map(m=>({...m}))};
   document.getElementById('ai-proposal').innerHTML = '';
   currentOffer = null; currentProposal = null;
-  renderChat();
+  renderChat(); renderThreadSel();
 }
+function msgRow(role, text){
+  const row = document.createElement('div'); row.className = 'crow ' + (role==='user'?'user':'ai');
+  const av = document.createElement('div'); av.className = 'avatar'; av.textContent = role==='user' ? '👤' : '🤖';
+  const body = document.createElement('div'); body.className = 'body'; body.textContent = text;
+  row.append(av, body);
+  return row;
+}
+function scrollChat(){ const w = document.getElementById('chatwrap'); w.scrollTop = 1e9; }
 function renderChat(){
   const log = document.getElementById('chatlog');
   log.innerHTML = '';
-  const g = document.createElement('div'); g.className = 'msg ai'; g.textContent = GREETING; log.appendChild(g);
-  for(const m of curThread.messages){
-    const el = document.createElement('div'); el.className = 'msg ' + (m.role==='user'?'user':'ai'); el.textContent = m.text; log.appendChild(el);
-  }
-  log.scrollTop = 1e9;
+  log.appendChild(msgRow('ai', GREETING));
+  for(const m of curThread.messages) log.appendChild(msgRow(m.role, m.text));
+  scrollChat();
 }
 async function persistThread(){
   if(!curThread.messages.length) return;
@@ -728,22 +759,32 @@ function aiHistory(){
     : {role:'assistant', content: m.parsed ? JSON.stringify(m.parsed) : m.text});
 }
 
+/* サンプル文面 (人名・団体名・施設名はすべて架空) */
 const EXAMPLES = [
-  'キャンナス浜松の杉村です。8/7〜11まで熊本へ行けます。',
-  '福祉避難所さくらの丘さんより。職員がまだ戻れず、8月12日から8月20日まで介護のできる方を2名お願いできないでしょうか。できれば運転できる方だと助かります。',
-  'キャンナス犬山、現在のところ明日以降8月9日までは困難です。10日から13日、1名調整可能です。',
-  '八代市のひかりの杜です。送迎の運転手さんが足りません。8/8から1週間、運転できる方1名と看護師さん1名お願いします。'
+  '青空ケアネット浜野の三好です。8/7〜11まで熊本へ行けます。',
+  '福祉避難所つきのはらさんより。職員がまだ戻れず、8月12日から8月20日まで介護のできる方を2名お願いできないでしょうか。できれば運転できる方だと助かります。',
+  '青空ケアネット杜川、現在のところ明日以降8月9日までは困難です。10日から13日、1名調整可能です。',
+  '氷川町の福祉避難所ななほしです。送迎の運転手さんが足りません。8/8から1週間、運転できる方1名と看護師さん1名お願いします。'
 ];
 let exIdx = 0;
 function fillExample(){ document.getElementById('ai-input').value = EXAMPLES[exIdx % EXAMPLES.length]; exIdx++; }
 function addMsg(role, text, opts){
   opts = opts || {};
-  const el = document.createElement('div'); el.className = 'msg '+(role==='user'?'user':'ai'); el.textContent = text;
+  const el = msgRow(role, text);
   document.getElementById('chatlog').appendChild(el);
-  document.getElementById('chatlog').scrollTop = 1e9;
+  scrollChat();
   if(!opts.transient) curThread.messages.push({role: role==='user'?'user':'ai', text, parsed: opts.parsed||null});
   return el;
 }
+/* 入力欄: Enterで送信・Shift+Enterで改行・自動で高さ調整 */
+const aiInputEl = document.getElementById('ai-input');
+aiInputEl.addEventListener('keydown', e=>{
+  if(e.key === 'Enter' && !e.shiftKey && !e.isComposing){ e.preventDefault(); runAI(); }
+});
+aiInputEl.addEventListener('input', ()=>{
+  aiInputEl.style.height = 'auto';
+  aiInputEl.style.height = Math.min(140, aiInputEl.scrollHeight) + 'px';
+});
 
 function parseMessage(text){
   // --- 支援先の特定（既存優先、なければ施設名らしき語を抽出） ---
@@ -853,6 +894,7 @@ function showOfferProposal(o){
         <button class="btn btn-main right" onclick="approveOffer()">✅ このまま保存する</button>
       </div>
     </div>`;
+  scrollChat();
 }
 /* 却下: 提案を破棄。修正内容は続きのメッセージで送れる */
 function rejectAI(){
@@ -909,7 +951,8 @@ async function runAI(){
   if(!text){ alert('メッセージを貼り付けてください'); return; }
   const history = aiHistory();   // 送信前までの会話を渡す (追記・修正に対応)
   addMsg('user', text);
-  document.getElementById('ai-input').value = '';
+  const inp = document.getElementById('ai-input');
+  inp.value = ''; inp.style.height = 'auto';
   document.getElementById('ai-proposal').innerHTML = '';   // 前の提案カードを閉じてから読み取る
   currentOffer = null; currentProposal = null;
   const waitEl = addMsg('ai', '🤖 読み取り中です…', {transient:true});
@@ -974,6 +1017,7 @@ async function runAI(){
         <button class="btn btn-main right" onclick="approveProposal()">✅ この内容で保存</button>
       </div>
     </div>`;
+  scrollChat();
 }
 
 /* 分配案をデータに適用する共通処理 (③保存 と ②手で編集 の両方から使う) */
@@ -1028,21 +1072,6 @@ function editProposal(){
   addMsg('ai', `✏️ ${r.site.name} に ${r.n}名を割り当てたうえで、支援先の編集画面を開きました。\n必要人員・期間・状況を直して「保存する」を押してください。`);
   persistThread(); save();
   openSiteModal(r.site.id);
-}
-
-/* ---------------- 実績CSV ---------------- */
-function exportCSV(){
-  const head = '支援者,所属法人,支援先,開始日,終了日,予定日数,実績日数,実績時間,状態\n';
-  const body = DATA.assignments.map(a=>{
-    const p = person(a.personId), s = site(a.siteId);
-    const recs = a.records||[];
-    const hours = recs.reduce((n,r)=>n+(r.hours||0),0);
-    return [p.name,p.corp,s.name,a.from,a.to,days(a),recs.length,hours,assignStatus(a).label].join(',');
-  }).join('\n');
-  const blob = new Blob(['﻿'+head+body], {type:'text/csv'});
-  const url = URL.createObjectURL(blob);
-  const aEl = document.createElement('a'); aEl.href=url; aEl.download='支援実績.csv'; aEl.click();
-  URL.revokeObjectURL(url);
 }
 
 /* ---------------- 全体描画 ---------------- */
