@@ -44,7 +44,8 @@
   .chip{border:1.5px solid var(--line); background:#fff; border-radius:999px; padding:6px 16px; font-size:14px; cursor:pointer; font-weight:600; color:var(--sub);}
   .chip.on{background:var(--brand); border-color:var(--brand); color:#fff;}
   input[type=text], textarea, input[type=date], input[type=number], select{
-    border:1.5px solid var(--line); border-radius:10px; padding:9px 12px; font-size:15px; font-family:inherit; background:#fff; width:100%;}
+    border:1.5px solid var(--line); border-radius:10px; padding:9px 12px; font-size:16px; font-family:inherit; background:#fff; width:100%;}
+    /* ↑16px未満だとiOSがフォーカス時に自動ズームするため16px固定 */
   textarea{resize:vertical; min-height:110px;}
   .btn{border:none; border-radius:10px; padding:10px 20px; font-size:15px; font-weight:700; cursor:pointer; font-family:inherit;}
   .btn-main{background:var(--brand); color:#fff;} .btn-main:hover{background:var(--brand-dark);}
@@ -89,9 +90,12 @@
   .tl-sitehead.droppable:hover{background:#d2eae4;}
   .tl-freehead{background:var(--accent-pale); color:#8a4a1d; font-weight:700; padding:6px 10px; border-radius:8px; margin-top:18px; font-size:13px;}
   .tl-name{font-size:13.5px; padding:2px 6px 2px 2px; white-space:nowrap; cursor:pointer;
-    overflow:hidden; text-overflow:ellipsis; min-width:0;}   /* バーへのはみ出し(重なり)防止 */
+    overflow:hidden; text-overflow:ellipsis; min-width:0;
+    position:sticky; left:0; z-index:2; background:var(--card);}   /* 横スクロールしても名前が見える */
   .tl-name .corp{color:var(--sub); font-size:13px;}
   .tl-name:hover{text-decoration:underline;}
+  .sh-in{display:contents;}   /* デスクトップはそのまま。モバイルでsticky化 */
+  .fh-in{display:contents;}
   .color-dot{width:30px; height:30px; border-radius:50%; border:none; color:#fff; font-weight:700;
     cursor:pointer; box-shadow:0 0 0 1.5px var(--line); font-family:inherit; font-size:13px;}
   .color-dot.sel{outline:3px solid var(--accent); outline-offset:1px;}
@@ -116,6 +120,53 @@
   .small{font-size:12px; color:var(--sub);}
   .range-row{display:flex; gap:8px; align-items:center; margin-bottom:6px;}
   footer{padding:20px 24px; text-align:center; font-size:12px; color:var(--sub);}
+
+  /* ============ スマホ対応 ============ */
+  @media(max-width:700px){
+    :root{--namecol:132px;}
+    body{font-size:15px;}
+    header{padding:10px 12px; gap:6px;}
+    header h1{font-size:16px;}
+    header .tag{font-size:10px; padding:2px 8px;}
+    .stats{gap:6px;}
+    .stat{padding:2px 10px;} .stat b{font-size:15px;} .stat span{font-size:9px;}
+    nav{padding:6px 8px 0; gap:2px;}
+    nav button{padding:10px 14px; font-size:15px;}
+    main{padding:12px 10px 40px;}
+    .card{padding:10px 8px; border-radius:12px;}
+    .chips{gap:6px; margin-bottom:8px;}
+    .chip{padding:8px 13px; font-size:13px;}     /* タップしやすく */
+    .btn{padding:11px 16px;}
+    .btn-sm{padding:8px 11px; font-size:13px;}
+    .hint{font-size:11.5px;}
+    .modal{padding:16px 14px; max-height:88vh;}
+    .grid2{grid-template-columns:1fr;}
+    /* 調整ボード */
+    .tl-name{font-size:12px;} .tl-name .corp{font-size:11px;}
+    .tl-bar{height:28px; font-size:10.5px; margin:4px 1px;}  /* 指で押しやすい高さ */
+    .tl-day{font-size:9px;}
+    .tl-sitehead{display:block; padding:6px 8px;}
+    .sh-in{display:inline-flex; position:sticky; left:4px; gap:6px; align-items:center; flex-wrap:wrap;
+      max-width:calc(100vw - 60px); font-size:12px;}
+    .tl-freehead{display:block;}
+    .fh-in{display:inline-block; position:sticky; left:4px; max-width:calc(100vw - 60px); font-size:12px;}
+    .sel-banner{font-size:12.5px; padding:8px 10px;}
+    /* AI秘書: スレッド一覧は横スクロールのチップ列に */
+    .ai-layout{grid-template-columns:1fr; gap:10px;}
+    .thread-side{display:flex; gap:8px; align-items:center; overflow-x:auto; padding:8px; -webkit-overflow-scrolling:touch;}
+    .thread-side h3{display:none;}
+    .thread-side > button{flex:none; width:auto !important; white-space:nowrap; padding:9px 14px;}
+    #thread-list{display:flex; gap:6px; flex:1; min-width:0;}
+    #thread-list .small{white-space:nowrap;}
+    .thread-item{flex:none; border:1.5px solid var(--line); border-radius:999px; padding:8px 13px; max-width:190px;}
+    .thread-item.on{border-color:var(--brand);}
+    .chat-card{height:72vh;}
+    .chatwrap{padding:12px 10px 8px;}
+    .crow .body{max-width:88%; font-size:14px;}
+    .chat-input{padding:8px;}
+    .proposal{margin-left:0; padding:12px;}
+    details.usage{padding:0 12px;}
+  }
 </style>
 </head>
 <body>
@@ -262,7 +313,7 @@
   </div>
 </div>
 
-<footer>災害支援シフト調整プロトタイプ v1.8 — 株式会社NAGARA（デモ用架空データ）</footer>
+<footer>災害支援シフト調整プロトタイプ v1.9 — 株式会社NAGARA（デモ用架空データ）</footer>
 
 <script>
 'use strict';
@@ -552,7 +603,7 @@ function renderBoard(){
 
   const el = document.getElementById('boardgrid');
   const nCols = daysArr.length * 2;
-  let html = `<div style="display:grid; grid-template-columns:235px repeat(${nCols}, minmax(13px,1fr)); align-items:center; min-width:${235+nCols*14}px;">`;
+  let html = `<div style="display:grid; grid-template-columns:var(--namecol,235px) repeat(${nCols}, minmax(13px,1fr)); align-items:center; min-width:calc(var(--namecol,235px) + ${nCols*14}px);">`;
   html += `<div style="grid-row:1; grid-column:1;"></div>` +
     daysArr.map((iso,i)=>`<div class="tl-day ${iso===TODAY?'today':''}" style="grid-row:1; grid-column:${2+i*2} / span 2;">${fmtD(iso)}</div>`).join('');
   let row = 2;
@@ -564,7 +615,7 @@ function renderBoard(){
       const have = assigned.filter(a=>qualMatches(person(a.personId), n.qual)).length;
       return `${n.qual} ${have}/${n.count}`;
     }).join('・');
-    html += `<div class="tl-sitehead ${selEntry?'droppable':''} ${flashKeys.has('s|'+s.name)?'flash':''}" style="grid-row:${row}; grid-column:1 / -1;" onclick="assignTo('${s.id}')">
+    html += `<div class="tl-sitehead ${selEntry?'droppable':''} ${flashKeys.has('s|'+s.name)?'flash':''}" style="grid-row:${row}; grid-column:1 / -1;" onclick="assignTo('${s.id}')"><span class="sh-in">
       🏥 ${esc(s.name)}
       <span style="font-weight:400; font-size:11px;">📍${esc(s.area)}｜${fmtD(s.from)}〜${fmtD(s.to)}｜${needTxt}</span>
       ${s.note?`<span style="font-weight:400; font-size:11px;">📝${esc(s.note)}</span>`:''}
@@ -573,7 +624,7 @@ function renderBoard(){
         <button class="btn btn-sub btn-sm" title="上へ移動" onclick="event.stopPropagation();moveSite('${s.id}',-1)">↑</button>
         <button class="btn btn-sub btn-sm" title="下へ移動" onclick="event.stopPropagation();moveSite('${s.id}',1)">↓</button>
         <button class="btn btn-sub btn-sm" onclick="event.stopPropagation();openSiteModal('${s.id}')">✏️ 編集</button>
-      </span></div>`;
+      </span></span></div>`;
     row++;
     const as = DATA.assignments.filter(a=>a.siteId===s.id).sort((x,y)=>x.from.localeCompare(y.from));
     if(!as.length){
@@ -593,7 +644,7 @@ function renderBoard(){
   }
 
   /* --- 動かせる人レーン --- */
-  html += `<div class="tl-freehead" style="grid-row:${row}; grid-column:1 / -1;">🟢 動かせる人（${entries.length}枠）— バーをクリックして選択 → 上の支援先へ</div>`;
+  html += `<div class="tl-freehead" style="grid-row:${row}; grid-column:1 / -1;"><span class="fh-in">🟢 動かせる人（${entries.length}枠）— バーをクリックして選択 → 上の支援先へ</span></div>`;
   row++;
   for(const e of entries){
     const sel = selEntry && selEntry.pid===e.p.id && selEntry.from===e.seg.from && selEntry.to===e.seg.to && selEntry.fromHalf===e.seg.fromHalf;
