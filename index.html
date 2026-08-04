@@ -910,6 +910,8 @@ async function runAI(){
   const history = aiHistory();   // 送信前までの会話を渡す (追記・修正に対応)
   addMsg('user', text);
   document.getElementById('ai-input').value = '';
+  document.getElementById('ai-proposal').innerHTML = '';   // 前の提案カードを閉じてから読み取る
+  currentOffer = null; currentProposal = null;
   const waitEl = addMsg('ai', '🤖 読み取り中です…', {transient:true});
   let parsed = null, aiReply = null, usedApi = false, apiRaw = null;
   try{
