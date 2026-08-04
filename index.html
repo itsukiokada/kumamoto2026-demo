@@ -99,6 +99,9 @@
   .color-dot{width:30px; height:30px; border-radius:50%; border:none; color:#fff; font-weight:700;
     cursor:pointer; box-shadow:0 0 0 1.5px var(--line); font-family:inherit; font-size:13px;}
   .color-dot.sel{outline:3px solid var(--accent); outline-offset:1px;}
+  .orgmark{display:inline-flex; width:17px; height:17px; border-radius:50%; color:#fff;
+    font-size:11px; font-weight:800; align-items:center; justify-content:center;
+    vertical-align:-3px; margin-right:3px; flex:none;}
   .tl-bar{height:20px; border-radius:99px; font-size:10px; font-weight:700; display:flex; align-items:center; justify-content:center; margin:3px 1px; color:#fff; overflow:hidden; white-space:nowrap; cursor:pointer;}
   .tl-bar.b-active{background:var(--accent);}
   .tl-bar.b-planned{background:var(--blue);}
@@ -269,7 +272,7 @@
     </div>
     <div class="form-row"><label>資格（あてはまるものをタップ）</label><div class="chips" id="pf-quals" style="margin-bottom:0;"></div></div>
     <div class="form-row"><label>名前の表示色（チームや役割の色分けに）</label><div class="flex" id="pf-colors"></div>
-      <p class="small" style="margin-top:4px;">所属に「キャンナス」を含む方はピンク、「介事連」を含む方は赤が自動で付きます（ここで色を選ぶと自動色より優先）</p></div>
+      <p class="small" style="margin-top:4px;">所属に「キャンナス」を含む方はピンク＋<span class="orgmark" style="background:#d81b60;">C</span>マーク、「介事連」を含む方は赤＋<span class="orgmark" style="background:#c0392b;">J</span>マークが自動で付きます（ここで色を選ぶと色は上書き・マークは所属基準のまま）</p></div>
     <div class="grid2">
       <div class="form-row"><label>運転レベル（任意）</label>
         <select id="pf-drivelv"><option value="">—</option><option value="1">Lv1 近場のみ</option><option value="2">Lv2</option><option value="3">Lv3 一般道OK</option><option value="4">Lv4</option><option value="5">Lv5 長距離・山道OK</option></select></div>
@@ -313,7 +316,7 @@
   </div>
 </div>
 
-<footer>災害支援シフト調整プロトタイプ v1.9 — 株式会社NAGARA（デモ用架空データ）</footer>
+<footer>災害支援シフト調整プロトタイプ v1.9.1 — 株式会社NAGARA（デモ用架空データ）</footer>
 
 <script>
 'use strict';
@@ -599,7 +602,7 @@ function renderBoard(){
   const firstSlot = slotNum(daysArr[0],'am'), lastSlot = slotNum(daysArr[daysArr.length-1],'pm');
   const colOfSlot = n => Math.max(firstSlot, Math.min(lastSlot, n)) - firstSlot;
   const clip = (sN,eN) => ({c1: colOfSlot(sN), c2: colOfSlot(eN)});
-  const nameHtml = p => { const c = personColor(p); return `<span style="${c?`color:${c};font-weight:700;`:''}">${esc(p.name)}</span>`; };
+  const nameHtml = p => { const c = personColor(p); return `${orgMarkHtml(p)}<span style="${c?`color:${c};font-weight:700;`:''}">${esc(p.name)}</span>`; };
 
   const el = document.getElementById('boardgrid');
   const nCols = daysArr.length * 2;
@@ -675,7 +678,7 @@ function openPerson(pid){
   const hist = personAssignments(pid).sort((a,b)=>b.from.localeCompare(a.from));
   const total = hist.filter(a=>a.to<TODAY).reduce((n,a)=>n+days(a),0);
   document.getElementById('person-modal-body').innerHTML = `
-    <div class="flex"><h3 style="${personColor(p)?`color:${personColor(p)};`:''}">${esc(p.name)}</h3><span class="badge ${st.cls}">${st.label}</span>
+    <div class="flex"><h3 style="${personColor(p)?`color:${personColor(p)};`:''}">${orgMarkHtml(p)}${esc(p.name)}</h3><span class="badge ${st.cls}">${st.label}</span>
       <button class="btn btn-sub btn-sm right" onclick="closeModal('person-modal')">閉じる</button></div>
     <p class="small">${esc(p.corp)}</p>
     <p style="margin:8px 0;">${qualBadges(p)}</p>
@@ -701,15 +704,20 @@ let pfRanges = [];
 let pfQuals = [];
 let pfColor = null;
 const NAME_COLORS = ['#c0392b','#e07a3f','#b8860b','#2e7d32','#1a7f6e','#2f6db3','#8e44ad','#d81b60'];
-/* 所属による自動色: キャンナス=ピンク・介事連=赤 (部分一致。手動で選んだ色があれば手動優先) */
+/* 所属による自動色+マーク: キャンナス=ピンクC・介事連=赤J (部分一致。色は手動選択が優先、マークは所属で常時表示) */
 const ORG_COLOR_RULES = [
-  {match:'キャンナス', color:'#d81b60'},
-  {match:'介事連', color:'#c0392b'},
+  {match:'キャンナス', color:'#d81b60', mark:'C'},
+  {match:'介事連', color:'#c0392b', mark:'J'},
 ];
+function orgRule(p){ return ORG_COLOR_RULES.find(r=>(p.corp||'').includes(r.match)) || null; }
 function personColor(p){
   if(p.color) return p.color;
-  const rule = ORG_COLOR_RULES.find(r=>(p.corp||'').includes(r.match));
+  const rule = orgRule(p);
   return rule ? rule.color : null;
+}
+function orgMarkHtml(p){
+  const rule = orgRule(p);
+  return rule ? `<span class="orgmark" style="background:${rule.color};" title="${rule.match}">${rule.mark}</span>` : '';
 }
 function renderPfColors(){
   document.getElementById('pf-colors').innerHTML =
