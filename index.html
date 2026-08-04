@@ -260,7 +260,7 @@
   </div>
 </div>
 
-<footer>災害支援シフト調整プロトタイプ v1.6 — 株式会社NAGARA（デモ用架空データ）</footer>
+<footer>災害支援シフト調整プロトタイプ v1.7 — 株式会社NAGARA（デモ用架空データ）</footer>
 
 <script>
 'use strict';
@@ -977,6 +977,8 @@ function fromApiParse(x){
     newSiteName: matchedSite ? null : x.site_name,
     newSiteArea: x.area || '',
     from, to,
+    fromHalf: x.date_from_half === 'pm' ? 'pm' : 'am',
+    toHalf: x.date_to_half === 'am' ? 'am' : 'pm',
     reqs: (x.requirements||[]).map(r=>({qual:r.qual, count:r.count})),
     nightWanted: !!x.night_shift,
     driverPreferred: !!x.driver_preferred,
@@ -1102,13 +1104,13 @@ async function runAI(){
   const totalShort = plan.reduce((n,x)=>n+Math.max(0,x.shortage),0);
   if(aiReply) addMsg('ai', aiReply);
   addMsg('ai',
-    `📋 読み取り結果${usedApi?'（AI解析）':'（簡易解析 — APIキー未設定）'}\n・支援先: ${siteName}${parsed.matchedSite?'':'（新規登録します）'}\n・期間: ${fmtD(parsed.from)} 〜 ${fmtD(parsed.to)}\n・必要人員: ${parsed.reqs.map(r=>`${r.qual}×${r.count}名`).join('、')}${parsed.nightWanted?'（夜勤対応希望）':''}${parsed.driverPreferred?'（🚗 運転できる方を優先）':''}${parsed.notes?`\n・状況: ${parsed.notes}`:''}\n\n条件に合う支援者をご提案します。${totalShort?`\n⚠️ ${totalShort}名分は条件に合う待機者が見つかりませんでした。`:''}`,
+    `📋 読み取り結果${usedApi?'（AI解析）':'（簡易解析 — APIキー未設定）'}\n・支援先: ${siteName}${parsed.matchedSite?'':'（新規登録します）'}\n・期間: ${fmtD(parsed.from)}${parsed.fromHalf==='pm'?'午後':''} 〜 ${fmtD(parsed.to)}${parsed.toHalf==='am'?'午前':''}\n・必要人員: ${parsed.reqs.map(r=>`${r.qual}×${r.count}名`).join('、')}${parsed.nightWanted?'（夜勤対応希望）':''}${parsed.driverPreferred?'（🚗 運転できる方を優先）':''}${parsed.notes?`\n・状況: ${parsed.notes}`:''}\n\n条件に合う支援者をご提案します。${totalShort?`\n⚠️ ${totalShort}名分は条件に合う待機者が見つかりませんでした。`:''}`,
     {parsed: apiRaw});
   persistThread();
 
   document.getElementById('ai-proposal').innerHTML = `
     <div class="proposal">
-      <h4>🤖 AI秘書の分配案 — ${esc(siteName)}（${fmtD(parsed.from)}〜${fmtD(parsed.to)}）</h4>
+      <h4>🤖 AI秘書の分配案 — ${esc(siteName)}（${fmtD(parsed.from)}${parsed.fromHalf==='pm'?'午後':''}〜${fmtD(parsed.to)}${parsed.toHalf==='am'?'午前':''}）</h4>
       ${plan.map((pl,gi)=>`
         <div style="margin-bottom:8px;">
           <b class="small">${pl.req.qual} × ${pl.req.count}名</b>
@@ -1156,8 +1158,11 @@ function applyProposal(){
     if(!r) return;
     const from = r.from > parsed.from ? r.from : parsed.from;
     const to = r.to < parsed.to ? r.to : parsed.to;
-    if(from<=to && isFreeFor(p, from, to)){
-      DATA.assignments.push({id:uid('a'), personId:pid, siteId:s.id, from, to, fromHalf:'am', toHalf:'pm', records:[]});
+    // 依頼の半日指定は、期間が切り詰められていない側にだけ引き継ぐ
+    const fromHalf = (from === parsed.from && parsed.fromHalf === 'pm') ? 'pm' : 'am';
+    const toHalf = (to === parsed.to && parsed.toHalf === 'am') ? 'am' : 'pm';
+    if(from<=to && isFreeFor(p, from, to, fromHalf, toHalf)){
+      DATA.assignments.push({id:uid('a'), personId:pid, siteId:s.id, from, to, fromHalf, toHalf, records:[]});
       flash(`a|${p.name}|${s.name}|${from}|${to}`);
       n++;
     }
@@ -1200,6 +1205,8 @@ if(IS_PROD){
   const t = document.createElement('span'); t.className = 'tag'; t.style.background = 'var(--accent)'; t.textContent = '本番環境';
   document.querySelector('header h1').after(t);
   document.querySelector('footer').textContent = '災害支援シフト調整 — 株式会社NAGARA（本番環境・合言葉つき）';
+  // /prod/ 配下からは説明資料が1階層上にある (相対リンクのままだと /prod/about.html で404)
+  document.querySelectorAll('a[href="about.html"]').forEach(a=>a.href = '../about.html');
 }
 /* 使い方セクションのサンプル文面 (タップで入力欄へ) */
 document.getElementById('usage-samples').innerHTML = EXAMPLES.map((e,i)=>
