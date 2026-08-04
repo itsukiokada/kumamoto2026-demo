@@ -88,8 +88,9 @@
   .tl-sitehead.droppable{cursor:pointer; outline:2px dashed var(--brand);}
   .tl-sitehead.droppable:hover{background:#d2eae4;}
   .tl-freehead{background:var(--accent-pale); color:#8a4a1d; font-weight:700; padding:6px 10px; border-radius:8px; margin-top:18px; font-size:13px;}
-  .tl-name{font-size:12px; padding:2px 6px 2px 2px; white-space:nowrap; cursor:pointer;
+  .tl-name{font-size:13.5px; padding:2px 6px 2px 2px; white-space:nowrap; cursor:pointer;
     overflow:hidden; text-overflow:ellipsis; min-width:0;}   /* バーへのはみ出し(重なり)防止 */
+  .tl-name .corp{color:var(--sub); font-size:13px;}
   .tl-name:hover{text-decoration:underline;}
   .color-dot{width:30px; height:30px; border-radius:50%; border:none; color:#fff; font-weight:700;
     cursor:pointer; box-shadow:0 0 0 1.5px var(--line); font-family:inherit; font-size:13px;}
@@ -216,7 +217,8 @@
       <div class="form-row"><label>所属法人・団体</label><input type="text" id="pf-corp" placeholder="例）青空ケアネット浜野"></div>
     </div>
     <div class="form-row"><label>資格（あてはまるものをタップ）</label><div class="chips" id="pf-quals" style="margin-bottom:0;"></div></div>
-    <div class="form-row"><label>名前の表示色（チームや役割の色分けに）</label><div class="flex" id="pf-colors"></div></div>
+    <div class="form-row"><label>名前の表示色（チームや役割の色分けに）</label><div class="flex" id="pf-colors"></div>
+      <p class="small" style="margin-top:4px;">所属に「キャンナス」を含む方はピンク、「介事連」を含む方は赤が自動で付きます（ここで色を選ぶと自動色より優先）</p></div>
     <div class="grid2">
       <div class="form-row"><label>運転レベル（任意）</label>
         <select id="pf-drivelv"><option value="">—</option><option value="1">Lv1 近場のみ</option><option value="2">Lv2</option><option value="3">Lv3 一般道OK</option><option value="4">Lv4</option><option value="5">Lv5 長距離・山道OK</option></select></div>
@@ -260,7 +262,7 @@
   </div>
 </div>
 
-<footer>災害支援シフト調整プロトタイプ v1.7 — 株式会社NAGARA（デモ用架空データ）</footer>
+<footer>災害支援シフト調整プロトタイプ v1.8 — 株式会社NAGARA（デモ用架空データ）</footer>
 
 <script>
 'use strict';
@@ -546,11 +548,11 @@ function renderBoard(){
   const firstSlot = slotNum(daysArr[0],'am'), lastSlot = slotNum(daysArr[daysArr.length-1],'pm');
   const colOfSlot = n => Math.max(firstSlot, Math.min(lastSlot, n)) - firstSlot;
   const clip = (sN,eN) => ({c1: colOfSlot(sN), c2: colOfSlot(eN)});
-  const nameHtml = p => `<span style="${p.color?`color:${p.color};font-weight:700;`:''}">${esc(p.name)}</span>`;
+  const nameHtml = p => { const c = personColor(p); return `<span style="${c?`color:${c};font-weight:700;`:''}">${esc(p.name)}</span>`; };
 
   const el = document.getElementById('boardgrid');
   const nCols = daysArr.length * 2;
-  let html = `<div style="display:grid; grid-template-columns:190px repeat(${nCols}, minmax(13px,1fr)); align-items:center; min-width:${190+nCols*14}px;">`;
+  let html = `<div style="display:grid; grid-template-columns:235px repeat(${nCols}, minmax(13px,1fr)); align-items:center; min-width:${235+nCols*14}px;">`;
   html += `<div style="grid-row:1; grid-column:1;"></div>` +
     daysArr.map((iso,i)=>`<div class="tl-day ${iso===TODAY?'today':''}" style="grid-row:1; grid-column:${2+i*2} / span 2;">${fmtD(iso)}</div>`).join('');
   let row = 2;
@@ -580,7 +582,7 @@ function renderBoard(){
     }
     for(const a of as){
       const p = person(a.personId), st = assignStatus(a);
-      html += `<div class="tl-name" style="grid-row:${row}; grid-column:1;" title="${esc(p.name)} ${esc(p.corp)}" onclick="openPerson('${p.id}')">${nameHtml(p)} <span class="small">${esc(p.corp)}</span></div>`;
+      html += `<div class="tl-name" style="grid-row:${row}; grid-column:1;" title="${esc(p.name)} ${esc(p.corp)}" onclick="openPerson('${p.id}')">${nameHtml(p)} <span class="corp">${esc(p.corp)}</span></div>`;
       const {c1, c2} = clip(aStart(a), aEnd(a));
       html += `<div class="tl-bar ${st.cls} ${flashKeys.has(akey(a))?'flash':''}" style="grid-row:${row}; grid-column:${c1+2} / ${c2+3};" title="${esc(p.name)} ${fmtRangeH(a)}（クリックで 分ける/解除）" onclick="openAssignMenu('${a.id}')">${fmtRangeH(a)}</div>`;
       row++;
@@ -595,7 +597,7 @@ function renderBoard(){
   row++;
   for(const e of entries){
     const sel = selEntry && selEntry.pid===e.p.id && selEntry.from===e.seg.from && selEntry.to===e.seg.to && selEntry.fromHalf===e.seg.fromHalf;
-    html += `<div class="tl-name" style="grid-row:${row}; grid-column:1;" title="${esc(e.p.name)} ${esc(e.p.corp)}" onclick="openPerson('${e.p.id}')">${nameHtml(e.p)} <span class="small">${esc(e.p.corp)}</span></div>`;
+    html += `<div class="tl-name" style="grid-row:${row}; grid-column:1;" title="${esc(e.p.name)} ${esc(e.p.corp)}" onclick="openPerson('${e.p.id}')">${nameHtml(e.p)} <span class="corp">${esc(e.p.corp)}</span></div>`;
     const segLabel = fmtRangeH({from:e.seg.from, fromHalf:e.seg.fromHalf, to:e.seg.to, toHalf:e.seg.toHalf});
     const {c1, c2} = clip(slotNum(e.seg.from, e.seg.fromHalf), slotNum(e.seg.to, e.seg.toHalf==='am'?'am':'pm'));
     html += `<div class="tl-bar b-free ${sel?'selected':''} ${flashKeys.has('p|'+e.p.name)?'flash':''}" style="grid-row:${row}; grid-column:${c1+2} / ${c2+3};" title="${esc(e.p.name)} ${segLabel} ${e.p.quals.join('・')}" onclick="selectEntry('${e.p.id}','${e.seg.from}','${e.seg.to}','${e.seg.fromHalf}','${e.seg.toHalf}')">${segLabel} ${esc(e.p.quals.filter(q=>q!=='運転可').slice(0,1).join(''))}${e.p.quals.includes('運転可')?'🚗':''}</div>`;
@@ -622,7 +624,7 @@ function openPerson(pid){
   const hist = personAssignments(pid).sort((a,b)=>b.from.localeCompare(a.from));
   const total = hist.filter(a=>a.to<TODAY).reduce((n,a)=>n+days(a),0);
   document.getElementById('person-modal-body').innerHTML = `
-    <div class="flex"><h3 style="${p.color?`color:${p.color};`:''}">${esc(p.name)}</h3><span class="badge ${st.cls}">${st.label}</span>
+    <div class="flex"><h3 style="${personColor(p)?`color:${personColor(p)};`:''}">${esc(p.name)}</h3><span class="badge ${st.cls}">${st.label}</span>
       <button class="btn btn-sub btn-sm right" onclick="closeModal('person-modal')">閉じる</button></div>
     <p class="small">${esc(p.corp)}</p>
     <p style="margin:8px 0;">${qualBadges(p)}</p>
@@ -648,6 +650,16 @@ let pfRanges = [];
 let pfQuals = [];
 let pfColor = null;
 const NAME_COLORS = ['#c0392b','#e07a3f','#b8860b','#2e7d32','#1a7f6e','#2f6db3','#8e44ad','#d81b60'];
+/* 所属による自動色: キャンナス=ピンク・介事連=赤 (部分一致。手動で選んだ色があれば手動優先) */
+const ORG_COLOR_RULES = [
+  {match:'キャンナス', color:'#d81b60'},
+  {match:'介事連', color:'#c0392b'},
+];
+function personColor(p){
+  if(p.color) return p.color;
+  const rule = ORG_COLOR_RULES.find(r=>(p.corp||'').includes(r.match));
+  return rule ? rule.color : null;
+}
 function renderPfColors(){
   document.getElementById('pf-colors').innerHTML =
     `<button class="color-dot ${!pfColor?'sel':''}" style="background:#2b2b2b;" title="標準（黒）" onclick="pfColor=null;renderPfColors();">A</button>` +
