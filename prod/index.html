@@ -88,8 +88,12 @@
   .tl-sitehead.droppable{cursor:pointer; outline:2px dashed var(--brand);}
   .tl-sitehead.droppable:hover{background:#d2eae4;}
   .tl-freehead{background:var(--accent-pale); color:#8a4a1d; font-weight:700; padding:6px 10px; border-radius:8px; margin-top:18px; font-size:13px;}
-  .tl-name{font-size:12px; padding:2px 6px 2px 2px; white-space:nowrap; cursor:pointer;}
-  .tl-name:hover{color:var(--brand-dark); text-decoration:underline;}
+  .tl-name{font-size:12px; padding:2px 6px 2px 2px; white-space:nowrap; cursor:pointer;
+    overflow:hidden; text-overflow:ellipsis; min-width:0;}   /* バーへのはみ出し(重なり)防止 */
+  .tl-name:hover{text-decoration:underline;}
+  .color-dot{width:30px; height:30px; border-radius:50%; border:none; color:#fff; font-weight:700;
+    cursor:pointer; box-shadow:0 0 0 1.5px var(--line); font-family:inherit; font-size:13px;}
+  .color-dot.sel{outline:3px solid var(--accent); outline-offset:1px;}
   .tl-bar{height:20px; border-radius:99px; font-size:10px; font-weight:700; display:flex; align-items:center; justify-content:center; margin:3px 1px; color:#fff; overflow:hidden; white-space:nowrap; cursor:pointer;}
   .tl-bar.b-active{background:var(--accent);}
   .tl-bar.b-planned{background:var(--blue);}
@@ -150,7 +154,7 @@
     </div>
     <div id="sel-banner"></div>
     <div class="card" style="overflow-x:auto;"><div id="boardgrid"><p class="small">データを読み込んでいます…</p></div></div>
-    <p class="hint">🟢 緑 = 動かせる期間（バーをクリックで選択 → 支援先の行をクリックで割当）｜🟠 支援中・🔵 予定・グレー = 完了（バーをクリックで解除）｜名前クリックで詳細・編集｜<b style="color:#b8860b;">黄色い枠 = いま反映した項目</b></p>
+    <p class="hint">1日 = 午前・午後の2マス｜🟢 緑 = 動かせる期間（バーをクリックで選択 → 支援先の行をクリックで割当）｜🟠 支援中・🔵 予定・グレー = 完了（バーをクリックで <b>✂️分ける</b>／🗑解除）｜名前クリックで詳細・編集・色設定｜<b style="color:#b8860b;">黄色い枠 = いま反映した項目</b></p>
   </section>
 
   <!-- ============ AI秘書 ============ -->
@@ -198,6 +202,11 @@
   <div class="modal" id="person-modal-body"></div>
 </div>
 
+<!-- 割当メニュー (分ける/解除) -->
+<div class="modal-bg" id="assign-modal">
+  <div class="modal" id="assign-modal-body"></div>
+</div>
+
 <!-- 支援者追加/編集モーダル -->
 <div class="modal-bg" id="person-form-modal">
   <div class="modal">
@@ -207,6 +216,7 @@
       <div class="form-row"><label>所属法人・団体</label><input type="text" id="pf-corp" placeholder="例）青空ケアネット浜野"></div>
     </div>
     <div class="form-row"><label>資格（あてはまるものをタップ）</label><div class="chips" id="pf-quals" style="margin-bottom:0;"></div></div>
+    <div class="form-row"><label>名前の表示色（チームや役割の色分けに）</label><div class="flex" id="pf-colors"></div></div>
     <div class="grid2">
       <div class="form-row"><label>運転レベル（任意）</label>
         <select id="pf-drivelv"><option value="">—</option><option value="1">Lv1 近場のみ</option><option value="2">Lv2</option><option value="3">Lv3 一般道OK</option><option value="4">Lv4</option><option value="5">Lv5 長距離・山道OK</option></select></div>
@@ -250,7 +260,7 @@
   </div>
 </div>
 
-<footer>災害支援シフト調整プロトタイプ v1.5 — 株式会社NAGARA（デモ用架空データ）</footer>
+<footer>災害支援シフト調整プロトタイプ v1.6 — 株式会社NAGARA（デモ用架空データ）</footer>
 
 <script>
 'use strict';
@@ -353,27 +363,37 @@ function personStatus(p){
   return {label:'待機中', cls:'b-wait'};
 }
 function overlaps(f1,t1,f2,t2){ return f1<=t2 && f2<=t1; }
-/* 調整可能シフト = 複数期間 (p.avail: [{from,to},...]) */
+/* ---- 半日(午前am/午後pm)スロット: 日付×2の整数に落として期間計算する ---- */
+function slotNum(iso, half){ return Math.round(new Date(iso+'T00:00:00Z').getTime()/86400000)*2 + (half==='pm'?1:0); }
+function slotToDate(n){ return new Date(Math.floor(n/2)*86400000).toISOString().slice(0,10); }
+function slotHalf(n){ return n%2 ? 'pm' : 'am'; }
+function aStart(a){ return slotNum(a.from, a.fromHalf==='pm'?'pm':'am'); }
+function aEnd(a){ return slotNum(a.to, a.toHalf==='am'?'am':'pm'); }
+function fmtRangeH(a){ return `${fmtD(a.from)}${a.fromHalf==='pm'?'午後':''}〜${fmtD(a.to)}${a.toHalf==='am'?'午前':''}`; }
+/* 調整可能シフト = 複数期間 (p.avail: [{from,to},...] 日単位) */
 function availRanges(p){ return p.avail || (p.from ? [{from:p.from, to:p.to}] : []); }
 function availText(p){ return availRanges(p).map(r=>`${fmtD(r.from)}〜${fmtD(r.to)}`).join('、') || '未提出'; }
 function availOverlap(p, from, to){ return availRanges(p).find(r=>r.from<=to && from<=r.to) || null; }
 function availCovers(p, from, to){ return availRanges(p).some(r=>r.from<=from && to<=r.to); }
-function isFreeFor(p, from, to){
-  return personAssignments(p.id).every(a=>!overlaps(a.from,a.to,from,to));
+function isFreeFor(p, from, to, fromHalf, toHalf){
+  const s = slotNum(from, fromHalf==='pm'?'pm':'am'), e = slotNum(to, toHalf==='am'?'am':'pm');
+  return personAssignments(p.id).every(a=>!(aStart(a)<=e && s<=aEnd(a)));
 }
-/* 行ける期間から割当済み区間を差し引いた「まだ動かせる区間」 */
+/* 行ける期間から割当済み区間(半日単位)を差し引いた「まだ動かせる区間」 */
 function freeSegments(p, r){
-  let segs = [{from:r.from, to:r.to}];
+  let segs = [[slotNum(r.from,'am'), slotNum(r.to,'pm')]];
   for(const a of personAssignments(p.id)){
-    segs = segs.flatMap(s=>{
-      if(!overlaps(a.from,a.to,s.from,s.to)) return [s];
+    const as = aStart(a), ae = aEnd(a);
+    segs = segs.flatMap(([s,e])=>{
+      if(ae < s || e < as) return [[s,e]];
       const out = [];
-      if(a.from > s.from) out.push({from:s.from, to:addDays(a.from,-1)});
-      if(a.to < s.to) out.push({from:addDays(a.to,1), to:s.to});
+      if(as > s) out.push([s, as-1]);
+      if(ae < e) out.push([ae+1, e]);
       return out;
     });
   }
-  return segs.filter(s=>s.from<=s.to);
+  return segs.filter(([s,e])=>s<=e)
+    .map(([s,e])=>({from:slotToDate(s), fromHalf:slotHalf(s), to:slotToDate(e), toHalf:slotHalf(e)}));
 }
 function siteAssigned(sid){ return DATA.assignments.filter(a=>a.siteId===sid && a.to>=TODAY); }
 /* 「〜以上」の資格読み替え (例: 初任者研修の枠は実務者研修・介護福祉士でも充足) */
@@ -415,27 +435,67 @@ function clearDates(){
   document.getElementById('f-to').value = '';
   renderBoard();
 }
-function selectEntry(pid, from, to){
-  if(selEntry && selEntry.pid===pid && selEntry.from===from && selEntry.to===to) selEntry = null;
-  else selEntry = {pid, from, to};
+function selectEntry(pid, from, to, fromHalf, toHalf){
+  if(selEntry && selEntry.pid===pid && selEntry.from===from && selEntry.to===to && selEntry.fromHalf===fromHalf) selEntry = null;
+  else selEntry = {pid, from, to, fromHalf, toHalf};
   renderBoard();
 }
 function assignTo(sid){
   if(!selEntry) return;
   const p = person(selEntry.pid), s = site(sid);
-  const from = selEntry.from > s.from ? selEntry.from : s.from;
-  const to = selEntry.to < s.to ? selEntry.to : s.to;
-  if(from > to){ alert(`${p.name}さんの期間（${fmtD(selEntry.from)}〜${fmtD(selEntry.to)}）と ${s.name} の支援期間（${fmtD(s.from)}〜${fmtD(s.to)}）が重なっていません`); return; }
-  if(!isFreeFor(p, from, to)){ alert(`${p.name}さんはこの期間、別の支援先に割当済みです`); return; }
-  DATA.assignments.push({id:uid('a'), personId:p.id, siteId:sid, from, to, records:[]});
+  const S = Math.max(slotNum(selEntry.from, selEntry.fromHalf), slotNum(s.from,'am'));
+  const E = Math.min(slotNum(selEntry.to, selEntry.toHalf==='am'?'am':'pm'), slotNum(s.to,'pm'));
+  if(S > E){ alert(`${p.name}さんの期間と ${s.name} の支援期間（${fmtD(s.from)}〜${fmtD(s.to)}）が重なっていません`); return; }
+  const from = slotToDate(S), to = slotToDate(E);
+  const fromHalf = slotHalf(S), toHalf = slotHalf(E);
+  if(!isFreeFor(p, from, to, fromHalf, toHalf)){ alert(`${p.name}さんはこの期間、別の支援先に割当済みです`); return; }
+  DATA.assignments.push({id:uid('a'), personId:p.id, siteId:sid, from, to, fromHalf, toHalf, records:[]});
   flash(`a|${p.name}|${s.name}|${from}|${to}`);
   selEntry = null; save();
+}
+/* 割当バークリック → 分ける / 解除 のメニュー */
+let menuAssignId = null;
+function openAssignMenu(aid){
+  const a = DATA.assignments.find(x=>x.id===aid);
+  if(!a) return;
+  menuAssignId = aid;
+  const p = person(a.personId), s = site(a.siteId);
+  const opts = [];
+  for(let n = aStart(a)+1; n <= aEnd(a); n++){
+    opts.push(`<option value="${n}">${fmtD(slotToDate(n))} ${slotHalf(n)==='am'?'午前':'午後'}から</option>`);
+  }
+  document.getElementById('assign-modal-body').innerHTML = `
+    <h3>${esc(p.name)} — ${esc(s.name)}</h3>
+    <p class="small" style="margin-bottom:12px;">現在の割当: ${fmtRangeH(a)}</p>
+    ${opts.length ? `
+    <div class="form-row"><label>✂️ 途中で分ける — 選んだ時点から後ろがこの支援先から外れて「動かせる人」（緑バー）に戻ります。緑バーを選んで別の支援先に割り当ててください。</label>
+      <div class="flex">
+        <select id="split-at" style="max-width:220px;">${opts.join('')}</select>
+        <button class="btn btn-main btn-sm" onclick="splitAssignment()">✂️ ここで分ける</button>
+      </div>
+    </div>` : '<p class="small">この割当は半日ぶんのため、これ以上分割できません。</p>'}
+    <div class="flex" style="justify-content:flex-end; margin-top:16px;">
+      <button class="btn btn-warn btn-sm" onclick="unassignBar('${a.id}')">🗑 割当をすべて解除</button>
+      <button class="btn btn-sub btn-sm" onclick="closeModal('assign-modal')">閉じる</button>
+    </div>`;
+  document.getElementById('assign-modal').classList.add('show');
+}
+function splitAssignment(){
+  const a = DATA.assignments.find(x=>x.id===menuAssignId);
+  if(!a) return;
+  const cut = Number(document.getElementById('split-at').value) - 1;  // 前半の終了スロット
+  if(cut < aStart(a)) return;
+  a.to = slotToDate(cut); a.toHalf = slotHalf(cut);
+  closeModal('assign-modal');
+  flash(akey(a), 'p|'+person(a.personId).name);
+  save();
 }
 function unassignBar(aid){
   const a = DATA.assignments.find(x=>x.id===aid);
   if(!a) return;
   const p = person(a.personId), s = site(a.siteId);
-  if(confirm(`${p.name}さんの ${s.name}（${fmtRange(a)}）への割当を解除しますか？`)){
+  if(confirm(`${p.name}さんの ${s.name}（${fmtRangeH(a)}）への割当を解除しますか？`)){
+    closeModal('assign-modal');
     DATA.assignments = DATA.assignments.filter(x=>x.id!==aid); save();
   }
 }
@@ -446,7 +506,7 @@ function renderBoard(){
   const fT = document.getElementById('f-to').value || null;
   const sites = DATA.sites.filter(s=>s.active);
 
-  /* 動かせる人 = 人×期間 の行 (割当済み区間は差し引き) */
+  /* 動かせる人 = 人×期間 の行 (割当済み区間は半日単位で差し引き) */
   const entries = [];
   const noAvail = [];
   DATA.people
@@ -468,11 +528,11 @@ function renderBoard(){
   const sb = document.getElementById('sel-banner');
   if(selEntry){
     const p = person(selEntry.pid);
-    sb.innerHTML = `<div class="sel-banner">👉 <b>${esc(p.name)}</b>（${fmtD(selEntry.from)}〜${fmtD(selEntry.to)}）を選択中 — 割り当てたい<b>支援先の行</b>をクリックしてください
+    sb.innerHTML = `<div class="sel-banner">👉 <b>${esc(p.name)}</b>（${fmtRangeH({from:selEntry.from, fromHalf:selEntry.fromHalf, to:selEntry.to, toHalf:selEntry.toHalf})}）を選択中 — 割り当てたい<b>支援先の行</b>をクリックしてください
       <button class="btn btn-sub btn-sm right" onclick="selEntry=null;renderBoard();">選択をやめる</button></div>`;
   }else sb.innerHTML = '';
 
-  /* 日付軸: 絞り込みがあればその範囲、なければデータから自動 (最大31日) */
+  /* 日付軸: 絞り込みがあればその範囲、なければデータから自動 (最大31日・1日=午前/午後の2列) */
   let min = fF || TODAY, max = fT || TODAY;
   if(!fF || !fT){
     sites.forEach(s=>{ if(s.from<min) min=s.from; if(s.to>max) max=s.to; });
@@ -483,13 +543,16 @@ function renderBoard(){
   const daysArr = [];
   let d = min;
   for(let i=0; i<31; i++){ daysArr.push(d); if(d>=max) break; d = addDays(d,1); }
-  const first = daysArr[0], last = daysArr[daysArr.length-1];
-  const colOf = iso => iso<=first ? 0 : (iso>=last ? daysArr.length-1 : daysArr.indexOf(iso));
-  const clip = (f,t) => ({c1: colOf(f<first?first:f), c2: colOf(t>last?last:t)});
+  const firstSlot = slotNum(daysArr[0],'am'), lastSlot = slotNum(daysArr[daysArr.length-1],'pm');
+  const colOfSlot = n => Math.max(firstSlot, Math.min(lastSlot, n)) - firstSlot;
+  const clip = (sN,eN) => ({c1: colOfSlot(sN), c2: colOfSlot(eN)});
+  const nameHtml = p => `<span style="${p.color?`color:${p.color};font-weight:700;`:''}">${esc(p.name)}</span>`;
 
   const el = document.getElementById('boardgrid');
-  let html = `<div style="display:grid; grid-template-columns:190px repeat(${daysArr.length}, minmax(24px,1fr)); align-items:center; min-width:${190+daysArr.length*26}px;">`;
-  html += `<div></div>` + daysArr.map(iso=>`<div class="tl-day ${iso===TODAY?'today':''}">${fmtD(iso)}</div>`).join('');
+  const nCols = daysArr.length * 2;
+  let html = `<div style="display:grid; grid-template-columns:190px repeat(${nCols}, minmax(13px,1fr)); align-items:center; min-width:${190+nCols*14}px;">`;
+  html += `<div style="grid-row:1; grid-column:1;"></div>` +
+    daysArr.map((iso,i)=>`<div class="tl-day ${iso===TODAY?'today':''}" style="grid-row:1; grid-column:${2+i*2} / span 2;">${fmtD(iso)}</div>`).join('');
   let row = 2;
 
   /* --- 支援先レーン --- */
@@ -517,9 +580,9 @@ function renderBoard(){
     }
     for(const a of as){
       const p = person(a.personId), st = assignStatus(a);
-      html += `<div class="tl-name" style="grid-row:${row}; grid-column:1;" onclick="openPerson('${p.id}')">${esc(p.name)} <span class="small">${esc(p.corp)}</span></div>`;
-      const {c1, c2} = clip(a.from, a.to);
-      html += `<div class="tl-bar ${st.cls} ${flashKeys.has(akey(a))?'flash':''}" style="grid-row:${row}; grid-column:${c1+2} / ${c2+3};" title="${esc(p.name)} ${fmtRange(a)}（クリックで解除）" onclick="unassignBar('${a.id}')">${fmtRange(a)}</div>`;
+      html += `<div class="tl-name" style="grid-row:${row}; grid-column:1;" title="${esc(p.name)} ${esc(p.corp)}" onclick="openPerson('${p.id}')">${nameHtml(p)} <span class="small">${esc(p.corp)}</span></div>`;
+      const {c1, c2} = clip(aStart(a), aEnd(a));
+      html += `<div class="tl-bar ${st.cls} ${flashKeys.has(akey(a))?'flash':''}" style="grid-row:${row}; grid-column:${c1+2} / ${c2+3};" title="${esc(p.name)} ${fmtRangeH(a)}（クリックで 分ける/解除）" onclick="openAssignMenu('${a.id}')">${fmtRangeH(a)}</div>`;
       row++;
     }
   }
@@ -531,13 +594,11 @@ function renderBoard(){
   html += `<div class="tl-freehead" style="grid-row:${row}; grid-column:1 / -1;">🟢 動かせる人（${entries.length}枠）— バーをクリックして選択 → 上の支援先へ</div>`;
   row++;
   for(const e of entries){
-    const sel = selEntry && selEntry.pid===e.p.id && selEntry.from===e.seg.from && selEntry.to===e.seg.to;
-    html += `<div class="tl-name" style="grid-row:${row}; grid-column:1;" onclick="openPerson('${e.p.id}')">${esc(e.p.name)} <span class="small">${esc(e.p.corp)}</span></div>`;
-    const vis = {from: e.seg.from<first?first:e.seg.from, to: e.seg.to>last?last:e.seg.to};
-    if(vis.from<=vis.to){
-      const {c1, c2} = clip(vis.from, vis.to);
-      html += `<div class="tl-bar b-free ${sel?'selected':''} ${flashKeys.has('p|'+e.p.name)?'flash':''}" style="grid-row:${row}; grid-column:${c1+2} / ${c2+3};" title="${esc(e.p.name)} ${fmtD(e.seg.from)}〜${fmtD(e.seg.to)} ${e.p.quals.join('・')}" onclick="selectEntry('${e.p.id}','${e.seg.from}','${e.seg.to}')">${fmtD(e.seg.from)}〜${fmtD(e.seg.to)} ${esc(e.p.quals.filter(q=>q!=='運転可').slice(0,1).join(''))}${e.p.quals.includes('運転可')?'🚗':''}</div>`;
-    }
+    const sel = selEntry && selEntry.pid===e.p.id && selEntry.from===e.seg.from && selEntry.to===e.seg.to && selEntry.fromHalf===e.seg.fromHalf;
+    html += `<div class="tl-name" style="grid-row:${row}; grid-column:1;" title="${esc(e.p.name)} ${esc(e.p.corp)}" onclick="openPerson('${e.p.id}')">${nameHtml(e.p)} <span class="small">${esc(e.p.corp)}</span></div>`;
+    const segLabel = fmtRangeH({from:e.seg.from, fromHalf:e.seg.fromHalf, to:e.seg.to, toHalf:e.seg.toHalf});
+    const {c1, c2} = clip(slotNum(e.seg.from, e.seg.fromHalf), slotNum(e.seg.to, e.seg.toHalf==='am'?'am':'pm'));
+    html += `<div class="tl-bar b-free ${sel?'selected':''} ${flashKeys.has('p|'+e.p.name)?'flash':''}" style="grid-row:${row}; grid-column:${c1+2} / ${c2+3};" title="${esc(e.p.name)} ${segLabel} ${e.p.quals.join('・')}" onclick="selectEntry('${e.p.id}','${e.seg.from}','${e.seg.to}','${e.seg.fromHalf}','${e.seg.toHalf}')">${segLabel} ${esc(e.p.quals.filter(q=>q!=='運転可').slice(0,1).join(''))}${e.p.quals.includes('運転可')?'🚗':''}</div>`;
     row++;
   }
   if(!entries.length){
@@ -561,7 +622,7 @@ function openPerson(pid){
   const hist = personAssignments(pid).sort((a,b)=>b.from.localeCompare(a.from));
   const total = hist.filter(a=>a.to<TODAY).reduce((n,a)=>n+days(a),0);
   document.getElementById('person-modal-body').innerHTML = `
-    <div class="flex"><h3>${esc(p.name)}</h3><span class="badge ${st.cls}">${st.label}</span>
+    <div class="flex"><h3 style="${p.color?`color:${p.color};`:''}">${esc(p.name)}</h3><span class="badge ${st.cls}">${st.label}</span>
       <button class="btn btn-sub btn-sm right" onclick="closeModal('person-modal')">閉じる</button></div>
     <p class="small">${esc(p.corp)}</p>
     <p style="margin:8px 0;">${qualBadges(p)}</p>
@@ -570,7 +631,7 @@ function openPerson(pid){
     ${hist.length ? hist.map(a=>{
       const s = assignStatus(a);
       return `<div class="assign-item"><span>🏥 ${esc(site(a.siteId).name)}</span>
-        <span>${fmtRange(a)}（${days(a)}日間）</span><span class="badge ${s.cls}">${s.label}</span></div>`;
+        <span>${fmtRangeH(a)}（${days(a)}日間）</span><span class="badge ${s.cls}">${s.label}</span></div>`;
     }).join('') : '<p class="small">まだ支援履歴はありません</p>'}
     <div class="flex" style="justify-content:flex-end; margin-top:14px;">
       <button class="btn btn-warn btn-sm" onclick="deletePerson('${p.id}')">🗑 削除</button>
@@ -585,6 +646,13 @@ let editingPersonId = null;
 let editingPersonName = null;
 let pfRanges = [];
 let pfQuals = [];
+let pfColor = null;
+const NAME_COLORS = ['#c0392b','#e07a3f','#b8860b','#2e7d32','#1a7f6e','#2f6db3','#8e44ad','#d81b60'];
+function renderPfColors(){
+  document.getElementById('pf-colors').innerHTML =
+    `<button class="color-dot ${!pfColor?'sel':''}" style="background:#2b2b2b;" title="標準（黒）" onclick="pfColor=null;renderPfColors();">A</button>` +
+    NAME_COLORS.map(c=>`<button class="color-dot ${pfColor===c?'sel':''}" style="background:${c};" onclick="pfColor='${c}';renderPfColors();">A</button>`).join('');
+}
 function openPersonForm(pid){
   closeModal('person-modal');
   editingPersonId = pid || null;
@@ -596,8 +664,9 @@ function openPersonForm(pid){
   document.getElementById('pf-note').value = p ? (p.note||'') : '';
   document.getElementById('pf-drivelv').value = p && p.driveLv ? String(p.driveLv) : '';
   pfQuals = p ? [...p.quals] : [];
+  pfColor = p ? (p.color || null) : null;
   pfRanges = p ? availRanges(p).map(r=>({...r})) : [{from:TODAY, to:addDays(TODAY,4)}];
-  renderPfQuals(); renderPfRanges();
+  renderPfQuals(); renderPfColors(); renderPfRanges();
   document.getElementById('person-form-modal').classList.add('show');
 }
 function renderPfQuals(){
@@ -628,6 +697,7 @@ function savePerson(){
     quals: [...pfQuals],
     note: document.getElementById('pf-note').value.trim(),
     driveLv: Number(document.getElementById('pf-drivelv').value) || null,
+    color: pfColor,
     avail: ranges,
   };
   if(fields.driveLv && !fields.quals.includes('運転可')) fields.quals.push('運転可');
@@ -1087,7 +1157,7 @@ function applyProposal(){
     const from = r.from > parsed.from ? r.from : parsed.from;
     const to = r.to < parsed.to ? r.to : parsed.to;
     if(from<=to && isFreeFor(p, from, to)){
-      DATA.assignments.push({id:uid('a'), personId:pid, siteId:s.id, from, to, records:[]});
+      DATA.assignments.push({id:uid('a'), personId:pid, siteId:s.id, from, to, fromHalf:'am', toHalf:'pm', records:[]});
       flash(`a|${p.name}|${s.name}|${from}|${to}`);
       n++;
     }
