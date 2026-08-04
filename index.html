@@ -135,20 +135,36 @@
 
   <!-- ============ AI秘書 ============ -->
   <section id="tab-ai" class="tabpane">
-    <h2>AI秘書に依頼する</h2>
-    <p class="hint">届いたメッセージ（Messenger・LINE・メール等）をそのまま貼り付けてください。施設からの応援依頼なら分配案を、支援者からの「行けます」の申し出なら支援者登録を、AI秘書が作ります。</p>
+    <div class="flex" style="margin-bottom:12px;">
+      <h2 style="margin:0;">AI秘書に相談する</h2>
+      <select id="thread-sel" style="max-width:300px;" onchange="pickThread(this.value)"></select>
+      <button class="btn btn-sub btn-sm" onclick="newThread()">＋ 新しい相談</button>
+    </div>
     <div class="card">
-      <div class="chatlog" id="chatlog">
-        <div class="msg ai">こんにちは、AI秘書です 🤖\n施設からの「応援がほしい」依頼も、支援者からの「行けます」の申し出も、届いたメッセージをそのまま貼り付けてください。内容を読み取って、分配案の作成や支援者登録までお手伝いします。</div>
-      </div>
-      <textarea id="ai-input" placeholder="例）キャンナス浜松の杉村です。8/7〜11まで熊本へ行けます。"></textarea>
+      <div class="chatlog" id="chatlog"></div>
+      <textarea id="ai-input" placeholder="届いたメッセージをそのまま貼り付け。続けて「運転もできるそうです」のような追加・修正もOK"></textarea>
       <div class="flex" style="margin-top:10px;">
         <button class="btn btn-sub" onclick="fillExample()">例文を入れる</button>
         <button class="btn btn-main right" onclick="runAI()">🤖 AI秘書に依頼する</button>
       </div>
       <div id="ai-proposal"></div>
     </div>
-    <p class="small">※ OpenAI API（gpt-5.1）で解析しています。APIキー未設定時は簡易解析にフォールバックします。現場の日報・アセスメントの記録は「ながらかいご議事録」で行います。</p>
+
+    <!-- 使い方（下部） -->
+    <div class="card" style="margin-top:24px;">
+      <h2 style="margin-top:0;">使い方</h2>
+      <div class="flow-usage">
+        <p style="margin-bottom:8px;"><b>1️⃣ 届いたメッセージを貼る</b>　MessengerやLINEの文面をコピーして、上の入力欄に貼り付けるだけ。下のサンプルをタップしても試せます。</p>
+        <div class="chips" id="usage-samples"></div>
+        <p style="margin:12px 0 8px;"><b>2️⃣ AIの提案を確認する</b>　「行けます」の申し出は支援者登録の提案に、施設からの依頼は分配案になります。提案には3つの選択肢があります：</p>
+        <p style="margin:0 0 8px 16px;">🚫 <b>却下</b>（読み取りが違うとき。続けて「◯◯が正しいです」と送れば読み取り直します）／ ✏️ <b>手で編集</b>（編集画面を開いて微修正してから保存）／ ✅ <b>保存</b>（そのまま反映）</p>
+        <img src="usage-proposal.png" alt="AI提案カードの例" onerror="this.style.display='none'" style="max-width:100%; border:1px solid var(--line); border-radius:10px; margin:6px 0;">
+        <p style="margin:12px 0 8px;"><b>3️⃣ 調整ボードで確認</b>　保存すると調整ボードに即反映され、いま反映した項目は<b style="color:#b8860b;">黄色い枠</b>で光ります。</p>
+        <img src="usage-board.png" alt="調整ボードへの反映例" onerror="this.style.display='none'" style="max-width:100%; border:1px solid var(--line); border-radius:10px; margin:6px 0;">
+        <p class="small" style="margin-top:10px;">💡 相談はスレッドごとに履歴が残ります。「この情報も追加して」のような続きの依頼は、同じスレッドでそのまま送ってください。<br>
+        ※ OpenAI API（gpt-5.1）で解析。APIキー未設定時は簡易解析にフォールバック。現場の日報・アセスメントの記録は「ながらかいご議事録」で行います。</p>
+      </div>
+    </div>
   </section>
 </main>
 
@@ -209,7 +225,7 @@
   </div>
 </div>
 
-<footer>災害支援シフト調整プロトタイプ v1.1 — 株式会社NAGARA（デモ用架空データ）</footer>
+<footer>災害支援シフト調整プロトタイプ v1.2 — 株式会社NAGARA（デモ用架空データ）</footer>
 
 <script>
 'use strict';
@@ -516,12 +532,14 @@ function closeModal(id){ document.getElementById(id).classList.remove('show'); }
 document.querySelectorAll('.modal-bg').forEach(m=>m.addEventListener('click', e=>{ if(e.target===m) m.classList.remove('show'); }));
 
 let editingPersonId = null;
+let editingPersonName = null;
 let pfRanges = [];
 let pfQuals = [];
 function openPersonForm(pid){
   closeModal('person-modal');
   editingPersonId = pid || null;
   const p = pid ? person(pid) : null;
+  editingPersonName = p ? p.name : null;
   document.getElementById('pf-title').textContent = p ? `支援者を編集 — ${p.name}` : '支援者を追加';
   document.getElementById('pf-name').value = p ? p.name : '';
   document.getElementById('pf-corp').value = p ? p.corp : '';
@@ -563,13 +581,14 @@ function savePerson(){
     avail: ranges,
   };
   if(fields.driveLv && !fields.quals.includes('運転可')) fields.quals.push('運転可');
-  if(editingPersonId){
-    Object.assign(person(editingPersonId), fields);
+  const target = editingPersonId ? (person(editingPersonId) || DATA.people.find(x=>x.name===editingPersonName)) : null;
+  if(target){
+    Object.assign(target, fields);
   }else{
     DATA.people.push({id:uid('p'), office:'', lodging:'', rentacar:false, ...fields});
   }
   flash('p|'+fields.name);
-  editingPersonId = null;
+  editingPersonId = null; editingPersonName = null;
   closeModal('person-form-modal'); save();
 }
 function deletePerson(pid){
@@ -586,9 +605,11 @@ function closeSite(sid){
 }
 let newNeeds = [];
 let editingSiteId = null;
+let editingSiteName = null;   // 保存中にサーバー採番でIDが変わっても名前で追従
 function openSiteModal(siteId){
   editingSiteId = siteId || null;
   const s = siteId ? site(siteId) : null;
+  editingSiteName = s ? s.name : null;
   newNeeds = s ? s.needs.map(n=>({...n})) : [];
   document.getElementById('site-modal-title').textContent = s ? `支援先を編集 — ${s.name}` : '支援先を追加';
   document.getElementById('sf-qual').innerHTML = QUALS.map(q=>`<option>${q}</option>`).join('');
@@ -638,29 +659,89 @@ function saveSite(){
     to: document.getElementById('sf-to').value || TODAY,
     note: document.getElementById('sf-note').value.trim(),
   };
-  if(editingSiteId){
-    Object.assign(site(editingSiteId), fields);
+  const target = editingSiteId ? (site(editingSiteId) || DATA.sites.find(x=>x.name===editingSiteName)) : null;
+  if(target){
+    Object.assign(target, fields);
   }else{
     DATA.sites.push({id:uid('s'), ...fields, active:true});
   }
   flash('s|'+fields.name);
-  editingSiteId = null;
+  editingSiteId = null; editingSiteName = null;
   closeModal('site-modal'); save();
 }
 
-/* ---------------- AI秘書 ---------------- */
+/* ---------------- AI秘書: スレッド (会話ごとに履歴を保存・続きから再開) ---------------- */
+const GREETING = 'こんにちは、AI秘書です 🤖\n施設からの「応援がほしい」依頼も、支援者からの「行けます」の申し出も、届いたメッセージをそのまま貼り付けてください。\n読み取り結果への「この情報も追加して」のような続きの依頼もこのままどうぞ。';
+let threads = [];
+let curThread = {id:null, title:'', messages:[]};
+async function loadThreads(){
+  try{ threads = await (await fetch(API + '/api/threads')).json(); }catch(e){ threads = []; }
+  if(!Array.isArray(threads)) threads = [];
+  renderThreadSel();
+}
+function renderThreadSel(){
+  const sel = document.getElementById('thread-sel');
+  sel.innerHTML = '<option value="">📂 過去の相談をひらく…</option>' +
+    threads.map(t=>`<option value="${t.id}">${esc((t.title||'無題').slice(0,28))}（${(t.updated_at||'').slice(5,10).replace('-','/')}）</option>`).join('');
+  sel.value = curThread.id || '';
+}
+function newThread(){
+  curThread = {id:null, title:'', messages:[]};
+  document.getElementById('ai-proposal').innerHTML = '';
+  currentOffer = null; currentProposal = null;
+  renderChat(); renderThreadSel();
+}
+function pickThread(id){
+  const t = threads.find(x=>x.id===id);
+  if(!t){ newThread(); return; }
+  curThread = {id:t.id, title:t.title, messages:(t.messages||[]).map(m=>({...m}))};
+  document.getElementById('ai-proposal').innerHTML = '';
+  currentOffer = null; currentProposal = null;
+  renderChat();
+}
+function renderChat(){
+  const log = document.getElementById('chatlog');
+  log.innerHTML = '';
+  const g = document.createElement('div'); g.className = 'msg ai'; g.textContent = GREETING; log.appendChild(g);
+  for(const m of curThread.messages){
+    const el = document.createElement('div'); el.className = 'msg ' + (m.role==='user'?'user':'ai'); el.textContent = m.text; log.appendChild(el);
+  }
+  log.scrollTop = 1e9;
+}
+async function persistThread(){
+  if(!curThread.messages.length) return;
+  if(!curThread.title){
+    const first = curThread.messages.find(m=>m.role==='user');
+    curThread.title = first ? first.text.slice(0,28) : '無題';
+  }
+  try{
+    const res = await (await fetch(API + '/api/threads', {method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({id: curThread.id, title: curThread.title, messages: curThread.messages})})).json();
+    if(res && res.id) curThread.id = res.id;
+    loadThreads();
+  }catch(e){ /* オフラインでも会話は継続できる */ }
+}
+/* AI APIに渡す会話履歴 (assistantは前回の読み取りJSONを渡して「追記・修正」を可能に) */
+function aiHistory(){
+  return curThread.messages.slice(-10).map(m=>
+    m.role==='user' ? {role:'user', content:m.text}
+    : {role:'assistant', content: m.parsed ? JSON.stringify(m.parsed) : m.text});
+}
+
 const EXAMPLES = [
   'キャンナス浜松の杉村です。8/7〜11まで熊本へ行けます。',
   '福祉避難所さくらの丘さんより。職員がまだ戻れず、8月12日から8月20日まで介護のできる方を2名お願いできないでしょうか。できれば運転できる方だと助かります。',
   'キャンナス犬山、現在のところ明日以降8月9日までは困難です。10日から13日、1名調整可能です。',
-  '八代市のひかりの里です。送迎の運転手さんが足りません。8/8から1週間、運転できる方1名と看護師さん1名お願いします。'
+  '八代市のひかりの杜です。送迎の運転手さんが足りません。8/8から1週間、運転できる方1名と看護師さん1名お願いします。'
 ];
 let exIdx = 0;
 function fillExample(){ document.getElementById('ai-input').value = EXAMPLES[exIdx % EXAMPLES.length]; exIdx++; }
-function addMsg(cls, text){
-  const el = document.createElement('div'); el.className = 'msg '+cls; el.textContent = text;
+function addMsg(role, text, opts){
+  opts = opts || {};
+  const el = document.createElement('div'); el.className = 'msg '+(role==='user'?'user':'ai'); el.textContent = text;
   document.getElementById('chatlog').appendChild(el);
   document.getElementById('chatlog').scrollTop = 1e9;
+  if(!opts.transient) curThread.messages.push({role: role==='user'?'user':'ai', text, parsed: opts.parsed||null});
   return el;
 }
 
@@ -765,12 +846,40 @@ function showOfferProposal(o){
     <div class="proposal">
       <h4>🙋 支援者として登録します（${o.headcount||1}名）</h4>
       <p class="small">${esc(o.organization||'所属未登録')}｜${esc(o.person_name||'氏名未登録')}｜${periods||'期間未定'}</p>
-      <p class="small">登録後は調整ボードの「動かせる人」に緑のバーで表示され、分配の候補になります。氏名・資格はあとから名前クリック→編集で補完できます。</p>
+      <p class="small">保存すると調整ボードの「動かせる人」に緑のバーで表示され、分配の候補になります。</p>
       <div class="flex" style="margin-top:10px;">
-        <button class="btn btn-sub" onclick="document.getElementById('ai-proposal').innerHTML='';currentOffer=null;">やり直す</button>
-        <button class="btn btn-main right" onclick="approveOffer()">✅ 動かせる人に登録する</button>
+        <button class="btn btn-warn" onclick="rejectAI()">🚫 却下</button>
+        <button class="btn btn-sub" onclick="editOffer()">✏️ 手で編集して登録</button>
+        <button class="btn btn-main right" onclick="approveOffer()">✅ このまま保存する</button>
       </div>
     </div>`;
+}
+/* 却下: 提案を破棄。修正内容は続きのメッセージで送れる */
+function rejectAI(){
+  document.getElementById('ai-proposal').innerHTML = '';
+  currentOffer = null; currentProposal = null;
+  addMsg('ai', '🚫 提案を却下しました。\n読み取りが違っていた場合は「正しくは◯◯です」のように続けて送ってください。読み取り直します。');
+  persistThread();
+}
+/* 手で編集: 申し出の内容を支援者フォームに引き写して開く (保存した時点で登録) */
+function editOffer(){
+  if(!currentOffer) return;
+  const o = currentOffer;
+  openPersonForm();
+  document.getElementById('pf-title').textContent = '支援者を編集して登録';
+  document.getElementById('pf-name').value = o.person_name || '';
+  document.getElementById('pf-corp').value = o.organization || '';
+  document.getElementById('pf-note').value = [o.night_shift_ok?'夜勤可':null, o.notes||null].filter(Boolean).join('・').slice(0,80);
+  pfQuals = (o.quals||[]).filter(q=>QUALS.includes(q));
+  if(o.can_drive && !pfQuals.includes('運転可')) pfQuals.push('運転可');
+  pfRanges = (o.periods||[]).filter(p=>p.from&&p.to).map(p=>({from:p.from, to:p.to}));
+  if(!pfRanges.length) pfRanges = [{from:TODAY, to:addDays(TODAY,4)}];
+  renderPfQuals(); renderPfRanges();
+  document.getElementById('ai-proposal').innerHTML = '';
+  const extra = (currentOffer.headcount||1) > 1 ? `\n※ ${currentOffer.headcount}名の申し出です。このフォームでは1人ずつ登録してください。` : '';
+  addMsg('ai', `✏️ 編集画面を開きました。内容を直して「保存する」を押すと登録されます。${extra}`);
+  currentOffer = null;
+  persistThread();
 }
 async function approveOffer(){
   if(!currentOffer) return;
@@ -789,20 +898,22 @@ async function approveOffer(){
   }
   document.getElementById('ai-proposal').innerHTML = '';
   currentOffer = null;
+  addMsg('ai', `✅ ${n}名を「動かせる人」に登録しました。\n調整ボードの緑バー（黄色い枠付き）とAI分配の候補に含まれます。`);
+  persistThread();
   await save();
-  addMsg('ai', `✅ ${n}名を「動かせる人」に登録しました。\n調整ボードの緑バーとAI分配の候補に含まれます。`);
 }
 
 let currentProposal = null;
 async function runAI(){
   const text = document.getElementById('ai-input').value.trim();
   if(!text){ alert('メッセージを貼り付けてください'); return; }
+  const history = aiHistory();   // 送信前までの会話を渡す (追記・修正に対応)
   addMsg('user', text);
   document.getElementById('ai-input').value = '';
-  const waitEl = addMsg('ai', '🤖 読み取り中です…');
+  const waitEl = addMsg('ai', '🤖 読み取り中です…', {transient:true});
   let parsed = null, aiReply = null, usedApi = false, apiRaw = null;
   try{
-    const res = await (await fetch(API + '/api/ai-parse', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({message:text})})).json();
+    const res = await (await fetch(API + '/api/ai-parse', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({message:text, history})})).json();
     if(res.ok){
       usedApi = true; apiRaw = res.parsed; aiReply = apiRaw.reply;
       if(apiRaw.message_type !== 'offer') parsed = fromApiParse(apiRaw);
@@ -810,13 +921,15 @@ async function runAI(){
   }catch(e){ /* サーバー未起動等 → 簡易解析へ */ }
   waitEl.remove();
   if(usedApi && apiRaw && apiRaw.message_type === 'offer' && apiRaw.offer){
-    if(aiReply) addMsg('ai', aiReply);
+    if(aiReply) addMsg('ai', aiReply, {parsed: apiRaw});
     showOfferProposal(apiRaw.offer);
+    persistThread();
     return;
   }
   if(!parsed) parsed = parseMessage(text);
   if(!parsed.matchedSite && !parsed.newSiteName){
-    addMsg('ai','ごめんなさい、どの施設への支援かが読み取れませんでした 🙏\n施設名を含めてもう一度送っていただけますか？');
+    addMsg('ai','ごめんなさい、どの施設への支援かが読み取れませんでした 🙏\n施設名を含めてもう一度送っていただけますか？', {parsed: apiRaw});
+    persistThread();
     return;
   }
   if(!parsed.reqs.length) parsed.reqs.push({qual:'初任者研修', count:1});
@@ -836,7 +949,9 @@ async function runAI(){
   const totalShort = plan.reduce((n,x)=>n+Math.max(0,x.shortage),0);
   if(aiReply) addMsg('ai', aiReply);
   addMsg('ai',
-    `📋 読み取り結果${usedApi?'（AI解析）':'（簡易解析 — APIキー未設定）'}\n・支援先: ${siteName}${parsed.matchedSite?'':'（新規登録します）'}\n・期間: ${fmtD(parsed.from)} 〜 ${fmtD(parsed.to)}\n・必要人員: ${parsed.reqs.map(r=>`${r.qual}×${r.count}名`).join('、')}${parsed.nightWanted?'（夜勤対応希望）':''}${parsed.driverPreferred?'（🚗 運転できる方を優先）':''}${parsed.notes?`\n・状況: ${parsed.notes}`:''}\n\n条件に合う支援者をご提案します。${totalShort?`\n⚠️ ${totalShort}名分は条件に合う待機者が見つかりませんでした。`:''}`);
+    `📋 読み取り結果${usedApi?'（AI解析）':'（簡易解析 — APIキー未設定）'}\n・支援先: ${siteName}${parsed.matchedSite?'':'（新規登録します）'}\n・期間: ${fmtD(parsed.from)} 〜 ${fmtD(parsed.to)}\n・必要人員: ${parsed.reqs.map(r=>`${r.qual}×${r.count}名`).join('、')}${parsed.nightWanted?'（夜勤対応希望）':''}${parsed.driverPreferred?'（🚗 運転できる方を優先）':''}${parsed.notes?`\n・状況: ${parsed.notes}`:''}\n\n条件に合う支援者をご提案します。${totalShort?`\n⚠️ ${totalShort}名分は条件に合う待機者が見つかりませんでした。`:''}`,
+    {parsed: apiRaw});
+  persistThread();
 
   document.getElementById('ai-proposal').innerHTML = `
     <div class="proposal">
@@ -852,14 +967,16 @@ async function runAI(){
           ${pl.shortage>0?`<div class="small" style="color:var(--danger); padding-left:24px;">⚠️ ${pl.shortage}名不足 — 他法人への追加募集をおすすめします</div>`:''}
         </div>`).join('')}
       <div class="flex" style="margin-top:10px;">
-        <button class="btn btn-sub" onclick="document.getElementById('ai-proposal').innerHTML='';currentProposal=null;">やり直す</button>
-        <button class="btn btn-main right" onclick="approveProposal()">✅ この内容で割り当てる</button>
+        <button class="btn btn-warn" onclick="rejectAI()">🚫 却下</button>
+        <button class="btn btn-sub" onclick="editProposal()">✏️ 手で編集</button>
+        <button class="btn btn-main right" onclick="approveProposal()">✅ この内容で保存</button>
       </div>
     </div>`;
 }
 
-function approveProposal(){
-  if(!currentProposal) return;
+/* 分配案をデータに適用する共通処理 (③保存 と ②手で編集 の両方から使う) */
+function applyProposal(){
+  if(!currentProposal) return null;
   const {parsed} = currentProposal;
   let s = parsed.matchedSite;
   let needsUpdated = false;
@@ -893,8 +1010,22 @@ function approveProposal(){
   });
   flash('s|'+s.name);
   document.getElementById('ai-proposal').innerHTML = '';
-  addMsg('ai', `✅ ${s.name} に ${n}名を割り当てました。${needsUpdated?`\n📋 支援先の必要人員を更新しました → ${s.needs.map(x=>`${x.qual}×${x.count}`).join('、')}（期間 ${fmtD(s.from)}〜${fmtD(s.to)}）`:''}\n調整ボードのタイムラインに反映済みです。`);
-  currentProposal = null; save();
+  currentProposal = null;
+  return {site: s, n, needsUpdated};
+}
+function approveProposal(){
+  const r = applyProposal();
+  if(!r) return;
+  addMsg('ai', `✅ ${r.site.name} に ${r.n}名を割り当てました。${r.needsUpdated?`\n📋 支援先の必要人員を更新しました → ${r.site.needs.map(x=>`${x.qual}×${x.count}`).join('、')}（期間 ${fmtD(r.site.from)}〜${fmtD(r.site.to)}）`:''}\n調整ボードに反映済みです（黄色い枠が今回の変更）。`);
+  persistThread(); save();
+}
+/* 手で編集: 分配は適用しつつ、支援先の編集画面を開いて微修正できるようにする */
+function editProposal(){
+  const r = applyProposal();
+  if(!r) return;
+  addMsg('ai', `✏️ ${r.site.name} に ${r.n}名を割り当てたうえで、支援先の編集画面を開きました。\n必要人員・期間・状況を直して「保存する」を押してください。`);
+  persistThread(); save();
+  openSiteModal(r.site.id);
 }
 
 /* ---------------- 実績CSV ---------------- */
@@ -923,6 +1054,11 @@ function renderStats(){
   document.getElementById('stat-sites').textContent = DATA.sites.filter(s=>s.active).length;
 }
 function renderAll(){ renderStats(); renderBoard(); }
+/* 使い方セクションのサンプル文面 (タップで入力欄へ) */
+document.getElementById('usage-samples').innerHTML = EXAMPLES.map((e,i)=>
+  `<button class="chip" style="max-width:100%; text-align:left; white-space:normal;" onclick="document.getElementById('ai-input').value=EXAMPLES[${i}];document.getElementById('ai-input').scrollIntoView({behavior:'smooth',block:'center'});">${esc(e.length>44?e.slice(0,44)+'…':e)}</button>`).join('');
+newThread();
+loadThreads();
 load();
 </script>
 </body>
