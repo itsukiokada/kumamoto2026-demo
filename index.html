@@ -250,7 +250,7 @@
   </div>
 </div>
 
-<footer>災害支援シフト調整プロトタイプ v1.3 — 株式会社NAGARA（デモ用架空データ）</footer>
+<footer>災害支援シフト調整プロトタイプ v1.5 — 株式会社NAGARA（デモ用架空データ）</footer>
 
 <script>
 'use strict';
@@ -505,8 +505,9 @@ function renderBoard(){
       ${s.note?`<span style="font-weight:400; font-size:11px;">📝${esc(s.note)}</span>`:''}
       ${selEntry?'<span style="font-size:12px;">▶ ここに割り当てる</span>':''}
       <span class="right flex" style="gap:4px;">
+        <button class="btn btn-sub btn-sm" title="上へ移動" onclick="event.stopPropagation();moveSite('${s.id}',-1)">↑</button>
+        <button class="btn btn-sub btn-sm" title="下へ移動" onclick="event.stopPropagation();moveSite('${s.id}',1)">↓</button>
         <button class="btn btn-sub btn-sm" onclick="event.stopPropagation();openSiteModal('${s.id}')">✏️ 編集</button>
-        <button class="btn btn-warn btn-sm" onclick="event.stopPropagation();closeSite('${s.id}')">支援終了</button>
       </span></div>`;
     row++;
     const as = DATA.assignments.filter(a=>a.siteId===s.id).sort((x,y)=>x.from.localeCompare(y.from));
@@ -650,7 +651,20 @@ function deletePerson(pid){
 
 /* ---------------- 支援先 追加/編集 ---------------- */
 function closeSite(sid){
+  // 誤操作防止のためボタンは一時非表示中 (2026-08-04 金子さん運用開始に伴い)
   if(confirm('この支援先を「終了」にしますか？')){ site(sid).active=false; save(); }
+}
+/* 並び替え: 配列順がそのまま表示順・保存時に sort_order として永続化される */
+function moveSite(sid, dir){
+  const idx = DATA.sites.findIndex(s=>s.id===sid);
+  if(idx < 0) return;
+  const s = DATA.sites[idx];
+  let j = idx + dir;
+  while(j >= 0 && j < DATA.sites.length && !DATA.sites[j].active) j += dir;  // 終了済みは飛ばす
+  if(j < 0 || j >= DATA.sites.length) return;
+  [DATA.sites[idx], DATA.sites[j]] = [DATA.sites[j], DATA.sites[idx]];
+  flash('s|'+s.name);
+  save();
 }
 let newNeeds = [];
 let editingSiteId = null;
