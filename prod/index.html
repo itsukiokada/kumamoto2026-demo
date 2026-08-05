@@ -113,6 +113,12 @@
   @keyframes flashpulse{from{filter:brightness(1);} to{filter:brightness(1.3);}}
   #sync{transition:opacity .3s;}
   .sel-banner{background:var(--accent-pale); border:1.5px solid var(--accent); border-radius:10px; padding:8px 14px; font-size:14px; margin-bottom:10px; display:flex; gap:10px; align-items:center; flex-wrap:wrap;}
+  .notice{background:#fff9e6; border:1.5px solid #e8d48a; border-left:5px solid var(--accent);
+    border-radius:10px; padding:10px 14px; font-size:13.5px; line-height:1.7; color:#5c4a1a; margin-bottom:14px;}
+  table{width:100%; border-collapse:collapse; background:var(--card); font-size:14px;}
+  th{background:var(--brand-pale); color:var(--brand-dark); font-size:13px; text-align:left; padding:10px 12px; white-space:nowrap;}
+  td{padding:10px 12px; border-top:1px solid var(--line); vertical-align:top;}
+  tbody tr:hover td{background:#fbfaf6;}
   .modal-bg{position:fixed; inset:0; background:rgba(0,0,0,.4); display:none; align-items:center; justify-content:center; z-index:50; padding:20px;}
   .modal-bg.show{display:flex;}
   .modal{background:#fff; border-radius:16px; padding:22px 24px; max-width:640px; width:100%; max-height:85vh; overflow-y:auto;}
@@ -193,6 +199,9 @@
 
   <!-- ============ 調整ボード（統合画面） ============ -->
   <section id="tab-board" class="tabpane show">
+    <div class="notice">
+      各施設への割り振りは「<b>DMAT</b>」が行うものです。本「調整ボード」は、その結果を反映し、活動記録を残すためのものです。<b>当日に割り振りが確定します。</b>未来の予定に関しては、切れ目なく支援者を確保するために<b>仮で表記</b>されているものです。
+    </div>
     <div class="chips">
       <b class="small" style="font-size:13px;">📅 期間で絞り込み</b>
       <input type="date" id="f-from" style="max-width:160px;">
@@ -216,6 +225,23 @@
     <div id="sel-banner"></div>
     <div class="card" style="overflow-x:auto;"><div id="boardgrid"><p class="small">データを読み込んでいます…</p></div></div>
     <p class="hint">表示は2週間ずつ（◀▶で移動・「期間で絞り込み」で任意範囲）｜1日 = 午前・午後の2マス｜🟢 緑 = 動かせる期間（バーをクリックで選択 → 支援先の行をクリックで割当）｜🟠 支援中・🔵 予定・グレー = 完了（バーをクリックで <b>✂️分ける</b>／🗑解除）｜名前クリックで詳細・編集・色設定｜<b style="color:#b8860b;">黄色い枠 = いま反映した項目</b></p>
+  </section>
+
+  <!-- ============ DMAT用 支援者名簿（閲覧専用・/dmat/ でのみ表示） ============ -->
+  <section id="tab-dmat" class="tabpane">
+    <div class="notice">
+      キャンナス熊本震災支援チームの<b>支援者名簿</b>です（閲覧専用）。施設への割り振りは含みません。<br>
+      時刻が判明している方は時刻まで、未確定の方は「午前／午後」までを表示しています。<span class="badge b-wait">調整中</span>は日程を調整中の方です。
+    </div>
+    <div class="chips">
+      <input type="date" id="d-from" style="max-width:160px;">
+      <span class="small">〜</span>
+      <input type="date" id="d-to" style="max-width:160px;">
+      <button class="btn btn-sub btn-sm" onclick="dmatToday()">本日</button>
+      <button class="btn btn-sub btn-sm" onclick="dmatAll()">すべて</button>
+      <button class="btn btn-sub btn-sm right" onclick="dmatCopy()">📋 テキストでコピー</button>
+    </div>
+    <div class="card" style="overflow-x:auto;"><div id="dmat-list"></div></div>
   </section>
 
   <!-- ============ AI秘書 ============ -->
@@ -322,15 +348,16 @@
   </div>
 </div>
 
-<footer>災害支援シフト調整プロトタイプ v1.9.3 — 株式会社NAGARA（デモ用架空データ）</footer>
+<footer>災害支援シフト調整プロトタイプ v2.0 — 株式会社NAGARA（デモ用架空データ）</footer>
 
 <script>
 'use strict';
 /* API接続先: ローカル開発時は同一サーバー、公開ページ(GitHub Pages)からは Supabase Edge Function。
    /prod/ 配下は本番 (別スキーマ・データ空スタート・合言葉ガード付き app-prod) に接続 */
-const IS_PROD = location.pathname.includes('/prod/');
+const IS_DMAT = location.pathname.includes('/dmat/');   // DMAT提出用の名簿ビュー(閲覧専用・別合言葉)
+const IS_PROD = location.pathname.includes('/prod/') || IS_DMAT;
 const API = ['localhost','127.0.0.1'].includes(location.hostname) ? ''
-  : 'https://dwbzwdvumxkcaqdwggml.supabase.co/functions/v1/' + (IS_PROD ? 'app-prod' : 'app');
+  : 'https://dwbzwdvumxkcaqdwggml.supabase.co/functions/v1/' + (IS_DMAT ? 'app-dmat' : IS_PROD ? 'app-prod' : 'app');
 /* 本番のみ: 合言葉を x-passcode ヘッダーで送る。401なら聞き直す */
 function apiHeaders(h){
   h = Object.assign({}, h);
@@ -353,7 +380,8 @@ async function api(path, opts){
   return res;
 }
 const TODAY = new Date().toISOString().slice(0,10);
-const QUALS = ['介護福祉士','看護師','准看護師','ケアマネ','実務者研修','初任者研修','運転可'];
+const QUALS = ['介護福祉士','看護師','准看護師','ケアマネ','実務者研修','初任者研修',
+  '理学療法士(PT)','作業療法士(OT)','言語聴覚士(ST)','管理栄養士','事務(ロジ)','運転可'];
 
 /* ---------------- データ (サーバーが正本) ---------------- */
 let DATA = {people:[], sites:[], assignments:[]};
@@ -534,6 +562,17 @@ function openAssignMenu(aid){
   document.getElementById('assign-modal-body').innerHTML = `
     <h3>${esc(p.name)} — ${esc(s.name)}</h3>
     <p class="small" style="margin-bottom:12px;">現在の割当: ${fmtRangeH(a)}</p>
+    <div class="form-row" style="background:var(--brand-pale); border-radius:10px; padding:10px 12px;">
+      <label>🕘 入り・出の時刻（DMAT報告用・空欄のままでもOK）</label>
+      <div class="flex">
+        <span class="small">入り ${fmtD(a.from)}</span>
+        <input type="time" id="asg-from-time" value="${a.fromTime||''}" style="max-width:130px;">
+        <span class="small">出 ${fmtD(a.to)}</span>
+        <input type="time" id="asg-to-time" value="${a.toTime||''}" style="max-width:130px;">
+        <button class="btn btn-main btn-sm" onclick="saveAssignTimes()">時刻を保存</button>
+      </div>
+      <p class="small" style="margin-top:4px;">※ この時刻は調整ボードには表示されず、DMAT用リストにのみ出ます</p>
+    </div>
     ${opts.length ? `
     <div class="form-row"><label>✂️ 途中で分ける — 選んだ時点から後ろがこの支援先から外れて「動かせる人」（緑バー）に戻ります。緑バーを選んで別の支援先に割り当ててください。</label>
       <div class="flex">
@@ -546,6 +585,15 @@ function openAssignMenu(aid){
       <button class="btn btn-sub btn-sm" onclick="closeModal('assign-modal')">閉じる</button>
     </div>`;
   document.getElementById('assign-modal').classList.add('show');
+}
+function saveAssignTimes(){
+  const a = DATA.assignments.find(x=>x.id===menuAssignId);
+  if(!a) return;
+  a.fromTime = document.getElementById('asg-from-time').value || null;
+  a.toTime = document.getElementById('asg-to-time').value || null;
+  closeModal('assign-modal');
+  flash(akey(a));
+  save();
 }
 function splitAssignment(){
   const a = DATA.assignments.find(x=>x.id===menuAssignId);
@@ -695,6 +743,8 @@ function renderBoard(){
 document.getElementById('board-search').addEventListener('input', renderBoard);
 document.getElementById('f-from').addEventListener('change', renderBoard);
 document.getElementById('f-to').addEventListener('change', renderBoard);
+document.getElementById('d-from').addEventListener('change', renderDmat);
+document.getElementById('d-to').addEventListener('change', renderDmat);
 
 /* ---------------- 支援者 詳細/追加/編集 ---------------- */
 function openPerson(pid){
@@ -1294,7 +1344,78 @@ function renderStats(){
   document.getElementById('stat-active').textContent = act;
   document.getElementById('stat-sites').textContent = DATA.sites.filter(s=>s.active).length;
 }
-function renderAll(){ renderStats(); renderBoard(); }
+function renderAll(){
+  if(IS_DMAT){ renderDmat(); return; }
+  renderStats(); renderBoard();
+}
+/* ---------------- DMAT用 支援者名簿 (閲覧専用) ---------------- */
+function dmatToday(){
+  document.getElementById('d-from').value = TODAY;
+  document.getElementById('d-to').value = TODAY;
+  renderDmat();
+}
+function dmatAll(){
+  document.getElementById('d-from').value = '';
+  document.getElementById('d-to').value = '';
+  renderDmat();
+}
+/* 1人につき「入り〜出」の行を作る。割当があればその期間、無ければ提出された行ける期間 */
+function dmatRows(){
+  const fF = document.getElementById('d-from').value || null;
+  const fT = document.getElementById('d-to').value || null;
+  const rows = [];
+  for(const p of DATA.people){
+    const as = personAssignments(p.id).sort((a,b)=>a.from.localeCompare(b.from));
+    if(as.length){
+      for(const a of as) rows.push({p, from:a.from, to:a.to, fromHalf:a.fromHalf, toHalf:a.toHalf,
+        fromTime:a.fromTime, toTime:a.toTime, confirmed:true});
+    }else{
+      for(const r of availRanges(p)) rows.push({p, from:r.from, to:r.to, fromHalf:'am', toHalf:'pm',
+        fromTime:null, toTime:null, confirmed:false});
+    }
+  }
+  return rows
+    .filter(r=>!fF || r.to >= fF)
+    .filter(r=>!fT || r.from <= fT)
+    .sort((a,b)=>a.from.localeCompare(b.from) || a.p.name.localeCompare(b.p.name));
+}
+function jobOf(p){
+  const j = p.quals.filter(q=>q!=='運転可');
+  if(j.length) return j.join('・');
+  // 資格未登録なら、メモに書かれた職種を拾う (PT/ST等をメモ運用していた期間の救済)
+  const m = (p.note||'').match(/(理学療法士|作業療法士|言語聴覚士|看護師|准看護師|介護福祉士|介護職|事務|ロジ|PT|OT|ST)/);
+  if(m) return m[1];
+  return p.quals.includes('運転可') ? '運転（ロジ）' : '—';
+}
+function dtText(iso, half, time){
+  const base = `${Number(iso.slice(5,7))}/${Number(iso.slice(8,10))}`;
+  if(time) return `${base} ${time}`;
+  return `${base}${half==='pm' ? ' 午後' : half==='am' ? ' 午前' : ''}`;
+}
+function renderDmat(){
+  const rows = dmatRows();
+  const el = document.getElementById('dmat-list');
+  el.innerHTML = `<table><thead><tr>
+      <th style="width:26%;">お名前</th><th style="width:20%;">職種</th><th style="width:24%;">所属</th>
+      <th style="width:15%;">入りの日時</th><th style="width:15%;">出の日時</th></tr></thead><tbody>` +
+    (rows.map(r=>`<tr>
+      <td><b>${orgMarkHtml(r.p)}${esc(r.p.name)}</b>${r.confirmed?'':' <span class="badge b-wait">調整中</span>'}</td>
+      <td>${esc(jobOf(r.p))}</td>
+      <td>${esc(r.p.corp)}</td>
+      <td>${dtText(r.from, r.fromHalf, r.fromTime)}</td>
+      <td>${dtText(r.to, r.toHalf, r.toTime)}</td>
+    </tr>`).join('') || '<tr><td colspan="5">該当する支援者がいません</td></tr>') +
+    `</tbody></table><p class="small" style="margin-top:8px;">計 ${rows.length} 名分（${new Date().toLocaleString('ja-JP')} 現在）</p>`;
+}
+function dmatCopy(){
+  const rows = dmatRows();
+  const txt = 'お名前\t職種\t所属\t入りの日時\t出の日時\n' +
+    rows.map(r=>[r.p.name, jobOf(r.p), r.p.corp,
+      dtText(r.from,r.fromHalf,r.fromTime), dtText(r.to,r.toHalf,r.toTime)].join('\t')).join('\n');
+  navigator.clipboard.writeText(txt).then(()=>alert('名簿をコピーしました。メールやメッセージにそのまま貼り付けられます。'))
+    .catch(()=>prompt('コピーしてお使いください', txt));
+}
+
 /* 本番モード: デモ表示を消し、実データ運用向けの見た目に */
 if(IS_PROD){
   document.querySelector('.demo-banner').remove();
@@ -1304,6 +1425,16 @@ if(IS_PROD){
   document.querySelector('footer').textContent = '災害支援シフト調整 — 株式会社NAGARA（本番環境・合言葉つき）';
   // /prod/ 配下からは説明資料が1階層上にある (相対リンクのままだと /prod/about.html で404)
   document.querySelectorAll('a[href="about.html"]').forEach(a=>a.href = '../about.html');
+}
+/* DMATモード: 調整ボード・AI秘書を隠し、支援者名簿だけの閲覧専用画面にする */
+if(IS_DMAT){
+  document.querySelectorAll('nav button').forEach(b=>b.remove());
+  document.querySelectorAll('.tabpane').forEach(p=>p.classList.remove('show'));
+  document.getElementById('tab-dmat').classList.add('show');
+  document.querySelector('header h1').textContent = '📋 支援者名簿（DMAT提出用）';
+  document.querySelectorAll('header .tag').forEach(t=>{ if(t.textContent==='本番環境') t.textContent='閲覧専用'; });
+  document.querySelector('.stats').remove();
+  document.querySelector('footer').textContent = 'キャンナス熊本震災支援チーム 支援者名簿 — 株式会社NAGARA（閲覧専用）';
 }
 /* 使い方セクションのサンプル文面 (タップで入力欄へ) */
 document.getElementById('usage-samples').innerHTML = EXAMPLES.map((e,i)=>
