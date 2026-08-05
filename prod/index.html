@@ -250,12 +250,18 @@
       🟠 支援中　🔵 これから　⬜ 活動終了　🟢 日程調整中
     </div>
     <div class="chips">
+      <button class="btn btn-sub btn-sm" onclick="dmatShift(-7)">◀ 前の1週間</button>
+      <button class="btn btn-sub btn-sm" onclick="dmatReset()">今日から2週間</button>
+      <button class="btn btn-sub btn-sm" onclick="dmatShift(7)">次の1週間 ▶</button>
+      <span class="small" id="dmat-view-label"></span>
+      <button class="btn btn-sub btn-sm right" onclick="dmatCopy()">📋 テキストでコピー</button>
+    </div>
+    <div class="chips">
+      <span class="small">期間を指定して見る:</span>
       <input type="date" id="d-from" style="max-width:160px;">
       <span class="small">〜</span>
       <input type="date" id="d-to" style="max-width:160px;">
-      <button class="btn btn-sub btn-sm" onclick="dmatToday()">本日</button>
-      <button class="btn btn-sub btn-sm" onclick="dmatAll()">すべて</button>
-      <button class="btn btn-sub btn-sm right" onclick="dmatCopy()">📋 テキストでコピー</button>
+      <button class="btn btn-sub btn-sm" onclick="dmatAll()">クリア</button>
     </div>
     <div class="card" style="overflow-x:auto;"><div id="dmat-list"></div></div>
     <p class="small" id="dmat-count"></p>
@@ -365,7 +371,7 @@
   </div>
 </div>
 
-<footer>災害支援シフト調整プロトタイプ v2.4.2 — 株式会社NAGARA（デモ用架空データ）</footer>
+<footer>災害支援シフト調整プロトタイプ v2.5 — 株式会社NAGARA（デモ用架空データ）</footer>
 
 <script>
 'use strict';
@@ -1623,15 +1629,23 @@ function renderAll(){
   renderStats(); renderBoard();
 }
 /* ---------------- DMAT用 支援者名簿 (閲覧専用) ---------------- */
-function dmatToday(){
-  document.getElementById('d-from').value = TODAY;
-  document.getElementById('d-to').value = TODAY;
-  renderDmat();
-}
-function dmatAll(){
+/* DMAT名簿の表示ウィンドウ: 既定は「今日から2週間」に固定（会議で見るのは直近のため） */
+let dmatFrom = TODAY;
+const DMAT_DAYS = 14;
+function dmatShift(days){
   document.getElementById('d-from').value = '';
   document.getElementById('d-to').value = '';
+  dmatFrom = addDays(dmatFrom, days);
   renderDmat();
+}
+function dmatReset(){
+  document.getElementById('d-from').value = '';
+  document.getElementById('d-to').value = '';
+  dmatFrom = TODAY;
+  renderDmat();
+}
+function dmatAll(){   // 日付指定をクリアして既定の2週間に戻す
+  dmatReset();
 }
 /* 1人につき「入り〜出」の行を作る。割当があればその期間、無ければ提出された行ける期間 */
 function dmatRows(){
@@ -1669,19 +1683,32 @@ function dtText(iso, half, time){
 function renderDmat(){
   const rows = dmatRows();
   const el = document.getElementById('dmat-list');
-  if(!rows.length){ el.innerHTML = '<p class="small">該当する支援者がいません</p>'; return; }
+  if(!rows.length){
+    el.innerHTML = '<p class="small">登録されている支援者がいません</p>';
+    document.getElementById('dmat-count').textContent = '';
+    document.getElementById('dmat-view-label').textContent = '';
+    return;
+  }
 
   const fF = document.getElementById('d-from').value || null;
   const fT = document.getElementById('d-to').value || null;
-  let min = fF, max = fT;
-  if(!min || !max){
-    rows.forEach(r=>{ if(!min || r.from < min) min = r.from; if(!max || r.to > max) max = r.to; });
-    if(fF) min = fF; if(fT) max = fT;
+  const filtered = !!(fF || fT);
+  let min, max;
+  if(filtered){
+    min = fF; max = fT;
+    if(!min || !max){
+      rows.forEach(r=>{ if(!min || r.from < min) min = r.from; if(!max || r.to > max) max = r.to; });
+      if(fF) min = fF; if(fT) max = fT;
+    }
+  }else{
+    min = dmatFrom;                       // 既定は今日から2週間に固定
+    max = addDays(dmatFrom, DMAT_DAYS-1);
   }
+  document.getElementById('dmat-view-label').textContent =
+    filtered ? `${fmtD(min)}〜${fmtD(max)}（期間指定中）` : `${fmtD(min)}〜${fmtD(max)} を表示中`;
   const days = [];
   let d = min;
   for(let i=0; i<62; i++){ days.push(d); if(d>=max) break; d = addDays(d,1); }
-  const cut = days[days.length-1] < max;   // 62日を超えて表示しきれなかった場合
   const first = slotNum(days[0],'am'), last = slotNum(days[days.length-1],'pm');
   const col = n => Math.max(first, Math.min(last, n)) - first;
 
@@ -1690,8 +1717,11 @@ function renderDmat(){
   let html = `<div style="display:grid; grid-template-columns:300px repeat(${nCols}, minmax(13px,1fr)); align-items:center; min-width:${300+nCols*14}px;">`;
   html += `<div style="grid-row:1; grid-column:1;"></div>` +
     days.map((iso,i)=>`<div class="tl-day ${iso===TODAY?'today':''}" style="grid-row:1; grid-column:${2+i*2} / span 2;">${fmtD(iso)}</div>`).join('');
+  // 表示期間に重ならない人は行ごと出さない（端に潰れた幻のバーが出るのを防ぐ）
+  const inWin = rows.filter(r=>r.to >= days[0] && r.from <= days[days.length-1]);
+  const outside = rows.filter(r=>!(r.to >= days[0] && r.from <= days[days.length-1]));
   let row = 2;
-  for(const r of rows){
+  for(const r of inWin){
     const label = `${dtText(r.from, r.fromHalf, r.fromTime)}〜${dtText(r.to, r.toHalf, r.toTime)}`;
     html += `<div class="tl-name" style="grid-row:${row}; grid-column:1;" title="${esc(r.p.name)} ${jobLabels(r.p).join('・')} ${label}">${esc(r.p.name)}${jobBadges(r.p)}${r.confirmed?'':'<span class="jb j-other">調整中</span>'} <span class="dmat-t">${label}</span></div>`;
     const s = slotNum(r.from, r.fromHalf==='pm'?'pm':'am');
@@ -1702,10 +1732,9 @@ function renderDmat(){
   }
   html += '</div>';
   el.innerHTML = html;
-  const outside = rows.filter(r=>r.to < days[0] || r.from > days[days.length-1]);
   document.getElementById('dmat-count').innerHTML =
-    `計 ${rows.length} 名分（${new Date().toLocaleString('ja-JP')} 現在）　🟠支援中・🔵これから・⬜活動終了・🟢日程調整中` +
-    (outside.length ? `<br><b style="color:var(--danger);">※ 表示期間の外に ${outside.length}名（${outside.map(r=>esc(r.p.name)+' '+fmtD(r.from)+'〜'+fmtD(r.to)).join('、')}）— 上の日付欄で期間を指定すると表示されます</b>` : '');
+    `この期間 ${inWin.length}名 ／ 登録全体 ${rows.length}名（${new Date().toLocaleString('ja-JP')} 現在）　🟠支援中・🔵これから・⬜活動終了・🟢日程調整中` +
+    (outside.length ? `<br><b style="color:var(--danger);">※ この期間の外に ${outside.length}名 — ${outside.map(r=>esc(r.p.name)+'（'+fmtD(r.from)+'〜'+fmtD(r.to)+'）').join('、')}　「次の1週間 ▶」か日付指定でご覧ください</b>` : '');
 }
 function dmatCopy(){
   const rows = dmatRows();
