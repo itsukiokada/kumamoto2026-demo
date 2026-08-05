@@ -278,7 +278,7 @@
     </div>
     <div class="form-row"><label>資格（あてはまるものをタップ）</label><div class="chips" id="pf-quals" style="margin-bottom:0;"></div></div>
     <div class="form-row"><label>名前の表示色（チームや役割の色分けに）</label><div class="flex" id="pf-colors"></div>
-      <p class="small" style="margin-top:4px;">所属に「キャンナス」を含む方はピンク＋<span class="orgmark" style="background:#d81b60;">C</span>マーク、「介事連」を含む方は赤＋<span class="orgmark" style="background:#c0392b;">J</span>マークが自動で付きます（ここで色を選ぶと色は上書き・マークは所属基準のまま）</p></div>
+      <p class="small" style="margin-top:4px;">所属による自動マーク: 「キャンナス」=ピンク<span class="orgmark" style="background:#d81b60;">C</span>／「介事連」=赤<span class="orgmark" style="background:#c0392b;">J</span>／「平成医療」=水色<span class="orgmark" style="background:#0288d1;">M</span>（ここで色を選ぶと色は上書き・マークは所属基準のまま）</p></div>
     <div class="grid2">
       <div class="form-row"><label>運転レベル（任意）</label>
         <select id="pf-drivelv"><option value="">—</option><option value="1">Lv1 近場のみ</option><option value="2">Lv2</option><option value="3">Lv3 一般道OK</option><option value="4">Lv4</option><option value="5">Lv5 長距離・山道OK</option></select></div>
@@ -322,7 +322,7 @@
   </div>
 </div>
 
-<footer>災害支援シフト調整プロトタイプ v1.9.2 — 株式会社NAGARA（デモ用架空データ）</footer>
+<footer>災害支援シフト調整プロトタイプ v1.9.3 — 株式会社NAGARA（デモ用架空データ）</footer>
 
 <script>
 'use strict';
@@ -733,6 +733,7 @@ const NAME_COLORS = ['#c0392b','#e07a3f','#b8860b','#2e7d32','#1a7f6e','#2f6db3'
 const ORG_COLOR_RULES = [
   {match:'キャンナス', color:'#d81b60', mark:'C'},
   {match:'介事連', color:'#c0392b', mark:'J'},
+  {match:'平成医療', color:'#0288d1', mark:'M'},
 ];
 function orgRule(p){ return ORG_COLOR_RULES.find(r=>(p.corp||'').includes(r.match)) || null; }
 function personColor(p){
