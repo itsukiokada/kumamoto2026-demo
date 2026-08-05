@@ -102,6 +102,7 @@
   .jb.j-other{background:#6b7280;} .jb.j-drive{background:transparent; padding:0;}
   .out-today{background:#c0392b; color:#fff; font-weight:700; font-size:11px;
     border-radius:6px; padding:2px 8px;}
+  .dmat-t{color:var(--ink); font-size:12px; font-weight:700; margin-left:4px;}
   .tl-name:hover{text-decoration:underline;}
   .sh-in{display:contents;}   /* デスクトップはそのまま。モバイルでsticky化 */
   .fh-in{display:contents;}
@@ -364,7 +365,7 @@
   </div>
 </div>
 
-<footer>災害支援シフト調整プロトタイプ v2.4 — 株式会社NAGARA（デモ用架空データ）</footer>
+<footer>災害支援シフト調整プロトタイプ v2.4.1 — 株式会社NAGARA（デモ用架空データ）</footer>
 
 <script>
 'use strict';
@@ -1671,28 +1672,31 @@ function renderDmat(){
   const days = [];
   let d = min;
   for(let i=0; i<62; i++){ days.push(d); if(d>=max) break; d = addDays(d,1); }
+  const cut = days[days.length-1] < max;   // 62日を超えて表示しきれなかった場合
   const first = slotNum(days[0],'am'), last = slotNum(days[days.length-1],'pm');
   const col = n => Math.max(first, Math.min(last, n)) - first;
 
   const nCols = days.length * 2;
-  let html = `<div style="display:grid; grid-template-columns:200px repeat(${nCols}, minmax(13px,1fr)); align-items:center; min-width:${200+nCols*14}px;">`;
+  // 名前列に in/out を併記する（バーが短いと文字が読めないため、文字情報はここで担保）
+  let html = `<div style="display:grid; grid-template-columns:300px repeat(${nCols}, minmax(13px,1fr)); align-items:center; min-width:${300+nCols*14}px;">`;
   html += `<div style="grid-row:1; grid-column:1;"></div>` +
     days.map((iso,i)=>`<div class="tl-day ${iso===TODAY?'today':''}" style="grid-row:1; grid-column:${2+i*2} / span 2;">${fmtD(iso)}</div>`).join('');
   let row = 2;
   for(const r of rows){
-    const jobs = jobBadges(r.p);
-    html += `<div class="tl-name" style="grid-row:${row}; grid-column:1;" title="${esc(r.p.name)} ${jobLabels(r.p).join('・')}">${esc(r.p.name)}${jobs}${r.confirmed?'':'<span class="jb j-other">調整中</span>'}</div>`;
+    const label = `${dtText(r.from, r.fromHalf, r.fromTime)}〜${dtText(r.to, r.toHalf, r.toTime)}`;
+    html += `<div class="tl-name" style="grid-row:${row}; grid-column:1;" title="${esc(r.p.name)} ${jobLabels(r.p).join('・')} ${label}">${esc(r.p.name)}${jobBadges(r.p)}${r.confirmed?'':'<span class="jb j-other">調整中</span>'} <span class="dmat-t">${label}</span></div>`;
     const s = slotNum(r.from, r.fromHalf==='pm'?'pm':'am');
     const e = slotNum(r.to, r.toHalf==='am'?'am':'pm');
-    const label = `${dtText(r.from, r.fromHalf, r.fromTime)}〜${dtText(r.to, r.toHalf, r.toTime)}`;
     const cls = r.confirmed ? (r.to < TODAY ? 'b-ended' : (r.from <= TODAY ? 'b-active' : 'b-planned')) : 'b-free';
-    html += `<div class="tl-bar ${cls}" style="grid-row:${row}; grid-column:${col(s)+2} / ${col(e)+3}; cursor:default;" title="${esc(r.p.name)} ${label}">${label}</div>`;
+    html += `<div class="tl-bar ${cls}" style="grid-row:${row}; grid-column:${col(s)+2} / ${col(e)+3}; cursor:default;" title="${esc(r.p.name)} ${label}"></div>`;
     row++;
   }
   html += '</div>';
   el.innerHTML = html;
-  document.getElementById('dmat-count').textContent =
-    `計 ${rows.length} 名分（${new Date().toLocaleString('ja-JP')} 現在）　🟠支援中・🔵予定・⬜活動終了・🟢調整中`;
+  const outside = rows.filter(r=>r.to < days[0] || r.from > days[days.length-1]);
+  document.getElementById('dmat-count').innerHTML =
+    `計 ${rows.length} 名分（${new Date().toLocaleString('ja-JP')} 現在）　🟠支援中・🔵これから・⬜活動終了・🟢日程調整中` +
+    (outside.length ? `<br><b style="color:var(--danger);">※ 表示期間の外に ${outside.length}名（${outside.map(r=>esc(r.p.name)+' '+fmtD(r.from)+'〜'+fmtD(r.to)).join('、')}）— 上の日付欄で期間を指定すると表示されます</b>` : '');
 }
 function dmatCopy(){
   const rows = dmatRows();
