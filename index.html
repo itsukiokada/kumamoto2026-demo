@@ -207,9 +207,15 @@
       <button class="btn btn-main btn-sm" onclick="openSiteModal()">＋ 支援先を追加</button>
       <button class="btn btn-sub btn-sm right" id="btn-reset" onclick="resetData()">デモデータを初期化</button>
     </div>
+    <div class="chips" id="view-nav">
+      <button class="btn btn-sub btn-sm" onclick="shiftView(-7)">◀ 前の1週間</button>
+      <button class="btn btn-sub btn-sm" onclick="resetView()">今日</button>
+      <button class="btn btn-sub btn-sm" onclick="shiftView(7)">次の1週間 ▶</button>
+      <span class="small" id="view-label"></span>
+    </div>
     <div id="sel-banner"></div>
     <div class="card" style="overflow-x:auto;"><div id="boardgrid"><p class="small">データを読み込んでいます…</p></div></div>
-    <p class="hint">1日 = 午前・午後の2マス｜🟢 緑 = 動かせる期間（バーをクリックで選択 → 支援先の行をクリックで割当）｜🟠 支援中・🔵 予定・グレー = 完了（バーをクリックで <b>✂️分ける</b>／🗑解除）｜名前クリックで詳細・編集・色設定｜<b style="color:#b8860b;">黄色い枠 = いま反映した項目</b></p>
+    <p class="hint">表示は2週間ずつ（◀▶で移動・「期間で絞り込み」で任意範囲）｜1日 = 午前・午後の2マス｜🟢 緑 = 動かせる期間（バーをクリックで選択 → 支援先の行をクリックで割当）｜🟠 支援中・🔵 予定・グレー = 完了（バーをクリックで <b>✂️分ける</b>／🗑解除）｜名前クリックで詳細・編集・色設定｜<b style="color:#b8860b;">黄色い枠 = いま反映した項目</b></p>
   </section>
 
   <!-- ============ AI秘書 ============ -->
@@ -316,7 +322,7 @@
   </div>
 </div>
 
-<footer>災害支援シフト調整プロトタイプ v1.9.1 — 株式会社NAGARA（デモ用架空データ）</footer>
+<footer>災害支援シフト調整プロトタイプ v1.9.2 — 株式会社NAGARA（デモ用架空データ）</footer>
 
 <script>
 'use strict';
@@ -480,6 +486,11 @@ document.querySelectorAll('nav button').forEach(b=>{
 /* ---------------- 調整ボード（統合画面） ---------------- */
 let boardQualFilter = null;
 let selEntry = null;   // {pid, from, to} 選択中の「動かせる期間」
+/* 表示ウィンドウ: 期間絞り込み未指定時は「昨日から2週間」に固定 (◀▶で週送り) */
+let viewFrom = addDays(TODAY, -1);
+const VIEW_DAYS = 14;
+function shiftView(days){ viewFrom = addDays(viewFrom, days); renderBoard(); }
+function resetView(){ viewFrom = addDays(TODAY, -1); renderBoard(); }
 function renderQualChips(elId, current, onpick){
   const el = document.getElementById(elId);
   el.innerHTML = `<button class="chip ${current===null?'on':''}" data-q="">すべて</button>` +
@@ -588,14 +599,23 @@ function renderBoard(){
       <button class="btn btn-sub btn-sm right" onclick="selEntry=null;renderBoard();">選択をやめる</button></div>`;
   }else sb.innerHTML = '';
 
-  /* 日付軸: 絞り込みがあればその範囲、なければデータから自動 (最大31日・1日=午前/午後の2列) */
-  let min = fF || TODAY, max = fT || TODAY;
-  if(!fF || !fT){
-    sites.forEach(s=>{ if(s.from<min) min=s.from; if(s.to>max) max=s.to; });
-    DATA.assignments.forEach(a=>{ const s=site(a.siteId); if(s&&s.active){ if(a.from<min) min=a.from; if(a.to>max) max=a.to; } });
-    entries.forEach(e=>{ if(e.seg.from<min) min=e.seg.from; if(e.seg.to>max) max=e.seg.to; });
-    if(fF) min = fF; if(fT) max = fT;
+  /* 日付軸: 通常は「昨日から2週間」固定 (9月の予定が入っても潰れない)。期間絞り込み時はその範囲 (最大31日) */
+  let min, max;
+  const filtered = !!(fF || fT);
+  if(filtered){
+    min = fF || TODAY; max = fT || TODAY;
+    if(!fF || !fT){
+      sites.forEach(s=>{ if(s.from<min) min=s.from; if(s.to>max) max=s.to; });
+      DATA.assignments.forEach(a=>{ const s=site(a.siteId); if(s&&s.active){ if(a.from<min) min=a.from; if(a.to>max) max=a.to; } });
+      entries.forEach(e=>{ if(e.seg.from<min) min=e.seg.from; if(e.seg.to>max) max=e.seg.to; });
+      if(fF) min = fF; if(fT) max = fT;
+    }
+  }else{
+    min = viewFrom;
+    max = addDays(viewFrom, VIEW_DAYS-1);
   }
+  document.getElementById('view-nav').style.display = filtered ? 'none' : 'flex';
+  if(!filtered) document.getElementById('view-label').textContent = `${fmtD(min)}〜${fmtD(max)} を表示中`;
   const daysArr = [];
   let d = min;
   for(let i=0; i<31; i++){ daysArr.push(d); if(d>=max) break; d = addDays(d,1); }
@@ -629,9 +649,11 @@ function renderBoard(){
         <button class="btn btn-sub btn-sm" onclick="event.stopPropagation();openSiteModal('${s.id}')">✏️ 編集</button>
       </span></span></div>`;
     row++;
-    const as = DATA.assignments.filter(a=>a.siteId===s.id).sort((x,y)=>x.from.localeCompare(y.from));
+    const asAll = DATA.assignments.filter(a=>a.siteId===s.id);
+    const as = asAll.filter(a=>aEnd(a) >= firstSlot && aStart(a) <= lastSlot)   // 表示期間外の行は出さない
+      .sort((x,y)=>x.from.localeCompare(y.from));
     if(!as.length){
-      html += `<div class="small" style="grid-row:${row}; grid-column:1 / -1; padding:4px 8px;">（まだ割当がありません）</div>`;
+      html += `<div class="small" style="grid-row:${row}; grid-column:1 / -1; padding:4px 8px;">（${asAll.length ? 'この期間の割当はありません' : 'まだ割当がありません'}）</div>`;
       row++; continue;
     }
     for(const a of as){
@@ -647,9 +669,12 @@ function renderBoard(){
   }
 
   /* --- 動かせる人レーン --- */
-  html += `<div class="tl-freehead" style="grid-row:${row}; grid-column:1 / -1;"><span class="fh-in">🟢 動かせる人（${entries.length}枠）— バーをクリックして選択 → 上の支援先へ</span></div>`;
+  const visEntries = entries.filter(e=>
+    slotNum(e.seg.to, e.seg.toHalf==='am'?'am':'pm') >= firstSlot && slotNum(e.seg.from, e.seg.fromHalf) <= lastSlot);
+  const hiddenN = entries.length - visEntries.length;
+  html += `<div class="tl-freehead" style="grid-row:${row}; grid-column:1 / -1;"><span class="fh-in">🟢 動かせる人（${visEntries.length}枠）— バーをクリックして選択 → 上の支援先へ${hiddenN?`　<span style="font-weight:400;">※表示期間外に${hiddenN}枠（▶で移動）</span>`:''}</span></div>`;
   row++;
-  for(const e of entries){
+  for(const e of visEntries){
     const sel = selEntry && selEntry.pid===e.p.id && selEntry.from===e.seg.from && selEntry.to===e.seg.to && selEntry.fromHalf===e.seg.fromHalf;
     html += `<div class="tl-name" style="grid-row:${row}; grid-column:1;" title="${esc(e.p.name)} ${esc(e.p.corp)}" onclick="openPerson('${e.p.id}')">${nameHtml(e.p)} <span class="corp">${esc(e.p.corp)}</span></div>`;
     const segLabel = fmtRangeH({from:e.seg.from, fromHalf:e.seg.fromHalf, to:e.seg.to, toHalf:e.seg.toHalf});
@@ -657,8 +682,8 @@ function renderBoard(){
     html += `<div class="tl-bar b-free ${sel?'selected':''} ${flashKeys.has('p|'+e.p.name)?'flash':''}" style="grid-row:${row}; grid-column:${c1+2} / ${c2+3};" title="${esc(e.p.name)} ${segLabel} ${e.p.quals.join('・')}" onclick="selectEntry('${e.p.id}','${e.seg.from}','${e.seg.to}','${e.seg.fromHalf}','${e.seg.toHalf}')">${segLabel} ${esc(e.p.quals.filter(q=>q!=='運転可').slice(0,1).join(''))}${e.p.quals.includes('運転可')?'🚗':''}</div>`;
     row++;
   }
-  if(!entries.length){
-    html += `<div class="small" style="grid-row:${row}; grid-column:1 / -1; padding:6px;">条件に合う動かせる人がいません</div>`; row++;
+  if(!visEntries.length){
+    html += `<div class="small" style="grid-row:${row}; grid-column:1 / -1; padding:6px;">${entries.length ? 'この期間に動かせる人はいません（◀▶で期間を移動）' : '条件に合う動かせる人がいません'}</div>`; row++;
   }
   if(noAvail.length){
     html += `<div class="small" style="grid-row:${row}; grid-column:1 / -1; padding:6px;">📮 期間未提出: ${noAvail.map(p=>`<a href="#" onclick="openPerson('${p.id}');return false;">${esc(p.name)}</a>`).join('、')}</div>`;
