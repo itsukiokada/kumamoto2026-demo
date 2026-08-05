@@ -82,6 +82,8 @@
   details.usage .inner{padding-bottom:16px;}
   .proposal{border:2px solid var(--brand); border-radius:14px; padding:14px 16px; background:var(--brand-pale); margin:4px 0 14px 40px;}
   .proposal h4{color:var(--brand-dark); margin-bottom:8px; font-size:15px;}
+  .dup-warn{background:#fff4e5; border:1.5px solid var(--accent); border-radius:10px;
+    padding:10px 12px; margin:8px 0; font-size:13.5px; color:#7a4a12;}
   .prop-cand{display:flex; align-items:center; gap:8px; padding:5px 0; font-size:14px;}
   .tl-day{font-size:10px; text-align:center; color:var(--sub); font-weight:700; padding:2px 0; border-left:1px solid #f0ece3;}
   .tl-day.today{color:var(--accent); background:var(--accent-pale); border-radius:6px 6px 0 0;}
@@ -107,6 +109,10 @@
   .tl-bar.b-planned{background:var(--blue);}
   .tl-bar.b-done{background:#9aa39b;}
   .tl-bar.b-free{background:#3f9e50;}
+  .tl-bar.b-ended{background:#a8b0a9;}   /* 活動終了（記録として表示） */
+  .outside{background:var(--blue-pale); border:1.5px solid #b9d2ee; border-radius:10px;
+    padding:10px 14px; font-size:13px; line-height:2; margin-bottom:12px;}
+  .outside a{color:var(--blue); font-weight:700;}
   .tl-bar.b-free.selected{outline:3px solid var(--accent); box-shadow:0 0 0 2px #fff inset;}
   .tl-bar.flash{outline:3px solid #f2b60d; box-shadow:0 0 0 4px rgba(242,182,13,.30); animation:flashpulse .9s ease-in-out infinite alternate;}
   .tl-sitehead.flash{outline:3px solid #f2b60d; box-shadow:0 0 0 4px rgba(242,182,13,.25);}
@@ -224,7 +230,8 @@
     </div>
     <div id="sel-banner"></div>
     <div class="card" style="overflow-x:auto;"><div id="boardgrid"><p class="small">データを読み込んでいます…</p></div></div>
-    <p class="hint">表示は2週間ずつ（◀▶で移動・「期間で絞り込み」で任意範囲）｜1日 = 午前・午後の2マス｜🟢 緑 = 動かせる期間（バーをクリックで選択 → 支援先の行をクリックで割当）｜🟠 支援中・🔵 予定・グレー = 完了（バーをクリックで <b>✂️分ける</b>／🗑解除）｜名前クリックで詳細・編集・色設定｜<b style="color:#b8860b;">黄色い枠 = いま反映した項目</b></p>
+    <div id="outside-box"></div>
+    <p class="hint">表示は2週間ずつ（◀▶で移動・「期間で絞り込み」で任意範囲）｜1日 = 午前・午後の2マス｜🟢 緑 = 動かせる期間（バーをクリックで選択 → 支援先の行をクリックで割当）｜⬜ グレーの緑バー = <b>活動終了（記録）</b>｜🟠 支援中・🔵 予定（バーをクリックで <b>✂️分ける</b>／🗑解除）｜名前クリックで詳細・編集・色設定｜<b style="color:#b8860b;">黄色い枠 = いま反映した項目</b></p>
   </section>
 
   <!-- ============ DMAT用 支援者名簿（閲覧専用・/dmat/ でのみ表示） ============ -->
@@ -348,7 +355,7 @@
   </div>
 </div>
 
-<footer>災害支援シフト調整プロトタイプ v2.0 — 株式会社NAGARA（デモ用架空データ）</footer>
+<footer>災害支援シフト調整プロトタイプ v2.1 — 株式会社NAGARA（デモ用架空データ）</footer>
 
 <script>
 'use strict';
@@ -514,11 +521,21 @@ document.querySelectorAll('nav button').forEach(b=>{
 /* ---------------- 調整ボード（統合画面） ---------------- */
 let boardQualFilter = null;
 let selEntry = null;   // {pid, from, to} 選択中の「動かせる期間」
-/* 表示ウィンドウ: 期間絞り込み未指定時は「昨日から2週間」に固定 (◀▶で週送り) */
-let viewFrom = addDays(TODAY, -1);
+/* 表示ウィンドウ: 期間絞り込み未指定時は「1週間前から2週間」(◀▶で週送り)。
+   起点を1週間前にしているのは、終了済みの活動も記録として見えている必要があるため
+   (2026-08-05 深川さん消失事故: 終了日が今日より前の人が画面から完全に消えていた) */
+let viewFrom = addDays(TODAY, -7);
 const VIEW_DAYS = 14;
 function shiftView(days){ viewFrom = addDays(viewFrom, days); renderBoard(); }
-function resetView(){ viewFrom = addDays(TODAY, -1); renderBoard(); }
+function resetView(){ viewFrom = addDays(TODAY, -7); renderBoard(); }
+/* 表示期間外の人へジャンプ (その期間が見えるようウィンドウを移動) */
+function jumpTo(iso){
+  document.getElementById('f-from').value = '';
+  document.getElementById('f-to').value = '';
+  viewFrom = addDays(iso, -2);
+  renderBoard();
+  document.getElementById('boardgrid').scrollIntoView({behavior:'smooth', block:'start'});
+}
 function renderQualChips(elId, current, onpick){
   const el = document.getElementById(elId);
   el.innerHTML = `<button class="chip ${current===null?'on':''}" data-q="">すべて</button>` +
@@ -631,10 +648,10 @@ function renderBoard(){
       const rs = availRanges(p);
       if(!rs.length){ noAvail.push(p); return; }
       rs.forEach(r=>freeSegments(p, r).forEach(seg=>{
-        if(seg.to < TODAY) return;               // 過去の期間は出さない
+        // 終了済みの期間もグレーで表示する（活動記録として残すため。除外すると画面から人が消える）
         if(fF && seg.to < fF) return;
         if(fT && seg.from > fT) return;
-        entries.push({p, seg});
+        entries.push({p, seg, past: seg.to < TODAY});
       }));
     });
   entries.sort((a,b)=>a.seg.from.localeCompare(b.seg.from) || a.p.name.localeCompare(b.p.name));
@@ -717,17 +734,17 @@ function renderBoard(){
   }
 
   /* --- 動かせる人レーン --- */
-  const visEntries = entries.filter(e=>
-    slotNum(e.seg.to, e.seg.toHalf==='am'?'am':'pm') >= firstSlot && slotNum(e.seg.from, e.seg.fromHalf) <= lastSlot);
-  const hiddenN = entries.length - visEntries.length;
-  html += `<div class="tl-freehead" style="grid-row:${row}; grid-column:1 / -1;"><span class="fh-in">🟢 動かせる人（${visEntries.length}枠）— バーをクリックして選択 → 上の支援先へ${hiddenN?`　<span style="font-weight:400;">※表示期間外に${hiddenN}枠（▶で移動）</span>`:''}</span></div>`;
+  const inWin = e => slotNum(e.seg.to, e.seg.toHalf==='am'?'am':'pm') >= firstSlot && slotNum(e.seg.from, e.seg.fromHalf) <= lastSlot;
+  const visEntries = entries.filter(inWin);
+  const outEntries = entries.filter(e=>!inWin(e));
+  html += `<div class="tl-freehead" style="grid-row:${row}; grid-column:1 / -1;"><span class="fh-in">🟢 動かせる人（${visEntries.length}枠）— バーをクリックして選択 → 上の支援先へ</span></div>`;
   row++;
   for(const e of visEntries){
     const sel = selEntry && selEntry.pid===e.p.id && selEntry.from===e.seg.from && selEntry.to===e.seg.to && selEntry.fromHalf===e.seg.fromHalf;
     html += `<div class="tl-name" style="grid-row:${row}; grid-column:1;" title="${esc(e.p.name)} ${esc(e.p.corp)}" onclick="openPerson('${e.p.id}')">${nameHtml(e.p)} <span class="corp">${esc(e.p.corp)}</span></div>`;
     const segLabel = fmtRangeH({from:e.seg.from, fromHalf:e.seg.fromHalf, to:e.seg.to, toHalf:e.seg.toHalf});
     const {c1, c2} = clip(slotNum(e.seg.from, e.seg.fromHalf), slotNum(e.seg.to, e.seg.toHalf==='am'?'am':'pm'));
-    html += `<div class="tl-bar b-free ${sel?'selected':''} ${flashKeys.has('p|'+e.p.name)?'flash':''}" style="grid-row:${row}; grid-column:${c1+2} / ${c2+3};" title="${esc(e.p.name)} ${segLabel} ${e.p.quals.join('・')}" onclick="selectEntry('${e.p.id}','${e.seg.from}','${e.seg.to}','${e.seg.fromHalf}','${e.seg.toHalf}')">${segLabel} ${esc(e.p.quals.filter(q=>q!=='運転可').slice(0,1).join(''))}${e.p.quals.includes('運転可')?'🚗':''}</div>`;
+    html += `<div class="tl-bar ${e.past?'b-ended':'b-free'} ${sel?'selected':''} ${flashKeys.has('p|'+e.p.name)?'flash':''}" style="grid-row:${row}; grid-column:${c1+2} / ${c2+3};" title="${esc(e.p.name)} ${segLabel} ${e.p.quals.join('・')}${e.past?'（活動終了）':''}" onclick="selectEntry('${e.p.id}','${e.seg.from}','${e.seg.to}','${e.seg.fromHalf}','${e.seg.toHalf}')">${segLabel} ${e.past?'活動終了':esc(e.p.quals.filter(q=>q!=='運転可').slice(0,1).join(''))+(e.p.quals.includes('運転可')?'🚗':'')}</div>`;
     row++;
   }
   if(!visEntries.length){
@@ -739,6 +756,16 @@ function renderBoard(){
   }
   html += '</div>';
   el.innerHTML = html;
+
+  /* 表示期間の外にいる人を必ず見えるようにする (件数だけでなく氏名と日付・ジャンプ導線を出す) */
+  const ob = document.getElementById('outside-box');
+  if(outEntries.length){
+    const list = outEntries
+      .sort((a,b)=>a.seg.from.localeCompare(b.seg.from))
+      .map(e=>`<a href="#" onclick="jumpTo('${e.seg.from}');return false;" style="white-space:nowrap;">${esc(e.p.name)} <span class="small">${fmtD(e.seg.from)}〜${fmtD(e.seg.to)}</span></a>`)
+      .join('　/　');
+    ob.innerHTML = `<div class="outside">📅 <b>表示している期間の外に ${outEntries.length}枠</b>あります（名前をクリックするとその期間に移動します）<br>${list}</div>`;
+  }else ob.innerHTML = '';
 }
 document.getElementById('board-search').addEventListener('input', renderBoard);
 document.getElementById('f-from').addEventListener('change', renderBoard);
@@ -848,6 +875,11 @@ function savePerson(){
     avail: ranges,
   };
   if(fields.driveLv && !fields.quals.includes('運転可')) fields.quals.push('運転可');
+  // 新規追加時のみ、同名の既存者がいれば確認する (二重登録の防止)
+  if(!editingPersonId){
+    const dup = DATA.people.filter(p=>normName(p.name) === normName(name));
+    if(dup.length && !confirm(`「${name}」さんは既に登録されています。\n${dup.map(p=>'・'+personSummary(p)).join('\n')}\n\n別人として新しく追加しますか？\n（同じ方の期間を足す場合は「キャンセル」→ 一覧でその方の名前をクリックして編集してください）`)) return;
+  }
   const target = editingPersonId ? (person(editingPersonId) || DATA.people.find(x=>x.name===editingPersonName)) : null;
   if(target){
     Object.assign(target, fields);
@@ -1135,16 +1167,53 @@ function fromApiParse(x){
 
 /* 支援者からの「行けます」申し出 → 動かせる人一覧へ登録 */
 let currentOffer = null;
+let mergeTargetId = null;   // 既存の同一人物に期間を追加する場合の対象
+
+/* 既存の支援者から同一人物の候補を探す (氏名の揺れ「深川」「深川さん」等を吸収) */
+function normName(s){
+  return String(s||'').replace(/さん|様|氏|\s|　/g,'').trim();
+}
+function findSamePerson(o){
+  const n = normName(o.person_name);
+  if(!n) return [];
+  const org = normName(o.organization);
+  return DATA.people.filter(p=>{
+    const pn = normName(p.name);
+    if(!(pn === n || pn.includes(n) || n.includes(pn))) return false;
+    if(!org) return true;                       // 所属の記載が無ければ氏名一致のみで候補に
+    const pc = normName(p.corp);
+    return pc.includes(org) || org.includes(pc) || pc.includes(n);
+  });
+}
+function personSummary(p){
+  const q = p.quals.length ? p.quals.join('・') : '資格未設定';
+  const av = availRanges(p).map(r=>`${fmtD(r.from)}〜${fmtD(r.to)}`).join('、') || '期間なし';
+  return `${p.corp}｜${q}｜${av}`;
+}
+
 function showOfferProposal(o){
   currentOffer = o;
+  mergeTargetId = null;
   const periods = (o.periods||[]).filter(p=>p.from&&p.to).map(p=>`${fmtD(p.from)}〜${fmtD(p.to)}`).join('、');
   addMsg('ai',
     `🙋 支援の「申し出」として読み取りました\n・お名前: ${o.person_name||'（記載なし）'}\n・所属: ${o.organization||'（記載なし）'}\n・人数: ${o.headcount||1}名\n・行ける期間: ${periods||'（記載なし）'}${o.quals&&o.quals.length?`\n・資格: ${o.quals.join('、')}`:''}${o.can_drive?'\n・🚗 運転可':''}${o.night_shift_ok?'\n・夜勤可':''}${o.notes?`\n・特記: ${o.notes}`:''}`);
+  const dupes = findSamePerson(o);
+  const dupHtml = dupes.length ? `
+      <div class="dup-warn">
+        ⚠️ <b>同じ方が既に登録されています</b>（${dupes.length}件）。二重登録を防ぐため、どちらか選んでください。
+        ${dupes.map(p=>`<label class="prop-cand"><input type="radio" name="dupsel" value="${p.id}" ${dupes.length===1?'checked':''}>
+          <b>${esc(p.name)}</b> <span class="small">${esc(personSummary(p))}</span></label>`).join('')}
+        <label class="prop-cand"><input type="radio" name="dupsel" value="" ${dupes.length===1?'':'checked'}>
+          <b>別人として新規登録する</b> <span class="small">（同姓の別の方の場合）</span></label>
+      </div>` : '';
   document.getElementById('ai-proposal').innerHTML = `
     <div class="proposal">
       <h4>🙋 支援者として登録します（${o.headcount||1}名）</h4>
       <p class="small">${esc(o.organization||'所属未登録')}｜${esc(o.person_name||'氏名未登録')}｜${periods||'期間未定'}</p>
-      <p class="small">保存すると調整ボードの「動かせる人」に緑のバーで表示され、分配の候補になります。</p>
+      ${dupHtml}
+      <p class="small">${dupes.length
+        ? '「同じ方」を選ぶと、その方に今回の期間が<b>追加</b>されます（既存の資格・所属はそのまま残ります）。'
+        : '保存すると調整ボードの「動かせる人」に緑のバーで表示され、分配の候補になります。'}</p>
       <div class="flex" style="margin-top:10px;">
         <button class="btn btn-warn" onclick="rejectAI()">🚫 却下</button>
         <button class="btn btn-sub" onclick="editOffer()">✏️ 手で編集して登録</button>
@@ -1188,6 +1257,32 @@ async function approveOffer(){
   const quals = (o.quals||[]).filter(q=>QUALS.includes(q));
   if(o.can_drive && !quals.includes('運転可')) quals.push('運転可');
   const note = [o.night_shift_ok?'夜勤可':null, o.notes||null].filter(Boolean).join('・').slice(0,80);
+
+  // 「同じ方」が選ばれていれば新規作成せず、既存レコードに期間を追加する
+  const sel = document.querySelector('#ai-proposal input[name=dupsel]:checked');
+  const target = sel && sel.value ? person(sel.value) : null;
+  if(target){
+    const cur = availRanges(target).map(r=>({...r}));
+    let added = 0;
+    for(const np of periods){
+      if(!cur.some(r=>r.from===np.from && r.to===np.to)){ cur.push({...np}); added++; }
+    }
+    cur.sort((a,b)=>a.from.localeCompare(b.from));
+    target.avail = cur;
+    quals.forEach(q=>{ if(!target.quals.includes(q)) target.quals.push(q); });   // 資格は失わせない
+    if(note && !(target.note||'').includes(note)) target.note = [target.note, note].filter(Boolean).join('・').slice(0,200);
+    if((!target.corp || target.corp.includes('未登録')) && o.organization) target.corp = o.organization;
+    document.getElementById('ai-proposal').innerHTML = '';
+    currentOffer = null;
+    flash('p|'+target.name);
+    addMsg('ai', added
+      ? `✅ 既存の「${target.name}」さんに期間を追加しました（${periods.map(p=>fmtD(p.from)+'〜'+fmtD(p.to)).join('、')}）。\n新しい人としては登録していないので、名簿が二重になりません。`
+      : `ℹ️ 「${target.name}」さんには既に同じ期間が登録されていたため、追加はありませんでした。`);
+    persistThread();
+    await save();
+    return;
+  }
+
   for(let i=0; i<n; i++){
     const name = (i===0 && o.person_name) ? o.person_name
       : `${o.organization||'所属未登録'} スタッフ${n>1? i+1 : ''}（氏名未登録）`;
