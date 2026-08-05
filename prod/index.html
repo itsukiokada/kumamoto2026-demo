@@ -365,7 +365,7 @@
   </div>
 </div>
 
-<footer>災害支援シフト調整プロトタイプ v2.4.1 — 株式会社NAGARA（デモ用架空データ）</footer>
+<footer>災害支援シフト調整プロトタイプ v2.4.2 — 株式会社NAGARA（デモ用架空データ）</footer>
 
 <script>
 'use strict';
@@ -375,10 +375,13 @@ const IS_DMAT = location.pathname.includes('/dmat/');   // DMAT提出用の名�
 const IS_PROD = location.pathname.includes('/prod/') || IS_DMAT;
 const API = ['localhost','127.0.0.1'].includes(location.hostname) ? ''
   : 'https://dwbzwdvumxkcaqdwggml.supabase.co/functions/v1/' + (IS_DMAT ? 'app-dmat' : IS_PROD ? 'app-prod' : 'app');
-/* 本番のみ: 合言葉を x-passcode ヘッダーで送る。401なら聞き直す */
+/* 本番のみ: 合言葉を x-passcode ヘッダーで送る。401なら聞き直す。
+   保存キーは画面ごとに分ける（調整ボードとDMAT名簿は同じドメインでlocalStorageを共有するため、
+   共通キーだと行き来のたびに上書きし合って毎回入力を求められる。2026-08-05 金子さん報告） */
+const PC_KEY = IS_DMAT ? 'shift-passcode-dmat' : 'shift-passcode';
 function apiHeaders(h){
   h = Object.assign({}, h);
-  const pc = localStorage.getItem('shift-passcode');
+  const pc = localStorage.getItem(PC_KEY);
   if(IS_PROD && pc) h['x-passcode'] = pc;
   return h;
 }
@@ -387,12 +390,18 @@ async function api(path, opts){
   opts.headers = apiHeaders(opts.headers);
   let res = await fetch(API + path, opts);
   if(res.status === 401 && IS_PROD){
-    const pc = prompt('合言葉を入力してください（調整本部から共有されたものです）');
+    const pc = prompt(IS_DMAT
+      ? 'DMAT名簿の合言葉を入力してください（調整ボードとは別のものです）'
+      : '調整ボードの合言葉を入力してください（調整本部から共有されたものです）');
     if(pc === null) throw new Error('passcode required');
-    localStorage.setItem('shift-passcode', pc.trim());
+    localStorage.setItem(PC_KEY, pc.trim());
     opts.headers = apiHeaders(opts.headers);
     res = await fetch(API + path, opts);
-    if(res.status === 401){ alert('合言葉が違います。ページを再読み込みしてやり直してください。'); throw new Error('bad passcode'); }
+    if(res.status === 401){
+      localStorage.removeItem(PC_KEY);   // 誤った値を残さない（次回また弾かれ続けるのを防ぐ）
+      alert('合言葉が違います。ページを再読み込みしてやり直してください。');
+      throw new Error('bad passcode');
+    }
   }
   return res;
 }
