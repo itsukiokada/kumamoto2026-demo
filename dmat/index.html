@@ -245,7 +245,8 @@
   <section id="tab-dmat" class="tabpane">
     <div class="notice">
       キャンナス熊本震災支援チームの<b>支援者名簿</b>です（閲覧専用）。施設への割り振りは含みません。<br>
-      時刻が判明している方は時刻まで、未確定の方は「午前／午後」までを表示しています。<span class="badge b-wait">調整中</span>は日程を調整中の方です。
+      1日 = 午前・午後の2マス。時刻が判明している方はバーに時刻まで、未確定の方は「午前／午後」を表示しています。<br>
+      🟠 支援中　🔵 これから　⬜ 活動終了　🟢 日程調整中
     </div>
     <div class="chips">
       <input type="date" id="d-from" style="max-width:160px;">
@@ -256,6 +257,7 @@
       <button class="btn btn-sub btn-sm right" onclick="dmatCopy()">📋 テキストでコピー</button>
     </div>
     <div class="card" style="overflow-x:auto;"><div id="dmat-list"></div></div>
+    <p class="small" id="dmat-count"></p>
   </section>
 
   <!-- ============ AI秘書 ============ -->
@@ -362,7 +364,7 @@
   </div>
 </div>
 
-<footer>災害支援シフト調整プロトタイプ v2.3 — 株式会社NAGARA（デモ用架空データ）</footer>
+<footer>災害支援シフト調整プロトタイプ v2.4 — 株式会社NAGARA（デモ用架空データ）</footer>
 
 <script>
 'use strict';
@@ -1653,25 +1655,49 @@ function dtText(iso, half, time){
   if(time) return `${base} ${time}`;
   return `${base}${half==='pm' ? ' 午後' : half==='am' ? ' 午前' : ''}`;
 }
+/* DMAT名簿: 調整ボードと同じガント表示。所属は出さず「名前・資格・in/outの時刻」に絞る */
 function renderDmat(){
   const rows = dmatRows();
   const el = document.getElementById('dmat-list');
-  el.innerHTML = `<table><thead><tr>
-      <th style="width:26%;">お名前</th><th style="width:20%;">職種</th><th style="width:24%;">所属</th>
-      <th style="width:15%;">入りの日時</th><th style="width:15%;">出の日時</th></tr></thead><tbody>` +
-    (rows.map(r=>`<tr>
-      <td><b>${orgMarkHtml(r.p)}${esc(r.p.name)}</b>${r.confirmed?'':' <span class="badge b-wait">調整中</span>'}</td>
-      <td>${esc(jobOf(r.p))}</td>
-      <td>${esc(r.p.corp)}</td>
-      <td>${dtText(r.from, r.fromHalf, r.fromTime)}</td>
-      <td>${dtText(r.to, r.toHalf, r.toTime)}</td>
-    </tr>`).join('') || '<tr><td colspan="5">該当する支援者がいません</td></tr>') +
-    `</tbody></table><p class="small" style="margin-top:8px;">計 ${rows.length} 名分（${new Date().toLocaleString('ja-JP')} 現在）</p>`;
+  if(!rows.length){ el.innerHTML = '<p class="small">該当する支援者がいません</p>'; return; }
+
+  const fF = document.getElementById('d-from').value || null;
+  const fT = document.getElementById('d-to').value || null;
+  let min = fF, max = fT;
+  if(!min || !max){
+    rows.forEach(r=>{ if(!min || r.from < min) min = r.from; if(!max || r.to > max) max = r.to; });
+    if(fF) min = fF; if(fT) max = fT;
+  }
+  const days = [];
+  let d = min;
+  for(let i=0; i<62; i++){ days.push(d); if(d>=max) break; d = addDays(d,1); }
+  const first = slotNum(days[0],'am'), last = slotNum(days[days.length-1],'pm');
+  const col = n => Math.max(first, Math.min(last, n)) - first;
+
+  const nCols = days.length * 2;
+  let html = `<div style="display:grid; grid-template-columns:200px repeat(${nCols}, minmax(13px,1fr)); align-items:center; min-width:${200+nCols*14}px;">`;
+  html += `<div style="grid-row:1; grid-column:1;"></div>` +
+    days.map((iso,i)=>`<div class="tl-day ${iso===TODAY?'today':''}" style="grid-row:1; grid-column:${2+i*2} / span 2;">${fmtD(iso)}</div>`).join('');
+  let row = 2;
+  for(const r of rows){
+    const jobs = jobBadges(r.p);
+    html += `<div class="tl-name" style="grid-row:${row}; grid-column:1;" title="${esc(r.p.name)} ${jobLabels(r.p).join('・')}">${esc(r.p.name)}${jobs}${r.confirmed?'':'<span class="jb j-other">調整中</span>'}</div>`;
+    const s = slotNum(r.from, r.fromHalf==='pm'?'pm':'am');
+    const e = slotNum(r.to, r.toHalf==='am'?'am':'pm');
+    const label = `${dtText(r.from, r.fromHalf, r.fromTime)}〜${dtText(r.to, r.toHalf, r.toTime)}`;
+    const cls = r.confirmed ? (r.to < TODAY ? 'b-ended' : (r.from <= TODAY ? 'b-active' : 'b-planned')) : 'b-free';
+    html += `<div class="tl-bar ${cls}" style="grid-row:${row}; grid-column:${col(s)+2} / ${col(e)+3}; cursor:default;" title="${esc(r.p.name)} ${label}">${label}</div>`;
+    row++;
+  }
+  html += '</div>';
+  el.innerHTML = html;
+  document.getElementById('dmat-count').textContent =
+    `計 ${rows.length} 名分（${new Date().toLocaleString('ja-JP')} 現在）　🟠支援中・🔵予定・⬜活動終了・🟢調整中`;
 }
 function dmatCopy(){
   const rows = dmatRows();
-  const txt = 'お名前\t職種\t所属\t入りの日時\t出の日時\n' +
-    rows.map(r=>[r.p.name, jobOf(r.p), r.p.corp,
+  const txt = 'お名前\t資格\t入りの日時\t出の日時\n' +
+    rows.map(r=>[r.p.name, jobOf(r.p),
       dtText(r.from,r.fromHalf,r.fromTime), dtText(r.to,r.toHalf,r.toTime)].join('\t')).join('\n');
   navigator.clipboard.writeText(txt).then(()=>alert('名簿をコピーしました。メールやメッセージにそのまま貼り付けられます。'))
     .catch(()=>prompt('コピーしてお使いください', txt));
