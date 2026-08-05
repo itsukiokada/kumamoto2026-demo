@@ -355,7 +355,7 @@
   </div>
 </div>
 
-<footer>災害支援シフト調整プロトタイプ v2.1 — 株式会社NAGARA（デモ用架空データ）</footer>
+<footer>災害支援シフト調整プロトタイプ v2.2 — 株式会社NAGARA（デモ用架空データ）</footer>
 
 <script>
 'use strict';
@@ -597,6 +597,7 @@ function openAssignMenu(aid){
         <button class="btn btn-main btn-sm" onclick="splitAssignment()">✂️ ここで分ける</button>
       </div>
     </div>` : '<p class="small">この割当は半日ぶんのため、これ以上分割できません。</p>'}
+    ${mergeInfo(a)}
     <div class="flex" style="justify-content:flex-end; margin-top:16px;">
       <button class="btn btn-warn btn-sm" onclick="unassignBar('${a.id}')">🗑 割当をすべて解除</button>
       <button class="btn btn-sub btn-sm" onclick="closeModal('assign-modal')">閉じる</button>
@@ -620,6 +621,82 @@ function splitAssignment(){
   a.to = slotToDate(cut); a.toHalf = slotHalf(cut);
   closeModal('assign-modal');
   flash(akey(a), 'p|'+person(a.personId).name);
+  save();
+}
+
+/* 結合できる場合だけ「元に戻す」ボタンを出す */
+function mergeInfo(a){
+  const c = mergeCandidates(a)[0];
+  if(!c) return '';
+  if(c.type === 'assign'){
+    return `<div class="form-row" style="background:#eef6ff; border-radius:10px; padding:10px 12px;">
+      <label>🔗 分けたのを元に戻す</label>
+      <p class="small" style="margin-bottom:6px;">すぐ後ろの割当（${fmtD(c.tail.from)}${c.tail.fromHalf==='pm'?'午後':''}〜${fmtD(c.tail.to)}${c.tail.toHalf==='am'?'午前':''}）と1本にまとめます。</p>
+      <button class="btn btn-main btn-sm" onclick="mergeAssignment()">🔗 元に戻す（結合）</button>
+    </div>`;
+  }
+  // 空き期間を戻す場合は「どこまで戻すか」を選べるようにする（伸ばし過ぎ防止）
+  const limit = Math.min(c.e, slotNum(site(a.siteId).to, 'pm'));
+  const opts = [];
+  for(let n = c.s; n <= limit; n++){
+    opts.push(`<option value="${n}">${fmtD(slotToDate(n))} ${slotHalf(n)==='am'?'午前':'午後'}まで</option>`);
+  }
+  if(!opts.length) return '';
+  return `<div class="form-row" style="background:#eef6ff; border-radius:10px; padding:10px 12px;">
+      <label>🔗 分けたのを元に戻す</label>
+      <p class="small" style="margin-bottom:6px;">${fmtD(c.seg.from)}${slotHalf(c.s)==='pm'?'午後':''}以降の空き期間を、この支援先の割当に戻します。どこまで戻すか選んでください。</p>
+      <div class="flex">
+        <select id="merge-to" style="max-width:220px;">${opts.join('')}</select>
+        <button class="btn btn-main btn-sm" onclick="mergeAssignment()">🔗 元に戻す（結合）</button>
+      </div>
+    </div>`;
+}
+
+/* ---- 分割の取り消し（結合） ----
+   分けた直後は後半が「動かせる人(緑)」に戻っているだけなので、その分を割当に戻す。
+   後半を別の支援先に割り当て済みなら、同じ支援先どうしのときだけ1本に結合できる。 */
+function mergeCandidates(a){
+  const out = [];
+  const p = person(a.personId);
+  // ① 同じ人・同じ支援先で、隣接している別の割当（分けたあと同じ所に割り当て直した場合）
+  DATA.assignments.forEach(b=>{
+    if(b.id === a.id || b.personId !== a.personId || b.siteId !== a.siteId) return;
+    if(aStart(b) === aEnd(a) + 1) out.push({type:'assign', b, from:a, tail:b});
+    else if(aEnd(b) + 1 === aStart(a)) out.push({type:'assign', b, from:b, tail:a});
+  });
+  // ② 直後が空き（緑バー）になっている場合＝分けたまま未割当
+  availRanges(p).forEach(r=>freeSegments(p, r).forEach(seg=>{
+    const s = slotNum(seg.from, seg.fromHalf), e = slotNum(seg.to, seg.toHalf==='am'?'am':'pm');
+    if(s === aEnd(a) + 1) out.push({type:'free', seg, s, e});
+  }));
+  return out;
+}
+function mergeAssignment(){
+  const a = DATA.assignments.find(x=>x.id===menuAssignId);
+  if(!a) return;
+  const cands = mergeCandidates(a);
+  if(!cands.length) return;
+  const c = cands[0];
+  const s = site(a.siteId);
+  if(c.type === 'assign'){
+    // 2本の割当を1本に統合（後ろ側のレコードを削除）
+    const head = c.from, tail = c.tail;
+    head.to = tail.to; head.toHalf = tail.toHalf;
+    if(!head.toTime && tail.toTime) head.toTime = tail.toTime;
+    head.records = [...(head.records||[]), ...(tail.records||[])];
+    DATA.assignments = DATA.assignments.filter(x=>x.id !== tail.id);
+    if(a.id === tail.id) menuAssignId = head.id;
+    flash(akey(head));
+  }else{
+    // 空いている直後の期間を、選ばれた終点まで割当に戻す
+    const selEl = document.getElementById('merge-to');
+    const limit = Math.min(c.e, slotNum(s.to, 'pm'));
+    const end = selEl ? Number(selEl.value) : limit;
+    if(end < c.s || end > limit) return;
+    a.to = slotToDate(end); a.toHalf = slotHalf(end);
+    flash(akey(a));
+  }
+  closeModal('assign-modal');
   save();
 }
 function unassignBar(aid){
@@ -864,7 +941,7 @@ function renderPfRanges(){
 function savePerson(){
   const name = document.getElementById('pf-name').value.trim();
   if(!name){ alert('氏名を入れてください'); return; }
-  const ranges = pfRanges.filter(r=>r.from && r.to && r.from<=r.to);
+  const ranges = mergeRanges(pfRanges.filter(r=>r.from && r.to && r.from<=r.to));
   const fields = {
     name,
     corp: document.getElementById('pf-corp').value.trim() || '（所属未登録）',
@@ -1185,6 +1262,40 @@ function findSamePerson(o){
     return pc.includes(org) || org.includes(pc) || pc.includes(n);
   });
 }
+/* 期間リストを正規化: 重なり・隣接（翌日つながり）は1本にまとめる
+   例) 8/2〜8/4 に 8/2〜8/5 を足すと 8/2〜8/5 の1本になる（「1日伸びた」ケース） */
+function mergeRanges(list){
+  const rs = list.filter(r=>r && r.from && r.to).map(r=>({from:r.from, to:r.to}))
+    .sort((a,b)=>a.from.localeCompare(b.from) || a.to.localeCompare(b.to));
+  const out = [];
+  for(const r of rs){
+    const last = out[out.length-1];
+    if(last && r.from <= addDays(last.to, 1)){        // 重なる or 隣接 → 伸ばす
+      if(r.to > last.to) last.to = r.to;
+    }else out.push({...r});
+  }
+  return out;
+}
+/* 重複アラートで選んだ既存の方の編集画面を開く（日程の延長・細かい修正用） */
+function openDupEdit(){
+  const sel = document.querySelector('#ai-proposal input[name=dupsel]:checked');
+  if(!sel || !sel.value){ alert('編集したい既存の方を選んでから押してください。'); return; }
+  const p = person(sel.value);
+  if(!p) return;
+  const o = currentOffer;
+  document.getElementById('ai-proposal').innerHTML = '';
+  currentOffer = null;
+  openPersonForm(p.id);
+  // 今回の申し出の期間を編集欄に足しておく（そのまま保存すれば反映、不要なら✕で消せる）
+  if(o){
+    (o.periods||[]).filter(x=>x.from&&x.to).forEach(x=>{
+      if(!pfRanges.some(r=>r.from===x.from && r.to===x.to)) pfRanges.push({from:x.from, to:x.to});
+    });
+    renderPfRanges();
+  }
+  addMsg('ai', `✏️ 「${p.name}」さんの編集画面を開きました。\n今回いただいた期間を下に足してあります。日程が延びた場合は、既存の行の日付を直して「保存する」を押してください。`);
+  persistThread();
+}
 function personSummary(p){
   const q = p.quals.length ? p.quals.join('・') : '資格未設定';
   const av = availRanges(p).map(r=>`${fmtD(r.from)}〜${fmtD(r.to)}`).join('、') || '期間なし';
@@ -1205,6 +1316,9 @@ function showOfferProposal(o){
           <b>${esc(p.name)}</b> <span class="small">${esc(personSummary(p))}</span></label>`).join('')}
         <label class="prop-cand"><input type="radio" name="dupsel" value="" ${dupes.length===1?'':'checked'}>
           <b>別人として新規登録する</b> <span class="small">（同姓の別の方の場合）</span></label>
+        <div class="flex" style="margin-top:8px; gap:6px;">
+          <button class="btn btn-sub btn-sm" onclick="openDupEdit()">✏️ 選んだ方の登録を直接編集する（日程の延長など）</button>
+        </div>
       </div>` : '';
   document.getElementById('ai-proposal').innerHTML = `
     <div class="proposal">
@@ -1212,7 +1326,7 @@ function showOfferProposal(o){
       <p class="small">${esc(o.organization||'所属未登録')}｜${esc(o.person_name||'氏名未登録')}｜${periods||'期間未定'}</p>
       ${dupHtml}
       <p class="small">${dupes.length
-        ? '「同じ方」を選ぶと、その方に今回の期間が<b>追加</b>されます（既存の資格・所属はそのまま残ります）。'
+        ? '「同じ方」を選んで保存すると、その方に今回の期間が<b>足されます</b>（既存の期間と重なる・つながる場合は自動で1本にまとめます）。<br>日程の変更や細かい修正をしたいときは、下の「直接編集する」から編集画面を開けます。'
         : '保存すると調整ボードの「動かせる人」に緑のバーで表示され、分配の候補になります。'}</p>
       <div class="flex" style="margin-top:10px;">
         <button class="btn btn-warn" onclick="rejectAI()">🚫 却下</button>
@@ -1262,13 +1376,10 @@ async function approveOffer(){
   const sel = document.querySelector('#ai-proposal input[name=dupsel]:checked');
   const target = sel && sel.value ? person(sel.value) : null;
   if(target){
-    const cur = availRanges(target).map(r=>({...r}));
-    let added = 0;
-    for(const np of periods){
-      if(!cur.some(r=>r.from===np.from && r.to===np.to)){ cur.push({...np}); added++; }
-    }
-    cur.sort((a,b)=>a.from.localeCompare(b.from));
-    target.avail = cur;
+    const before = availRanges(target).map(r=>`${r.from}〜${r.to}`).join('、');
+    const merged = mergeRanges([...availRanges(target).map(r=>({...r})), ...periods]);
+    const added = merged.map(r=>`${r.from}〜${r.to}`).join('、') !== before;
+    target.avail = merged;
     quals.forEach(q=>{ if(!target.quals.includes(q)) target.quals.push(q); });   // 資格は失わせない
     if(note && !(target.note||'').includes(note)) target.note = [target.note, note].filter(Boolean).join('・').slice(0,200);
     if((!target.corp || target.corp.includes('未登録')) && o.organization) target.corp = o.organization;
@@ -1276,8 +1387,8 @@ async function approveOffer(){
     currentOffer = null;
     flash('p|'+target.name);
     addMsg('ai', added
-      ? `✅ 既存の「${target.name}」さんに期間を追加しました（${periods.map(p=>fmtD(p.from)+'〜'+fmtD(p.to)).join('、')}）。\n新しい人としては登録していないので、名簿が二重になりません。`
-      : `ℹ️ 「${target.name}」さんには既に同じ期間が登録されていたため、追加はありませんでした。`);
+      ? `✅ 既存の「${target.name}」さんの日程を更新しました。\n・更新後の期間: ${availRanges(target).map(p=>fmtD(p.from)+'〜'+fmtD(p.to)).join('、')}\n新しい人としては登録していないので、名簿が二重になりません。`
+      : `ℹ️ 「${target.name}」さんには既に同じ期間が入っていたため、変更はありませんでした。`);
     persistThread();
     await save();
     return;
