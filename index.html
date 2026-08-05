@@ -95,6 +95,13 @@
     overflow:hidden; text-overflow:ellipsis; min-width:0;
     position:sticky; left:0; z-index:2; background:var(--card);}   /* 横スクロールしても名前が見える */
   .tl-name .corp{color:var(--sub); font-size:13px;}
+  .jb{display:inline-block; font-size:10.5px; font-weight:800; line-height:1.5; padding:0 5px;
+    border-radius:5px; margin-left:3px; vertical-align:1px; color:#fff;}
+  .jb.j-nurse{background:#c2185b;} .jb.j-care{background:#1a7f6e;}
+  .jb.j-reha{background:#0288d1;} .jb.j-logi{background:#8d6e63;}
+  .jb.j-other{background:#6b7280;} .jb.j-drive{background:transparent; padding:0;}
+  .out-today{background:#c0392b; color:#fff; font-weight:700; font-size:11px;
+    border-radius:6px; padding:2px 8px;}
   .tl-name:hover{text-decoration:underline;}
   .sh-in{display:contents;}   /* デスクトップはそのまま。モバイルでsticky化 */
   .fh-in{display:contents;}
@@ -231,7 +238,7 @@
     <div id="sel-banner"></div>
     <div class="card" style="overflow-x:auto;"><div id="boardgrid"><p class="small">データを読み込んでいます…</p></div></div>
     <div id="outside-box"></div>
-    <p class="hint">表示は2週間ずつ（◀▶で移動・「期間で絞り込み」で任意範囲）｜1日 = 午前・午後の2マス｜🟢 緑 = 動かせる期間（バーをクリックで選択 → 支援先の行をクリックで割当）｜⬜ グレーの緑バー = <b>活動終了（記録）</b>｜🟠 支援中・🔵 予定（バーをクリックで <b>✂️分ける</b>／🗑解除）｜名前クリックで詳細・編集・色設定｜<b style="color:#b8860b;">黄色い枠 = いま反映した項目</b></p>
+    <p class="hint">表示は2週間ずつ（◀▶で移動・「期間で絞り込み」で任意範囲）｜1日 = 午前・午後の2マス｜名前の横は職種（<span class="jb j-nurse">看護</span><span class="jb j-care">介福</span><span class="jb j-reha">PT</span><span class="jb j-logi">ロジ</span>）｜🟢 緑 = 動かせる期間（バーをクリックで選択 → 支援先の行をクリックで割当）｜⬜ グレー = <b>活動終了（記録）</b>｜🟠 支援中・🔵 予定（バーをクリックで <b>✂️分ける</b>／<b>🔗元に戻す</b>／🗑解除・入り出の時刻もここ）｜<span class="out-today">🚪本日out</span> = その日に出る方｜<b style="color:#b8860b;">黄色い枠 = いま反映した項目</b></p>
   </section>
 
   <!-- ============ DMAT用 支援者名簿（閲覧専用・/dmat/ でのみ表示） ============ -->
@@ -355,7 +362,7 @@
   </div>
 </div>
 
-<footer>災害支援シフト調整プロトタイプ v2.2 — 株式会社NAGARA（デモ用架空データ）</footer>
+<footer>災害支援シフト調整プロトタイプ v2.3 — 株式会社NAGARA（デモ用架空データ）</footer>
 
 <script>
 'use strict';
@@ -467,6 +474,18 @@ function slotHalf(n){ return n%2 ? 'pm' : 'am'; }
 function aStart(a){ return slotNum(a.from, a.fromHalf==='pm'?'pm':'am'); }
 function aEnd(a){ return slotNum(a.to, a.toHalf==='am'?'am':'pm'); }
 function fmtRangeH(a){ return `${fmtD(a.from)}${a.fromHalf==='pm'?'午後':''}〜${fmtD(a.to)}${a.toHalf==='am'?'午前':''}`; }
+/* 割当バーの表示。入り/出の時刻が入っていればバー上に出す（当日outが一目で分かるように） */
+function barLabel(a){
+  const f = `${fmtD(a.from)}${a.fromTime ? ' '+a.fromTime : (a.fromHalf==='pm'?'午後':'')}`;
+  const t = `${fmtD(a.to)}${a.toTime ? ' '+a.toTime : (a.toHalf==='am'?'午前':'')}`;
+  return `${f}〜${t}`;
+}
+/* 今日この支援先を出る人（当日out）を施設ヘッダーに出すための抽出 */
+function leavingToday(siteId){
+  return DATA.assignments.filter(a=>a.siteId===siteId && a.to===TODAY)
+    .map(a=>{ const p = person(a.personId); return p ? `${p.name}${a.toTime?' '+a.toTime:(a.toHalf==='am'?' 午前':'')}` : null; })
+    .filter(Boolean);
+}
 /* 調整可能シフト = 複数期間 (p.avail: [{from,to},...] 日単位) */
 function availRanges(p){ return p.avail || (p.from ? [{from:p.from, to:p.to}] : []); }
 function availText(p){ return availRanges(p).map(r=>`${fmtD(r.from)}〜${fmtD(r.to)}`).join('、') || '未提出'; }
@@ -718,6 +737,7 @@ function renderBoard(){
   /* 動かせる人 = 人×期間 の行 (割当済み区間は半日単位で差し引き) */
   const entries = [];
   const noAvail = [];
+  let oldCount = 0;   // 1週間より前に終わった未割当の数（件数のみ案内）
   DATA.people
     .filter(p=>!boardQualFilter || p.quals.includes(boardQualFilter))
     .filter(p=>!kw || (p.name + p.corp).includes(kw))
@@ -726,9 +746,12 @@ function renderBoard(){
       if(!rs.length){ noAvail.push(p); return; }
       rs.forEach(r=>freeSegments(p, r).forEach(seg=>{
         // 終了済みの期間もグレーで表示する（活動記録として残すため。除外すると画面から人が消える）
+        // ただし1週間より前に終わった未割当は溜まるだけなので、件数だけ案内して隠す
         if(fF && seg.to < fF) return;
         if(fT && seg.from > fT) return;
-        entries.push({p, seg, past: seg.to < TODAY});
+        const past = seg.to < TODAY;
+        if(past && !fF && !fT && seg.to < addDays(TODAY, -7)){ oldCount++; return; }
+        entries.push({p, seg, past});
       }));
     });
   entries.sort((a,b)=>a.seg.from.localeCompare(b.seg.from) || a.p.name.localeCompare(b.p.name));
@@ -784,6 +807,7 @@ function renderBoard(){
       🏥 ${esc(s.name)}
       <span style="font-weight:400; font-size:11px;">📍${esc(s.area)}｜${fmtD(s.from)}〜${fmtD(s.to)}｜${needTxt}</span>
       ${s.note?`<span style="font-weight:400; font-size:11px;">📝${esc(s.note)}</span>`:''}
+      ${leavingToday(s.id).length?`<span class="out-today">🚪本日out: ${esc(leavingToday(s.id).join('、'))}</span>`:''}
       ${selEntry?'<span style="font-size:12px;">▶ ここに割り当てる</span>':''}
       <span class="right flex" style="gap:4px;">
         <button class="btn btn-sub btn-sm" title="上へ移動" onclick="event.stopPropagation();moveSite('${s.id}',-1)">↑</button>
@@ -800,9 +824,9 @@ function renderBoard(){
     }
     for(const a of as){
       const p = person(a.personId), st = assignStatus(a);
-      html += `<div class="tl-name" style="grid-row:${row}; grid-column:1;" title="${esc(p.name)} ${esc(p.corp)}" onclick="openPerson('${p.id}')">${nameHtml(p)} <span class="corp">${esc(p.corp)}</span></div>`;
+      html += `<div class="tl-name" style="grid-row:${row}; grid-column:1;" title="${esc(p.name)} ${esc(p.corp)} ${jobLabels(p).join('・')}" onclick="openPerson('${p.id}')">${nameHtml(p)}${jobBadges(p)} <span class="corp">${esc(p.corp)}</span></div>`;
       const {c1, c2} = clip(aStart(a), aEnd(a));
-      html += `<div class="tl-bar ${st.cls} ${flashKeys.has(akey(a))?'flash':''}" style="grid-row:${row}; grid-column:${c1+2} / ${c2+3};" title="${esc(p.name)} ${fmtRangeH(a)}（クリックで 分ける/解除）" onclick="openAssignMenu('${a.id}')">${fmtRangeH(a)}</div>`;
+      html += `<div class="tl-bar ${st.cls} ${flashKeys.has(akey(a))?'flash':''}" style="grid-row:${row}; grid-column:${c1+2} / ${c2+3};" title="${esc(p.name)} ${barLabel(a)}（クリックで 分ける/解除）" onclick="openAssignMenu('${a.id}')">${barLabel(a)}</div>`;
       row++;
     }
   }
@@ -814,11 +838,11 @@ function renderBoard(){
   const inWin = e => slotNum(e.seg.to, e.seg.toHalf==='am'?'am':'pm') >= firstSlot && slotNum(e.seg.from, e.seg.fromHalf) <= lastSlot;
   const visEntries = entries.filter(inWin);
   const outEntries = entries.filter(e=>!inWin(e));
-  html += `<div class="tl-freehead" style="grid-row:${row}; grid-column:1 / -1;"><span class="fh-in">🟢 動かせる人（${visEntries.length}枠）— バーをクリックして選択 → 上の支援先へ</span></div>`;
+  html += `<div class="tl-freehead" style="grid-row:${row}; grid-column:1 / -1;"><span class="fh-in">🟢 動かせる人（${visEntries.length}枠）— バーをクリックして選択 → 上の支援先へ${oldCount?`　<span style="font-weight:400; font-size:11px;">※1週間より前に終わった未割当 ${oldCount}件は非表示（「期間で絞り込み」で表示できます）</span>`:''}</span></div>`;
   row++;
   for(const e of visEntries){
     const sel = selEntry && selEntry.pid===e.p.id && selEntry.from===e.seg.from && selEntry.to===e.seg.to && selEntry.fromHalf===e.seg.fromHalf;
-    html += `<div class="tl-name" style="grid-row:${row}; grid-column:1;" title="${esc(e.p.name)} ${esc(e.p.corp)}" onclick="openPerson('${e.p.id}')">${nameHtml(e.p)} <span class="corp">${esc(e.p.corp)}</span></div>`;
+    html += `<div class="tl-name" style="grid-row:${row}; grid-column:1;" title="${esc(e.p.name)} ${esc(e.p.corp)} ${jobLabels(e.p).join('・')}" onclick="openPerson('${e.p.id}')">${nameHtml(e.p)}${jobBadges(e.p)} <span class="corp">${esc(e.p.corp)}</span></div>`;
     const segLabel = fmtRangeH({from:e.seg.from, fromHalf:e.seg.fromHalf, to:e.seg.to, toHalf:e.seg.toHalf});
     const {c1, c2} = clip(slotNum(e.seg.from, e.seg.fromHalf), slotNum(e.seg.to, e.seg.toHalf==='am'?'am':'pm'));
     html += `<div class="tl-bar ${e.past?'b-ended':'b-free'} ${sel?'selected':''} ${flashKeys.has('p|'+e.p.name)?'flash':''}" style="grid-row:${row}; grid-column:${c1+2} / ${c2+3};" title="${esc(e.p.name)} ${segLabel} ${e.p.quals.join('・')}${e.past?'（活動終了）':''}" onclick="selectEntry('${e.p.id}','${e.seg.from}','${e.seg.to}','${e.seg.fromHalf}','${e.seg.toHalf}')">${segLabel} ${e.past?'活動終了':esc(e.p.quals.filter(q=>q!=='運転可').slice(0,1).join(''))+(e.p.quals.includes('運転可')?'🚗':'')}</div>`;
@@ -1296,6 +1320,38 @@ function openDupEdit(){
   addMsg('ai', `✏️ 「${p.name}」さんの編集画面を開きました。\n今回いただいた期間を下に足してあります。日程が延びた場合は、既存の行の日付を直して「保存する」を押してください。`);
   persistThread();
 }
+/* 職種を名前の横に出すための短縮ラベル（クリックせず一目で分かるように） */
+const JOB_SHORT = {
+  '介護福祉士':'介福', '実務者研修':'実務', '初任者研修':'初任', 'ケアマネ':'ケアマネ',
+  '看護師':'看護', '准看護師':'准看',
+  '理学療法士(PT)':'PT', '作業療法士(OT)':'OT', '言語聴覚士(ST)':'ST',
+  '管理栄養士':'栄養', '事務(ロジ)':'ロジ',
+};
+const JOB_CLASS = {
+  '看護':'j-nurse', '准看':'j-nurse',
+  '介福':'j-care', '実務':'j-care', '初任':'j-care', 'ケアマネ':'j-care',
+  'PT':'j-reha', 'OT':'j-reha', 'ST':'j-reha',
+  '栄養':'j-other', 'ロジ':'j-logi',
+};
+/* 資格が未登録でも、メモに書かれた職種を拾う（PT/ST等をメモ運用していた期間の救済） */
+function jobLabels(p){
+  const out = p.quals.filter(q=>q!=='運転可').map(q=>JOB_SHORT[q]).filter(Boolean);
+  if(!out.length){
+    const m = (p.note||'').match(/理学療法士|作業療法士|言語聴覚士|看護師|准看護師|介護福祉士|介護職|事務|ロジ|PT|OT|ST/);
+    if(m){
+      const t = m[0];
+      out.push(/理学|PT/.test(t) ? 'PT' : /作業|OT/.test(t) ? 'OT' : /言語|ST/.test(t) ? 'ST'
+        : /准看/.test(t) ? '准看' : /看護/.test(t) ? '看護' : /介護福祉士/.test(t) ? '介福'
+        : /介護職/.test(t) ? '介護' : 'ロジ');
+    }
+  }
+  return out;
+}
+function jobBadges(p){
+  const labels = jobLabels(p);
+  const drive = p.quals.includes('運転可') ? '<span class="jb j-drive" title="運転可">🚗</span>' : '';
+  return labels.map(l=>`<span class="jb ${JOB_CLASS[l]||'j-other'}">${l}</span>`).join('') + drive;
+}
 function personSummary(p){
   const q = p.quals.length ? p.quals.join('・') : '資格未設定';
   const av = availRanges(p).map(r=>`${fmtD(r.from)}〜${fmtD(r.to)}`).join('、') || '期間なし';
@@ -1588,9 +1644,8 @@ function dmatRows(){
 function jobOf(p){
   const j = p.quals.filter(q=>q!=='運転可');
   if(j.length) return j.join('・');
-  // 資格未登録なら、メモに書かれた職種を拾う (PT/ST等をメモ運用していた期間の救済)
-  const m = (p.note||'').match(/(理学療法士|作業療法士|言語聴覚士|看護師|准看護師|介護福祉士|介護職|事務|ロジ|PT|OT|ST)/);
-  if(m) return m[1];
+  const l = jobLabels(p);           // メモから拾った職種（調整ボードのバッジと同じ判定）
+  if(l.length) return l.join('・');
   return p.quals.includes('運転可') ? '運転（ロジ）' : '—';
 }
 function dtText(iso, half, time){
