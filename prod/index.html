@@ -22,6 +22,11 @@
   .stat{background:rgba(255,255,255,.14); border-radius:10px; padding:4px 14px; text-align:center;}
   .stat b{font-size:20px; display:block; line-height:1.2;}
   .stat span{font-size:11px; opacity:.9;}
+  .nagara-logo{display:inline-flex; align-items:center; gap:5px; background:#fff; border-radius:8px;
+    padding:4px 10px 4px 7px; text-decoration:none; margin-left:4px;}
+  .nagara-logo svg{width:20px; height:16px;}
+  .nagara-logo span{color:#004AAD; font-weight:800; font-size:12.5px; letter-spacing:.04em;}
+  .nagara-logo:hover{box-shadow:0 0 0 2px rgba(255,255,255,.5);}
   .demo-banner{background:#fff6d9; color:#7a5b00; text-align:center; padding:6px; font-size:13px; border-bottom:1px solid #f0e2ae;}
   nav{display:flex; gap:4px; padding:10px 24px 0; background:var(--card); border-bottom:2px solid var(--line); flex-wrap:wrap;}
   nav button{border:none; background:transparent; padding:12px 20px; font-size:16px; font-weight:600;
@@ -103,6 +108,9 @@
   .out-today{background:#c0392b; color:#fff; font-weight:700; font-size:11px;
     border-radius:6px; padding:2px 8px;}
   .dmat-t{color:var(--ink); font-size:12px; font-weight:700; margin-left:4px;}
+  .rp-card{border-left:6px solid var(--accent);}
+  .rp-card.done{border-left-color:var(--ok); background:#f6fbf6;}
+  .rp-card input[type=time]{font-size:17px; padding:11px 12px;}   /* スマホで押しやすく */
   .tl-name:hover{text-decoration:underline;}
   .sh-in{display:contents;}   /* デスクトップはそのまま。モバイルでsticky化 */
   .fh-in{display:contents;}
@@ -199,6 +207,7 @@
   <span class="tag">熊本地震 介護施設支援</span>
   <span class="tag" id="sync" style="display:none;"></span>
   <a href="about.html" style="color:#fff; font-size:12px;">📄 説明資料</a>
+  <a class="nagara-logo" href="https://nagarainc.com/" target="_blank" rel="noopener" title="株式会社NAGARA（このツールの提供元）"><svg viewBox="208 289 783.3 621" aria-label="NAGARA"><path d="M979.061 417.569C927.432 263.672 714.22 246.103 632.147 374.767C623.686 388.051 623.406 404.974 631.264 418.645L632.621 420.992C644.032 440.8 669.028 447.948 689.266 437.355C690.429 436.752 691.592 436.171 692.754 435.59C769.983 397.632 860.194 454.902 860.194 540.958V680.968C860.194 715.696 835.692 745.774 801.589 752.383C801.287 752.448 800.964 752.512 800.663 752.577C783.073 755.871 765.354 747.453 756.44 731.951C706.146 644.647 647.218 542.314 598.818 458.347C590.766 443.62 573.37 413.78 556.792 385.317C494.118 277.71 344.634 260.162 260.344 351.838C244.584 368.976 231.838 389.278 223.398 412.38C222.365 415.222 221.267 418.021 220.169 420.82C201.265 469.112 210.028 713.263 210.028 714.469C210.222 736.666 214.571 761.641 221.59 781.47C274.317 938.339 493.149 952.742 572.186 818.481C579.958 805.283 580.066 788.92 572.423 775.657C560.818 755.505 535.219 748.551 514.851 759.79C513.732 760.414 512.634 760.995 511.514 761.577C433.618 802.204 340.457 744.568 340.457 656.704V524.853C340.457 484.377 370.406 449.843 410.581 444.848C410.947 444.804 411.291 444.761 411.636 444.718C428.408 442.738 444.728 451.07 453.167 465.71C517.564 577.473 586.503 697.18 651.955 810.816C714.134 918.768 865.189 933.774 945.625 838.633C958.457 823.454 968.942 806.079 976.284 786.745C977.382 783.86 978.544 780.997 979.729 778.133C1000.38 728.248 986.403 535.554 990.128 484.011C990.192 482.956 990.235 481.879 990.235 480.824C989.999 458.67 986.102 437.377 979.104 417.569H979.061Z" fill="#004AAD"/> <path d="M521.095 756.904C495.517 772.471 465.483 781.449 433.36 781.449C340.048 781.449 264.435 705.814 264.435 612.502C264.435 530.559 322.803 462.222 400.246 446.807C365.368 455.892 340.414 487.908 340.414 524.832V656.66C340.414 744.503 433.575 802.139 511.471 761.533C512.59 760.952 513.71 760.349 514.808 759.746C516.853 758.605 518.963 757.658 521.095 756.904Z" fill="#617CC3"/> <path d="M938.154 586.515C938.154 668.739 879.42 737.248 801.589 752.362C835.671 745.752 860.172 715.696 860.172 680.946V540.958C860.172 458.089 776.506 401.895 701.345 431.779C722.121 422.65 745.072 417.59 769.207 417.59C862.519 417.59 938.132 493.226 938.132 586.515H938.154Z" fill="#617CC3"/></svg><span>NAGARA</span></a>
   <div class="stats">
     <div class="stat"><b id="stat-avail">-</b><span>動かせる人（7日以内）</span></div>
     <div class="stat"><b id="stat-active">-</b><span>支援中</span></div>
@@ -265,6 +274,22 @@
     </div>
     <div class="card" style="overflow-x:auto;"><div id="dmat-list"></div></div>
     <p class="small" id="dmat-count"></p>
+  </section>
+
+  <!-- ============ 支援者用 勤怠入力（/report/ でのみ表示・事後報告） ============ -->
+  <section id="tab-report" class="tabpane">
+    <div class="notice">
+      本日の活動が終わったら、<b>ご自身の入り・出の時刻</b>を入力してください（あとからの入力でかまいません）。<br>
+      お名前をタップ → 時刻を入れて「保存」だけです。ログインは要りません。
+    </div>
+    <div class="chips">
+      <b class="small">日付</b>
+      <input type="date" id="rp-date" style="max-width:170px;">
+      <button class="btn btn-sub btn-sm" onclick="reportDay(-1)">◀ 前日</button>
+      <button class="btn btn-sub btn-sm" onclick="reportToday()">本日</button>
+      <button class="btn btn-sub btn-sm" onclick="reportDay(1)">翌日 ▶</button>
+    </div>
+    <div id="report-list"></div>
   </section>
 
   <!-- ============ AI秘書 ============ -->
@@ -371,31 +396,34 @@
   </div>
 </div>
 
-<footer>災害支援シフト調整プロトタイプ v2.5 — 株式会社NAGARA（デモ用架空データ）</footer>
+<footer>災害支援シフト調整プロトタイプ v2.6 — 株式会社NAGARA（デモ用架空データ）</footer>
 
 <script>
 'use strict';
 /* API接続先: ローカル開発時は同一サーバー、公開ページ(GitHub Pages)からは Supabase Edge Function。
    /prod/ 配下は本番 (別スキーマ・データ空スタート・合言葉ガード付き app-prod) に接続 */
-const IS_DMAT = location.pathname.includes('/dmat/');   // DMAT提出用の名簿ビュー(閲覧専用・別合言葉)
-const IS_PROD = location.pathname.includes('/prod/') || IS_DMAT;
+const IS_DMAT = location.pathname.includes('/dmat/');       // DMAT提出用の名簿ビュー(閲覧専用・別合言葉)
+const IS_REPORT = location.pathname.includes('/report/');   // 支援者用 勤怠入力(合言葉なし・時刻のみ更新)
+const IS_PROD = location.pathname.includes('/prod/') || IS_DMAT || IS_REPORT;
 const API = ['localhost','127.0.0.1'].includes(location.hostname) ? ''
-  : 'https://dwbzwdvumxkcaqdwggml.supabase.co/functions/v1/' + (IS_DMAT ? 'app-dmat' : IS_PROD ? 'app-prod' : 'app');
+  : 'https://dwbzwdvumxkcaqdwggml.supabase.co/functions/v1/'
+    + (IS_DMAT ? 'app-dmat' : IS_REPORT ? 'app-report' : IS_PROD ? 'app-prod' : 'app');
 /* 本番のみ: 合言葉を x-passcode ヘッダーで送る。401なら聞き直す。
    保存キーは画面ごとに分ける（調整ボードとDMAT名簿は同じドメインでlocalStorageを共有するため、
    共通キーだと行き来のたびに上書きし合って毎回入力を求められる。2026-08-05 金子さん報告） */
 const PC_KEY = IS_DMAT ? 'shift-passcode-dmat' : 'shift-passcode';
+const NEED_PC = IS_PROD && !IS_REPORT;   // 勤怠入力ページは現場の全員が使うため合言葉なし
 function apiHeaders(h){
   h = Object.assign({}, h);
   const pc = localStorage.getItem(PC_KEY);
-  if(IS_PROD && pc) h['x-passcode'] = pc;
+  if(NEED_PC && pc) h['x-passcode'] = pc;
   return h;
 }
 async function api(path, opts){
   opts = Object.assign({}, opts);
   opts.headers = apiHeaders(opts.headers);
   let res = await fetch(API + path, opts);
-  if(res.status === 401 && IS_PROD){
+  if(res.status === 401 && NEED_PC){
     const pc = prompt(IS_DMAT
       ? 'DMAT名簿の合言葉を入力してください（調整ボードとは別のものです）'
       : '調整ボードの合言葉を入力してください（調整本部から共有されたものです）');
@@ -492,10 +520,10 @@ function slotHalf(n){ return n%2 ? 'pm' : 'am'; }
 function aStart(a){ return slotNum(a.from, a.fromHalf==='pm'?'pm':'am'); }
 function aEnd(a){ return slotNum(a.to, a.toHalf==='am'?'am':'pm'); }
 function fmtRangeH(a){ return `${fmtD(a.from)}${a.fromHalf==='pm'?'午後':''}〜${fmtD(a.to)}${a.toHalf==='am'?'午前':''}`; }
-/* 割当バーの表示。入り/出の時刻が入っていればバー上に出す（当日outが一目で分かるように） */
+/* 割当バーの表示。時刻があれば時刻、なければ午前/午後を必ず出す（DMAT名簿と同じ粒度で読めるように） */
 function barLabel(a){
-  const f = `${fmtD(a.from)}${a.fromTime ? ' '+a.fromTime : (a.fromHalf==='pm'?'午後':'')}`;
-  const t = `${fmtD(a.to)}${a.toTime ? ' '+a.toTime : (a.toHalf==='am'?'午前':'')}`;
+  const f = `${fmtD(a.from)} ${a.fromTime ? a.fromTime : (a.fromHalf==='pm'?'午後':'午前')}`;
+  const t = `${fmtD(a.to)} ${a.toTime ? a.toTime : (a.toHalf==='am'?'午前':'午後')}`;
   return `${f}〜${t}`;
 }
 /* 今日この支援先を出る人（当日out）を施設ヘッダーに出すための抽出 */
@@ -592,14 +620,23 @@ function selectEntry(pid, from, to, fromHalf, toHalf){
 function assignTo(sid){
   if(!selEntry) return;
   const p = person(selEntry.pid), s = site(sid);
-  const S = Math.max(slotNum(selEntry.from, selEntry.fromHalf), slotNum(s.from,'am'));
-  const E = Math.min(slotNum(selEntry.to, selEntry.toHalf==='am'?'am':'pm'), slotNum(s.to,'pm'));
-  if(S > E){ alert(`${p.name}さんの期間と ${s.name} の支援期間（${fmtD(s.from)}〜${fmtD(s.to)}）が重なっていません`); return; }
+  // 選んだ期間をそのまま割り当てる（支援先の期間で切り詰めない）。
+  // 以前は支援先期間でクリップしていたため、支援先が8/4開始だと8/2〜8/4の人が8/4だけ割当になり
+  // 残りが緑バーに分離＝「同じ人が2つに分かれる」「8/3以前に遡れない」の原因になっていた（2026-08-06 金子さん報告）
+  const S = slotNum(selEntry.from, selEntry.fromHalf);
+  const E = slotNum(selEntry.to, selEntry.toHalf==='am'?'am':'pm');
   const from = slotToDate(S), to = slotToDate(E);
   const fromHalf = slotHalf(S), toHalf = slotHalf(E);
   if(!isFreeFor(p, from, to, fromHalf, toHalf)){ alert(`${p.name}さんはこの期間、別の支援先に割当済みです`); return; }
-  DATA.assignments.push({id:uid('a'), personId:p.id, siteId:sid, from, to, fromHalf, toHalf, records:[]});
+  // 支援先の期間から外れる場合は、支援先側の期間を自動で広げる（実態に合わせる）
+  let widened = null;
+  if(from < s.from){ s.from = from; widened = 'from'; }
+  if(to > s.to){ s.to = to; widened = widened ? 'both' : 'to'; }
+  // AI秘書が読み取った時刻があれば、割当にそのまま引き継ぐ
+  DATA.assignments.push({id:uid('a'), personId:p.id, siteId:sid, from, to, fromHalf, toHalf,
+    fromTime: p.inTime || null, toTime: p.outTime || null, records:[]});
   flash(`a|${p.name}|${s.name}|${from}|${to}`);
+  if(widened) flash('s|'+s.name);
   selEntry = null; save();
 }
 /* 割当バークリック → 分ける / 解除 のメニュー */
@@ -673,7 +710,7 @@ function mergeInfo(a){
     </div>`;
   }
   // 空き期間を戻す場合は「どこまで戻すか」を選べるようにする（伸ばし過ぎ防止）
-  const limit = Math.min(c.e, slotNum(site(a.siteId).to, 'pm'));
+  const limit = c.e;   // 支援先期間では制限しない（必要なら支援先側を自動で広げる）
   const opts = [];
   for(let n = c.s; n <= limit; n++){
     opts.push(`<option value="${n}">${fmtD(slotToDate(n))} ${slotHalf(n)==='am'?'午前':'午後'}まで</option>`);
@@ -727,10 +764,10 @@ function mergeAssignment(){
   }else{
     // 空いている直後の期間を、選ばれた終点まで割当に戻す
     const selEl = document.getElementById('merge-to');
-    const limit = Math.min(c.e, slotNum(s.to, 'pm'));
-    const end = selEl ? Number(selEl.value) : limit;
-    if(end < c.s || end > limit) return;
+    const end = selEl ? Number(selEl.value) : c.e;
+    if(end < c.s || end > c.e) return;
     a.to = slotToDate(end); a.toHalf = slotHalf(end);
+    if(a.to > s.to){ s.to = a.to; flash('s|'+s.name); }   // 支援先期間を自動で広げる
     flash(akey(a));
   }
   closeModal('assign-modal');
@@ -904,17 +941,36 @@ function openPerson(pid){
     <p class="small">${esc(p.corp)}</p>
     <p style="margin:8px 0;">${qualBadges(p)}</p>
     <p>行ける期間: <b>${availText(p)}</b> ${p.note?`（${esc(p.note)}）`:''}</p>
-    <h4 style="margin:14px 0 6px; color:var(--brand-dark);">支援履歴（累計 ${total} 日）</h4>
+    <h4 style="margin:14px 0 6px; color:var(--brand-dark);">支援履歴と入り・出の時刻（累計 ${total} 日）</h4>
     ${hist.length ? hist.map(a=>{
       const s = assignStatus(a);
-      return `<div class="assign-item"><span>🏥 ${esc(site(a.siteId).name)}</span>
-        <span>${fmtRangeH(a)}（${days(a)}日間）</span><span class="badge ${s.cls}">${s.label}</span></div>`;
-    }).join('') : '<p class="small">まだ支援履歴はありません</p>'}
+      return `<div class="assign-item" style="display:block; border-bottom:1px dotted var(--line); padding:8px 0;">
+        <div class="flex"><span>🏥 ${esc(site(a.siteId).name)}</span>
+          <span>${fmtRangeH(a)}（${days(a)}日間）</span><span class="badge ${s.cls}">${s.label}</span></div>
+        <div class="flex" style="margin-top:6px;">
+          <span class="small">🕘 入り ${fmtD(a.from)}</span>
+          <input type="time" id="pt-f-${a.id}" value="${a.fromTime||''}" style="max-width:120px;">
+          <span class="small">出 ${fmtD(a.to)}</span>
+          <input type="time" id="pt-t-${a.id}" value="${a.toTime||''}" style="max-width:120px;">
+          <button class="btn btn-main btn-sm" onclick="savePersonTimes('${a.id}','${p.id}')">保存</button>
+        </div></div>`;
+    }).join('') : '<p class="small">まだ支援履歴はありません（支援先に割り当てると、ここで入り・出の時刻を入力できます）</p>'}
     <div class="flex" style="justify-content:flex-end; margin-top:14px;">
       <button class="btn btn-warn btn-sm" onclick="deletePerson('${p.id}')">🗑 削除</button>
       <button class="btn btn-main btn-sm" onclick="openPersonForm('${p.id}')">✏️ 編集する</button>
     </div>`;
   document.getElementById('person-modal').classList.add('show');
+}
+/* 支援者の詳細画面から入り・出の時刻を保存する（割当バーを押さなくても入力できるように） */
+function savePersonTimes(aid, pid){
+  const a = DATA.assignments.find(x=>x.id===aid);
+  if(!a) return;
+  a.fromTime = document.getElementById('pt-f-'+aid).value || null;
+  a.toTime = document.getElementById('pt-t-'+aid).value || null;
+  flash(akey(a));
+  save();
+  openPerson(pid);   // 保存後も同じ画面を開いたままにする
+  setSync('✓ 時刻を保存しました');
 }
 function closeModal(id){ document.getElementById(id).classList.remove('show'); }
 document.querySelectorAll('.modal-bg').forEach(m=>m.addEventListener('click', e=>{ if(e.target===m) m.classList.remove('show'); }));
@@ -1444,6 +1500,9 @@ async function approveOffer(){
   const periods = (o.periods||[]).filter(p=>p.from&&p.to).map(p=>({from:p.from, to:p.to}));
   const quals = (o.quals||[]).filter(q=>QUALS.includes(q));
   if(o.can_drive && !quals.includes('運転可')) quals.push('運転可');
+  // AIが読み取った入り/出の時刻は、割り当てたときに自動で入るよう支援者に持たせておく
+  const inT = /^\d{1,2}:\d{2}$/.test(o.in_time||'') ? o.in_time.padStart(5,'0') : null;
+  const outT = /^\d{1,2}:\d{2}$/.test(o.out_time||'') ? o.out_time.padStart(5,'0') : null;
   const note = [o.night_shift_ok?'夜勤可':null, o.notes||null].filter(Boolean).join('・').slice(0,80);
 
   // 「同じ方」が選ばれていれば新規作成せず、既存レコードに期間を追加する
@@ -1455,6 +1514,8 @@ async function approveOffer(){
     const added = merged.map(r=>`${r.from}〜${r.to}`).join('、') !== before;
     target.avail = merged;
     quals.forEach(q=>{ if(!target.quals.includes(q)) target.quals.push(q); });   // 資格は失わせない
+    if(inT) target.inTime = inT;
+    if(outT) target.outTime = outT;
     if(note && !(target.note||'').includes(note)) target.note = [target.note, note].filter(Boolean).join('・').slice(0,200);
     if((!target.corp || target.corp.includes('未登録')) && o.organization) target.corp = o.organization;
     document.getElementById('ai-proposal').innerHTML = '';
@@ -1472,7 +1533,8 @@ async function approveOffer(){
     const name = (i===0 && o.person_name) ? o.person_name
       : `${o.organization||'所属未登録'} スタッフ${n>1? i+1 : ''}（氏名未登録）`;
     DATA.people.push({id:uid('p'), name, corp:o.organization||'（所属未登録）', office:'',
-      quals:[...quals], note, driveLv:null, lodging:'', rentacar:false, avail: periods.map(p=>({...p}))});
+      quals:[...quals], note, driveLv:null, lodging:'', rentacar:false,
+      inTime: inT, outTime: outT, avail: periods.map(p=>({...p}))});
     flash('p|'+name);
   }
   document.getElementById('ai-proposal').innerHTML = '';
@@ -1625,6 +1687,7 @@ function renderStats(){
   document.getElementById('stat-sites').textContent = DATA.sites.filter(s=>s.active).length;
 }
 function renderAll(){
+  if(IS_REPORT){ renderReport(); return; }
   if(IS_DMAT){ renderDmat(); return; }
   renderStats(); renderBoard();
 }
@@ -1677,7 +1740,7 @@ function jobOf(p){
 function dtText(iso, half, time){
   const base = `${Number(iso.slice(5,7))}/${Number(iso.slice(8,10))}`;
   if(time) return `${base} ${time}`;
-  return `${base}${half==='pm' ? ' 午後' : half==='am' ? ' 午前' : ''}`;
+  return `${base} ${half==='pm' ? '午後' : '午前'}`;   // 午前/午後は必ず表示する
 }
 /* DMAT名簿: 調整ボードと同じガント表示。所属は出さず「名前・資格・in/outの時刻」に絞る */
 function renderDmat(){
@@ -1745,6 +1808,59 @@ function dmatCopy(){
     .catch(()=>prompt('コピーしてお使いください', txt));
 }
 
+/* ---------------- 支援者用 勤怠入力（事後報告・ログイン不要） ---------------- */
+function reportToday(){ document.getElementById('rp-date').value = TODAY; renderReport(); }
+function reportDay(n){
+  const el = document.getElementById('rp-date');
+  el.value = addDays(el.value || TODAY, n);
+  renderReport();
+}
+/* その日に活動している人（割当がある人）を出す。施設の紐付けは任意なので施設別には分けない */
+function reportRows(){
+  const d = document.getElementById('rp-date').value || TODAY;
+  return DATA.assignments
+    .filter(a=>a.from <= d && d <= a.to)
+    .map(a=>({a, p: person(a.personId), s: site(a.siteId)}))
+    .filter(r=>r.p)
+    .sort((x,y)=>x.p.name.localeCompare(y.p.name));
+}
+function renderReport(){
+  const d = document.getElementById('rp-date').value || TODAY;
+  const rows = reportRows();
+  const el = document.getElementById('report-list');
+  if(!rows.length){
+    el.innerHTML = `<div class="card"><p class="small">${fmtD(d)} に活動予定の方が登録されていません。<br>日付を変えてみるか、事務局にご連絡ください。</p></div>`;
+    return;
+  }
+  el.innerHTML = rows.map(r=>{
+    const done = r.a.fromTime && r.a.toTime;
+    return `<div class="card rp-card ${done?'done':''}">
+      <div class="flex" style="gap:8px;">
+        <b style="font-size:16px;">${esc(r.p.name)}</b>${jobBadges(r.p)}
+        ${r.s?`<span class="small">🏥 ${esc(r.s.name)}</span>`:''}
+        ${done?'<span class="badge b-done right">✓ 入力済み</span>':'<span class="badge b-active right">未入力</span>'}
+      </div>
+      <div class="flex" style="margin-top:10px;">
+        <span class="small">入り</span>
+        <input type="time" id="rp-f-${r.a.id}" value="${r.a.fromTime||''}" style="max-width:130px;">
+        <span class="small">出</span>
+        <input type="time" id="rp-t-${r.a.id}" value="${r.a.toTime||''}" style="max-width:130px;">
+        <button class="btn btn-main btn-sm" onclick="saveReport('${r.a.id}')">保存</button>
+      </div>
+    </div>`;
+  }).join('') + `<p class="small">${fmtD(d)} の活動者 ${rows.length}名（入力済み ${rows.filter(r=>r.a.fromTime&&r.a.toTime).length}名）</p>`;
+}
+async function saveReport(aid){
+  const a = DATA.assignments.find(x=>x.id===aid);
+  if(!a) return;
+  a.fromTime = document.getElementById('rp-f-'+aid).value || null;
+  a.toTime = document.getElementById('rp-t-'+aid).value || null;
+  setSync('⏳ 保存中…', true);
+  await save();
+  renderReport();
+  setSync('✓ 保存しました。ありがとうございます');
+}
+
 /* 本番モード: デモ表示を消し、実データ運用向けの見た目に */
 if(IS_PROD){
   document.querySelector('.demo-banner').remove();
@@ -1754,6 +1870,18 @@ if(IS_PROD){
   document.querySelector('footer').textContent = '災害支援シフト調整 — 株式会社NAGARA（本番環境・合言葉つき）';
   // /prod/ 配下からは説明資料が1階層上にある (相対リンクのままだと /prod/about.html で404)
   document.querySelectorAll('a[href="about.html"]').forEach(a=>a.href = '../about.html');
+}
+/* 勤怠入力モード: 自分の入り・出だけを入力する画面にする（ログイン不要・現場の全員が使う） */
+if(IS_REPORT){
+  document.querySelectorAll('nav button').forEach(b=>b.remove());
+  document.querySelectorAll('.tabpane').forEach(p=>p.classList.remove('show'));
+  document.getElementById('tab-report').classList.add('show');
+  document.querySelector('header h1').textContent = '🕘 活動時間の入力';
+  document.querySelectorAll('header .tag').forEach(t=>{ if(t.textContent==='本番環境') t.remove(); });
+  const st = document.querySelector('.stats'); if(st) st.remove();
+  document.querySelectorAll('a[href="about.html"]').forEach(a=>a.remove());
+  document.querySelector('footer').textContent = 'キャンナス熊本震災支援チーム 活動時間の入力 — 株式会社NAGARA';
+  document.getElementById('rp-date').value = TODAY;
 }
 /* DMATモード: 調整ボード・AI秘書を隠し、支援者名簿だけの閲覧専用画面にする */
 if(IS_DMAT){
