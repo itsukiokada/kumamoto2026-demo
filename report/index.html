@@ -22,11 +22,12 @@
   .stat{background:rgba(255,255,255,.14); border-radius:10px; padding:4px 14px; text-align:center;}
   .stat b{font-size:20px; display:block; line-height:1.2;}
   .stat span{font-size:11px; opacity:.9;}
-  .nagara-logo{display:inline-flex; align-items:center; gap:5px; background:#fff; border-radius:8px;
-    padding:4px 10px 4px 7px; text-decoration:none; margin-left:4px;}
-  .nagara-logo svg{width:20px; height:16px;}
-  .nagara-logo span{color:#004AAD; font-weight:800; font-size:12.5px; letter-spacing:.04em;}
-  .nagara-logo:hover{box-shadow:0 0 0 2px rgba(255,255,255,.5);}
+  .nagara-logo{display:inline-flex; align-items:center; gap:6px; text-decoration:none;
+    margin-top:10px; opacity:.85; transition:opacity .2s;}
+  .nagara-logo svg{width:26px; height:21px;}
+  .nagara-logo span{color:#004AAD; font-weight:800; font-size:14px; letter-spacing:.04em;}
+  .nagara-logo:hover{opacity:1;}
+  .nagara-logo::before{content:'提供'; color:var(--sub); font-size:11px; margin-right:2px;}
   .demo-banner{background:#fff6d9; color:#7a5b00; text-align:center; padding:6px; font-size:13px; border-bottom:1px solid #f0e2ae;}
   nav{display:flex; gap:4px; padding:10px 24px 0; background:var(--card); border-bottom:2px solid var(--line); flex-wrap:wrap;}
   nav button{border:none; background:transparent; padding:12px 20px; font-size:16px; font-weight:600;
@@ -90,8 +91,13 @@
   .dup-warn{background:#fff4e5; border:1.5px solid var(--accent); border-radius:10px;
     padding:10px 12px; margin:8px 0; font-size:13.5px; color:#7a4a12;}
   .prop-cand{display:flex; align-items:center; gap:8px; padding:5px 0; font-size:14px;}
-  .tl-day{font-size:10px; text-align:center; color:var(--sub); font-weight:700; padding:2px 0; border-left:1px solid #f0ece3;}
+  .tl-day{font-size:10px; text-align:center; color:var(--sub); font-weight:700; padding:2px 0; border-left:1px solid #cfc9bd;}
   .tl-day.today{color:var(--accent); background:var(--accent-pale); border-radius:6px 6px 0 0;}
+  /* 午前/午後の目盛り。日の変わり目は濃い線、午前↔午後は薄い線 */
+  .tl-half{font-size:8.5px; text-align:center; color:#9b958a; padding:1px 0 3px;
+    border-left:1px dotted #ded8cc; background:#fbfaf7;}
+  .tl-half.am{border-left:1px solid #cfc9bd;}
+  .tl-half.today{background:var(--accent-pale); color:var(--accent);}
   .tl-sitehead{background:var(--brand-pale); color:var(--brand-dark); font-weight:700; padding:6px 10px; border-radius:8px; margin-top:12px; font-size:13px; display:flex; gap:8px; align-items:center; flex-wrap:wrap;}
   .tl-sitehead.droppable{cursor:pointer; outline:2px dashed var(--brand);}
   .tl-sitehead.droppable:hover{background:#d2eae4;}
@@ -150,7 +156,8 @@
   .right{margin-left:auto;}
   .small{font-size:12px; color:var(--sub);}
   .range-row{display:flex; gap:8px; align-items:center; margin-bottom:6px;}
-  footer{padding:20px 24px; text-align:center; font-size:12px; color:var(--sub);}
+  footer{padding:20px 24px 34px; text-align:center; font-size:12px; color:var(--sub);
+    display:flex; flex-direction:column; align-items:center; gap:2px;}
 
   /* ============ スマホ対応 ============ */
   @media(max-width:700px){
@@ -207,7 +214,6 @@
   <span class="tag">熊本地震 介護施設支援</span>
   <span class="tag" id="sync" style="display:none;"></span>
   <a href="about.html" style="color:#fff; font-size:12px;">📄 説明資料</a>
-  <a class="nagara-logo" href="https://nagarainc.com/" target="_blank" rel="noopener" title="株式会社NAGARA（このツールの提供元）"><svg viewBox="208 289 783.3 621" aria-label="NAGARA"><path d="M979.061 417.569C927.432 263.672 714.22 246.103 632.147 374.767C623.686 388.051 623.406 404.974 631.264 418.645L632.621 420.992C644.032 440.8 669.028 447.948 689.266 437.355C690.429 436.752 691.592 436.171 692.754 435.59C769.983 397.632 860.194 454.902 860.194 540.958V680.968C860.194 715.696 835.692 745.774 801.589 752.383C801.287 752.448 800.964 752.512 800.663 752.577C783.073 755.871 765.354 747.453 756.44 731.951C706.146 644.647 647.218 542.314 598.818 458.347C590.766 443.62 573.37 413.78 556.792 385.317C494.118 277.71 344.634 260.162 260.344 351.838C244.584 368.976 231.838 389.278 223.398 412.38C222.365 415.222 221.267 418.021 220.169 420.82C201.265 469.112 210.028 713.263 210.028 714.469C210.222 736.666 214.571 761.641 221.59 781.47C274.317 938.339 493.149 952.742 572.186 818.481C579.958 805.283 580.066 788.92 572.423 775.657C560.818 755.505 535.219 748.551 514.851 759.79C513.732 760.414 512.634 760.995 511.514 761.577C433.618 802.204 340.457 744.568 340.457 656.704V524.853C340.457 484.377 370.406 449.843 410.581 444.848C410.947 444.804 411.291 444.761 411.636 444.718C428.408 442.738 444.728 451.07 453.167 465.71C517.564 577.473 586.503 697.18 651.955 810.816C714.134 918.768 865.189 933.774 945.625 838.633C958.457 823.454 968.942 806.079 976.284 786.745C977.382 783.86 978.544 780.997 979.729 778.133C1000.38 728.248 986.403 535.554 990.128 484.011C990.192 482.956 990.235 481.879 990.235 480.824C989.999 458.67 986.102 437.377 979.104 417.569H979.061Z" fill="#004AAD"/> <path d="M521.095 756.904C495.517 772.471 465.483 781.449 433.36 781.449C340.048 781.449 264.435 705.814 264.435 612.502C264.435 530.559 322.803 462.222 400.246 446.807C365.368 455.892 340.414 487.908 340.414 524.832V656.66C340.414 744.503 433.575 802.139 511.471 761.533C512.59 760.952 513.71 760.349 514.808 759.746C516.853 758.605 518.963 757.658 521.095 756.904Z" fill="#617CC3"/> <path d="M938.154 586.515C938.154 668.739 879.42 737.248 801.589 752.362C835.671 745.752 860.172 715.696 860.172 680.946V540.958C860.172 458.089 776.506 401.895 701.345 431.779C722.121 422.65 745.072 417.59 769.207 417.59C862.519 417.59 938.132 493.226 938.132 586.515H938.154Z" fill="#617CC3"/></svg><span>NAGARA</span></a>
   <div class="stats">
     <div class="stat"><b id="stat-avail">-</b><span>動かせる人（7日以内）</span></div>
     <div class="stat"><b id="stat-active">-</b><span>支援中</span></div>
@@ -396,7 +402,10 @@
   </div>
 </div>
 
-<footer>災害支援シフト調整プロトタイプ v2.6.1 — 株式会社NAGARA（デモ用架空データ）</footer>
+<footer>
+  <div id="footer-text">災害支援シフト調整プロトタイプ v2.7（デモ用架空データ）</div>
+  <a class="nagara-logo" href="https://nagarainc.com/" target="_blank" rel="noopener" title="株式会社NAGARA（このツールの提供元）"><svg viewBox="208 289 783.3 621" aria-label="NAGARA"><path d="M979.061 417.569C927.432 263.672 714.22 246.103 632.147 374.767C623.686 388.051 623.406 404.974 631.264 418.645L632.621 420.992C644.032 440.8 669.028 447.948 689.266 437.355C690.429 436.752 691.592 436.171 692.754 435.59C769.983 397.632 860.194 454.902 860.194 540.958V680.968C860.194 715.696 835.692 745.774 801.589 752.383C801.287 752.448 800.964 752.512 800.663 752.577C783.073 755.871 765.354 747.453 756.44 731.951C706.146 644.647 647.218 542.314 598.818 458.347C590.766 443.62 573.37 413.78 556.792 385.317C494.118 277.71 344.634 260.162 260.344 351.838C244.584 368.976 231.838 389.278 223.398 412.38C222.365 415.222 221.267 418.021 220.169 420.82C201.265 469.112 210.028 713.263 210.028 714.469C210.222 736.666 214.571 761.641 221.59 781.47C274.317 938.339 493.149 952.742 572.186 818.481C579.958 805.283 580.066 788.92 572.423 775.657C560.818 755.505 535.219 748.551 514.851 759.79C513.732 760.414 512.634 760.995 511.514 761.577C433.618 802.204 340.457 744.568 340.457 656.704V524.853C340.457 484.377 370.406 449.843 410.581 444.848C410.947 444.804 411.291 444.761 411.636 444.718C428.408 442.738 444.728 451.07 453.167 465.71C517.564 577.473 586.503 697.18 651.955 810.816C714.134 918.768 865.189 933.774 945.625 838.633C958.457 823.454 968.942 806.079 976.284 786.745C977.382 783.86 978.544 780.997 979.729 778.133C1000.38 728.248 986.403 535.554 990.128 484.011C990.192 482.956 990.235 481.879 990.235 480.824C989.999 458.67 986.102 437.377 979.104 417.569H979.061Z" fill="#004AAD"/> <path d="M521.095 756.904C495.517 772.471 465.483 781.449 433.36 781.449C340.048 781.449 264.435 705.814 264.435 612.502C264.435 530.559 322.803 462.222 400.246 446.807C365.368 455.892 340.414 487.908 340.414 524.832V656.66C340.414 744.503 433.575 802.139 511.471 761.533C512.59 760.952 513.71 760.349 514.808 759.746C516.853 758.605 518.963 757.658 521.095 756.904Z" fill="#617CC3"/> <path d="M938.154 586.515C938.154 668.739 879.42 737.248 801.589 752.362C835.671 745.752 860.172 715.696 860.172 680.946V540.958C860.172 458.089 776.506 401.895 701.345 431.779C722.121 422.65 745.072 417.59 769.207 417.59C862.519 417.59 938.132 493.226 938.132 586.515H938.154Z" fill="#617CC3"/></svg><span>NAGARA</span></a>
+</footer>
 
 <script>
 'use strict';
@@ -849,7 +858,12 @@ function renderBoard(){
   let html = `<div style="display:grid; grid-template-columns:var(--namecol,235px) repeat(${nCols}, minmax(13px,1fr)); align-items:center; min-width:calc(var(--namecol,235px) + ${nCols*14}px);">`;
   html += `<div style="grid-row:1; grid-column:1;"></div>` +
     daysArr.map((iso,i)=>`<div class="tl-day ${iso===TODAY?'today':''}" style="grid-row:1; grid-column:${2+i*2} / span 2;">${fmtD(iso)}</div>`).join('');
-  let row = 2;
+  // 午前/午後の目盛り行
+  html += `<div style="grid-row:2; grid-column:1;"></div>` +
+    daysArr.map((iso,i)=>
+      `<div class="tl-half am ${iso===TODAY?'today':''}" style="grid-row:2; grid-column:${2+i*2};">前</div>` +
+      `<div class="tl-half ${iso===TODAY?'today':''}" style="grid-row:2; grid-column:${3+i*2};">後</div>`).join('');
+  let row = 3;
 
   /* --- 支援先レーン --- */
   for(const s of sites){
@@ -1780,10 +1794,15 @@ function renderDmat(){
   let html = `<div style="display:grid; grid-template-columns:300px repeat(${nCols}, minmax(13px,1fr)); align-items:center; min-width:${300+nCols*14}px;">`;
   html += `<div style="grid-row:1; grid-column:1;"></div>` +
     days.map((iso,i)=>`<div class="tl-day ${iso===TODAY?'today':''}" style="grid-row:1; grid-column:${2+i*2} / span 2;">${fmtD(iso)}</div>`).join('');
+  // 午前/午後の目盛り行
+  html += `<div style="grid-row:2; grid-column:1;"></div>` +
+    days.map((iso,i)=>
+      `<div class="tl-half am ${iso===TODAY?'today':''}" style="grid-row:2; grid-column:${2+i*2};">前</div>` +
+      `<div class="tl-half ${iso===TODAY?'today':''}" style="grid-row:2; grid-column:${3+i*2};">後</div>`).join('');
   // 表示期間に重ならない人は行ごと出さない（端に潰れた幻のバーが出るのを防ぐ）
   const inWin = rows.filter(r=>r.to >= days[0] && r.from <= days[days.length-1]);
   const outside = rows.filter(r=>!(r.to >= days[0] && r.from <= days[days.length-1]));
-  let row = 2;
+  let row = 3;
   for(const r of inWin){
     const label = `${dtText(r.from, r.fromHalf, r.fromTime)}〜${dtText(r.to, r.toHalf, r.toTime)}`;
     html += `<div class="tl-name" style="grid-row:${row}; grid-column:1;" title="${esc(r.p.name)} ${jobLabels(r.p).join('・')} ${label}">${esc(r.p.name)}${jobBadges(r.p)}${r.confirmed?'':'<span class="jb j-other">調整中</span>'} <span class="dmat-t">${label}</span></div>`;
@@ -1867,7 +1886,7 @@ if(IS_PROD){
   document.getElementById('btn-reset').remove();
   const t = document.createElement('span'); t.className = 'tag'; t.style.background = 'var(--accent)'; t.textContent = '本番環境';
   document.querySelector('header h1').after(t);
-  document.querySelector('footer').textContent = '災害支援シフト調整 — 株式会社NAGARA（本番環境・合言葉つき）';
+  document.getElementById('footer-text').textContent = '災害支援シフト調整（本番環境・合言葉つき）';
   // /prod/ 配下からは説明資料が1階層上にある (相対リンクのままだと /prod/about.html で404)
   document.querySelectorAll('a[href="about.html"]').forEach(a=>a.href = '../about.html');
 }
@@ -1880,7 +1899,7 @@ if(IS_REPORT){
   document.querySelectorAll('header .tag').forEach(t=>{ if(t.textContent==='本番環境') t.remove(); });
   const st = document.querySelector('.stats'); if(st) st.remove();
   document.querySelectorAll('a[href*="about"]').forEach(a=>a.remove());   // IS_PROD側で ../about.html に書き換わるため部分一致で消す
-  document.querySelector('footer').textContent = 'キャンナス熊本震災支援チーム 活動時間の入力 — 株式会社NAGARA';
+  document.getElementById('footer-text').textContent = 'キャンナス熊本震災支援チーム　活動時間の入力';
   document.getElementById('rp-date').value = TODAY;
 }
 /* DMATモード: 調整ボード・AI秘書を隠し、支援者名簿だけの閲覧専用画面にする */
@@ -1891,7 +1910,7 @@ if(IS_DMAT){
   document.querySelector('header h1').textContent = '📋 支援者名簿（DMAT提出用）';
   document.querySelectorAll('header .tag').forEach(t=>{ if(t.textContent==='本番環境') t.textContent='閲覧専用'; });
   document.querySelector('.stats').remove();
-  document.querySelector('footer').textContent = 'キャンナス熊本震災支援チーム 支援者名簿 — 株式会社NAGARA（閲覧専用）';
+  document.getElementById('footer-text').textContent = 'キャンナス熊本震災支援チーム　支援者名簿（閲覧専用）';
 }
 /* 使い方セクションのサンプル文面 (タップで入力欄へ) */
 document.getElementById('usage-samples').innerHTML = EXAMPLES.map((e,i)=>
