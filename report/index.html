@@ -396,7 +396,7 @@
   </div>
 </div>
 
-<footer>災害支援シフト調整プロトタイプ v2.6 — 株式会社NAGARA（デモ用架空データ）</footer>
+<footer>災害支援シフト調整プロトタイプ v2.6.1 — 株式会社NAGARA（デモ用架空データ）</footer>
 
 <script>
 'use strict';
@@ -1879,7 +1879,7 @@ if(IS_REPORT){
   document.querySelector('header h1').textContent = '🕘 活動時間の入力';
   document.querySelectorAll('header .tag').forEach(t=>{ if(t.textContent==='本番環境') t.remove(); });
   const st = document.querySelector('.stats'); if(st) st.remove();
-  document.querySelectorAll('a[href="about.html"]').forEach(a=>a.remove());
+  document.querySelectorAll('a[href*="about"]').forEach(a=>a.remove());   // IS_PROD側で ../about.html に書き換わるため部分一致で消す
   document.querySelector('footer').textContent = 'キャンナス熊本震災支援チーム 活動時間の入力 — 株式会社NAGARA';
   document.getElementById('rp-date').value = TODAY;
 }
