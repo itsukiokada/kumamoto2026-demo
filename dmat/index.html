@@ -2027,7 +2027,7 @@ if(IS_DMAT){
 document.getElementById('usage-samples').innerHTML = EXAMPLES.map((e,i)=>
   `<button class="chip" style="max-width:100%; text-align:left; white-space:normal;" onclick="document.getElementById('ai-input').value=EXAMPLES[${i}];document.getElementById('ai-input').scrollIntoView({behavior:'smooth',block:'center'});">${esc(e.length>44?e.slice(0,44)+'…':e)}</button>`).join('');
 newThread();
-loadThreads();
+if(!IS_REPORT && !IS_DMAT) loadThreads();   // AI秘書のない画面ではスレッドを取得しない (勤怠入力はサーバー側でも403)
 load();
 </script>
 </body>
