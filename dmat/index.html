@@ -259,7 +259,7 @@
   <!-- ============ DMAT用 支援者名簿（閲覧専用・/dmat/ でのみ表示） ============ -->
   <section id="tab-dmat" class="tabpane">
     <div class="notice">
-      キャンナス熊本震災支援チームの<b>支援者名簿</b>です（閲覧専用）。施設への割り振りは含みません。<br>
+      <span id="dmat-team">キャンナス熊本震災支援チーム</span>の<b>支援者名簿</b>です（閲覧専用）。施設への割り振りは含みません。<br>
       1日 = 午前・午後の2マス。時刻が判明している方はバーに時刻まで、未確定の方は「午前／午後」を表示しています。<br>
       🟠 支援中　🔵 これから　⬜ 活動終了
     </div>
@@ -418,16 +418,22 @@
 'use strict';
 /* API接続先: ローカル開発時は同一サーバー、公開ページ(GitHub Pages)からは Supabase Edge Function。
    /prod/ 配下は本番 (別スキーマ・データ空スタート・合言葉ガード付き app-prod) に接続 */
+/* テナント判定 (v3.0): /orange/ 配下は 医療法人オレンジグループ用の別テナント (同じ枠組み・データは完全分離) */
+const IS_ORANGE = location.pathname.includes('/orange/');
 const IS_DMAT = location.pathname.includes('/dmat/');       // DMAT提出用の名簿ビュー(閲覧専用・別合言葉)
 const IS_REPORT = location.pathname.includes('/report/');   // 支援者用 勤怠入力(合言葉なし・時刻のみ更新)
-const IS_PROD = location.pathname.includes('/prod/') || IS_DMAT || IS_REPORT;
-const API = ['localhost','127.0.0.1'].includes(location.hostname) ? ''
-  : 'https://dwbzwdvumxkcaqdwggml.supabase.co/functions/v1/'
-    + (IS_DMAT ? 'app-dmat' : IS_REPORT ? 'app-report' : IS_PROD ? 'app-prod' : 'app');
+const IS_PROD = location.pathname.includes('/prod/') || IS_DMAT || IS_REPORT || IS_ORANGE;
+const TEAM = IS_ORANGE ? 'オレンジグループ震災支援チーム' : 'キャンナス熊本震災支援チーム';
+const FN = IS_DMAT ? (IS_ORANGE ? 'app-orange-dmat' : 'app-dmat')
+  : IS_REPORT ? (IS_ORANGE ? 'app-orange-report' : 'app-report')
+  : IS_ORANGE ? 'app-orange'
+  : IS_PROD ? 'app-prod' : 'app';
+const API = ['localhost','127.0.0.1'].includes(location.hostname) ? '' :
+  'https://dwbzwdvumxkcaqdwggml.supabase.co/functions/v1/' + FN;
 /* 本番のみ: 合言葉を x-passcode ヘッダーで送る。401なら聞き直す。
    保存キーは画面ごとに分ける（調整ボードとDMAT名簿は同じドメインでlocalStorageを共有するため、
    共通キーだと行き来のたびに上書きし合って毎回入力を求められる。2026-08-05 金子さん報告） */
-const PC_KEY = IS_DMAT ? 'shift-passcode-dmat' : 'shift-passcode';
+const PC_KEY = (IS_ORANGE ? 'shift-passcode-orange' : 'shift-passcode') + (IS_DMAT ? '-dmat' : '');
 const NEED_PC = IS_PROD && !IS_REPORT;   // 勤怠入力ページは現場の全員が使うため合言葉なし
 function apiHeaders(h){
   h = Object.assign({}, h);
@@ -2078,11 +2084,12 @@ async function saveReport(aid){
 if(IS_PROD){
   document.querySelector('.demo-banner').remove();
   document.getElementById('btn-reset').remove();
-  const t = document.createElement('span'); t.className = 'tag'; t.style.background = 'var(--accent)'; t.textContent = '本番環境';
+  const t = document.createElement('span'); t.className = 'tag'; t.style.background = 'var(--accent)'; t.textContent = IS_ORANGE ? '本番環境（オレンジ）' : '本番環境';
   document.querySelector('header h1').after(t);
-  document.getElementById('footer-text').textContent = '災害支援シフト調整（本番環境・合言葉つき）';
+  document.getElementById('footer-text').textContent = IS_ORANGE ? '災害支援シフト調整 — オレンジグループ（本番環境・合言葉つき）' : '災害支援シフト調整（本番環境・合言葉つき）';
   // /prod/ 配下からは説明資料が1階層上にある (相対リンクのままだと /prod/about.html で404)
-  document.querySelectorAll('a[href="about.html"]').forEach(a=>a.href = '../about.html');
+  const upN = (IS_ORANGE && (IS_DMAT || IS_REPORT)) ? '../../' : '../';
+  document.querySelectorAll('a[href="about.html"]').forEach(a=>a.href = upN + 'about.html');
 }
 /* 勤怠入力モード: 自分の入り・出だけを入力する画面にする（ログイン不要・現場の全員が使う） */
 if(IS_REPORT){
@@ -2093,7 +2100,7 @@ if(IS_REPORT){
   document.querySelectorAll('header .tag').forEach(t=>{ if(t.textContent==='本番環境') t.remove(); });
   const st = document.querySelector('.stats'); if(st) st.remove();
   document.querySelectorAll('a[href*="about"]').forEach(a=>a.remove());   // IS_PROD側で ../about.html に書き換わるため部分一致で消す
-  document.getElementById('footer-text').textContent = 'キャンナス熊本震災支援チーム　活動時間の入力';
+  document.getElementById('footer-text').textContent = TEAM + '　活動時間の入力';
   document.getElementById('rp-date').value = TODAY;
 }
 /* DMATモード: 調整ボード・AI秘書を隠し、支援者名簿だけの閲覧専用画面にする */
@@ -2104,7 +2111,8 @@ if(IS_DMAT){
   document.querySelector('header h1').textContent = '📋 支援者名簿（DMAT提出用）';
   document.querySelectorAll('header .tag').forEach(t=>{ if(t.textContent==='本番環境') t.textContent='閲覧専用'; });
   document.querySelector('.stats').remove();
-  document.getElementById('footer-text').textContent = 'キャンナス熊本震災支援チーム　支援者名簿（閲覧専用）';
+  document.getElementById('footer-text').textContent = TEAM + '　支援者名簿（閲覧専用）';
+  document.getElementById('dmat-team').textContent = TEAM;
 }
 /* 使い方セクションのサンプル文面 (タップで入力欄へ) */
 document.getElementById('usage-samples').innerHTML = EXAMPLES.map((e,i)=>
