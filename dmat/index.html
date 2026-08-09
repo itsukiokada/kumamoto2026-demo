@@ -239,7 +239,6 @@
       <button class="btn btn-sub btn-sm" onclick="clearDates()">クリア</button>
       <input type="text" id="board-search" placeholder="名前・法人名で検索" style="max-width:240px;">
     </div>
-    <div class="chips" id="board-qual-filter"></div>
     <div class="chips">
       <button class="btn btn-main btn-sm" onclick="openPersonForm()">＋ 支援者を追加</button>
       <button class="btn btn-main btn-sm" onclick="openSiteModal()">＋ 支援先を追加</button>
@@ -362,17 +361,19 @@
     <div class="grid2">
       <div class="form-row"><label>運転レベル（任意）</label>
         <select id="pf-drivelv"><option value="">—</option><option value="1">Lv1 近場のみ</option><option value="2">Lv2</option><option value="3">Lv3 一般道OK</option><option value="4">Lv4</option><option value="5">Lv5 長距離・山道OK</option></select></div>
-      <div class="form-row"><label>メモ（夜勤可・経験など）</label><input type="text" id="pf-note" placeholder="例）夜勤可・災害支援経験あり"></div>
+      <div class="form-row"><label>メモ（夜勤可・経験など）</label><textarea id="pf-note" rows="3" placeholder="例）夜勤可・災害支援経験あり"></textarea></div>
+      <div class="form-row"><label>移動方法</label><input type="text" id="pf-transport" placeholder="例）自家用車で現地入り／レンタカー予定／新幹線＋バス"></div>
     </div>
     <div class="form-row"><label>行ける期間（複数可）</label>
       <div id="pf-ranges"></div>
       <button class="btn btn-sub btn-sm" onclick="addPfRange()">＋ 期間を追加</button>
     </div>
-    <div class="form-row"><label>入り・出の予定時刻（支援先に割り当てたときに入ります・空欄OK）</label>
+    <div class="form-row"><label>入り・出の予定時刻（空欄OK）</label>
       <div class="flex">
         <span class="small">入り</span><input type="time" id="pf-intime" style="max-width:130px;">
         <span class="small">出</span><input type="time" id="pf-outtime" style="max-width:130px;">
       </div>
+      <p class="small" style="margin-top:4px;">時刻を変更して保存すると、終わっていない割当（バー）の予定時刻にも反映されます</p>
     </div>
     <div class="flex" style="justify-content:flex-end;">
       <button class="btn btn-sub" onclick="closeModal('person-form-modal')">やめる</button>
@@ -409,7 +410,7 @@
 </div>
 
 <footer>
-  <div id="footer-text">災害支援シフト調整プロトタイプ v2.8（デモ用架空データ）</div>
+  <div id="footer-text">災害支援シフト調整プロトタイプ v2.9（デモ用架空データ）</div>
   <a class="nagara-logo" href="https://nagarainc.com/" target="_blank" rel="noopener" title="株式会社NAGARA（このツールの提供元）"><svg viewBox="208 289 783.3 621" aria-label="NAGARA"><path d="M979.061 417.569C927.432 263.672 714.22 246.103 632.147 374.767C623.686 388.051 623.406 404.974 631.264 418.645L632.621 420.992C644.032 440.8 669.028 447.948 689.266 437.355C690.429 436.752 691.592 436.171 692.754 435.59C769.983 397.632 860.194 454.902 860.194 540.958V680.968C860.194 715.696 835.692 745.774 801.589 752.383C801.287 752.448 800.964 752.512 800.663 752.577C783.073 755.871 765.354 747.453 756.44 731.951C706.146 644.647 647.218 542.314 598.818 458.347C590.766 443.62 573.37 413.78 556.792 385.317C494.118 277.71 344.634 260.162 260.344 351.838C244.584 368.976 231.838 389.278 223.398 412.38C222.365 415.222 221.267 418.021 220.169 420.82C201.265 469.112 210.028 713.263 210.028 714.469C210.222 736.666 214.571 761.641 221.59 781.47C274.317 938.339 493.149 952.742 572.186 818.481C579.958 805.283 580.066 788.92 572.423 775.657C560.818 755.505 535.219 748.551 514.851 759.79C513.732 760.414 512.634 760.995 511.514 761.577C433.618 802.204 340.457 744.568 340.457 656.704V524.853C340.457 484.377 370.406 449.843 410.581 444.848C410.947 444.804 411.291 444.761 411.636 444.718C428.408 442.738 444.728 451.07 453.167 465.71C517.564 577.473 586.503 697.18 651.955 810.816C714.134 918.768 865.189 933.774 945.625 838.633C958.457 823.454 968.942 806.079 976.284 786.745C977.382 783.86 978.544 780.997 979.729 778.133C1000.38 728.248 986.403 535.554 990.128 484.011C990.192 482.956 990.235 481.879 990.235 480.824C989.999 458.67 986.102 437.377 979.104 417.569H979.061Z" fill="#004AAD"/> <path d="M521.095 756.904C495.517 772.471 465.483 781.449 433.36 781.449C340.048 781.449 264.435 705.814 264.435 612.502C264.435 530.559 322.803 462.222 400.246 446.807C365.368 455.892 340.414 487.908 340.414 524.832V656.66C340.414 744.503 433.575 802.139 511.471 761.533C512.59 760.952 513.71 760.349 514.808 759.746C516.853 758.605 518.963 757.658 521.095 756.904Z" fill="#617CC3"/> <path d="M938.154 586.515C938.154 668.739 879.42 737.248 801.589 752.362C835.671 745.752 860.172 715.696 860.172 680.946V540.958C860.172 458.089 776.506 401.895 701.345 431.779C722.121 422.65 745.072 417.59 769.207 417.59C862.519 417.59 938.132 493.226 938.132 586.515H938.154Z" fill="#617CC3"/></svg><span>NAGARA</span></a>
 </footer>
 
@@ -679,7 +680,12 @@ function openAssignMenu(aid){
         <input type="time" id="asg-to-time" value="${a.toTime||''}" style="max-width:130px;">
         <button class="btn btn-main btn-sm" onclick="saveAssignTimes()">時刻を保存</button>
       </div>
-      <p class="small" style="margin-top:4px;">✅ 実績: 入り ${a.actualFromTime||'—'} ／ 出 ${a.actualToTime||'—'}（ご本人が「活動時間の入力」ページから記入したもの。ここでは変更できません）</p>
+      <p class="small" style="margin-top:4px;">${(()=>{
+        const punches = (a.records||[]).filter(r=>r.inTime||r.outTime).sort((x,y)=>x.date.localeCompare(y.date));
+        return punches.length
+          ? `✅ 打刻: ${punches.map(r=>`${fmtD(r.date)} ${r.inTime||'—'}〜${r.outTime||'—'}`).join('　')}`
+          : `✅ 実績: 入り ${a.actualFromTime||'—'} ／ 出 ${a.actualToTime||'—'}`;
+      })()}（ご本人が「活動時間の入力」ページから記入したもの。ここでは変更できません）</p>
     </div>
     ${opts.length ? `
     <div class="form-row"><label>✂️ 途中で分ける — 選んだ時点から後ろがこの支援先から外れて「動かせる人」（緑バー）に戻ります。緑バーを選んで別の支援先に割り当ててください。</label>
@@ -794,13 +800,18 @@ function unassignBar(aid){
   const a = DATA.assignments.find(x=>x.id===aid);
   if(!a) return;
   const p = person(a.personId), s = site(a.siteId);
-  if(confirm(`${p.name}さんの ${s.name}（${fmtRangeH(a)}）への割当を解除しますか？`)){
+  // 打刻がある割当の解除は明示的に警告する (同じ人の別の割当が同じ日付を含む場合は自動で引き継がれる)
+  const punches = (a.records||[]).filter(r=>r.inTime||r.outTime);
+  const warn = punches.length
+    ? `\n\n⚠️ この割当にはご本人の打刻が ${punches.length}日分 あります（${punches.map(r=>fmtD(r.date)).join('・')}）。\n同じ期間の割当が他に無い場合、打刻も一緒に消えます。`
+    : '';
+  if(confirm(`${p.name}さんの ${s.name}（${fmtRangeH(a)}）への割当を解除しますか？${warn}`)){
     closeModal('assign-modal');
     DATA.assignments = DATA.assignments.filter(x=>x.id!==aid); save();
   }
 }
 function renderBoard(){
-  renderQualChips('board-qual-filter', boardQualFilter, q=>{boardQualFilter=q; renderBoard();});
+  // v2.9: 職種フィルタはグリッド内 (動かせる人の直下) に描画するためここでは何もしない
   const kw = (document.getElementById('board-search').value||'').trim();
   const fF = document.getElementById('f-from').value || null;
   const fT = document.getElementById('f-to').value || null;
@@ -917,12 +928,19 @@ function renderBoard(){
   const outEntries = entries.filter(e=>!inWin(e));
   html += `<div class="tl-freehead" style="grid-row:${row}; grid-column:1 / -1;"><span class="fh-in">🟢 動かせる人（${visEntries.length}枠）— バーをクリックして選択 → 上の支援先へ${oldCount?`　<span style="font-weight:400; font-size:11px;">※1週間より前に終わった未割当 ${oldCount}件は非表示（「期間で絞り込み」で表示できます）</span>`:''}</span></div>`;
   row++;
+  // 職種フィルタは「動かせる人」のすぐ下に置く (金子さん 8/8要望①)。
+  // グリッドは横スクロールするため sticky で常に画面内に収める (スマホでチップが圏外に出ない)
+  const chip = q => `<button class="chip ${boardQualFilter===(q||null)?'on':''}" onclick="boardQualFilter=${q?`'${q}'`:'null'};renderBoard();">${q||'すべて'}</button>`;
+  html += `<div style="grid-row:${row}; grid-column:1 / -1;"><div class="chips" style="position:sticky; left:8px; max-width:min(920px, calc(100vw - 70px)); padding:6px 4px;">${chip(null)}${QUALS.map(chip).join('')}</div></div>`;
+  row++;
   for(const e of visEntries){
     const sel = selEntry && selEntry.pid===e.p.id && selEntry.from===e.seg.from && selEntry.to===e.seg.to && selEntry.fromHalf===e.seg.fromHalf;
     html += `<div class="tl-name" style="grid-row:${row}; grid-column:1;" title="${esc(e.p.name)} ${esc(e.p.corp)} ${jobLabels(e.p).join('・')}" onclick="openPerson('${e.p.id}')">${nameHtml(e.p)}${jobBadges(e.p)} <span class="corp">${esc(e.p.corp)}</span></div>`;
     const segLabel = fmtRangeH({from:e.seg.from, fromHalf:e.seg.fromHalf, to:e.seg.to, toHalf:e.seg.toHalf});
     const {c1, c2} = clip(slotNum(e.seg.from, e.seg.fromHalf), slotNum(e.seg.to, e.seg.toHalf==='am'?'am':'pm'));
-    html += `<div class="tl-bar ${e.past?'b-ended':'b-free'} ${sel?'selected':''} ${flashKeys.has('p|'+e.p.name)?'flash':''}" style="grid-row:${row}; grid-column:${c1+2} / ${c2+3};" title="${esc(e.p.name)} ${segLabel} ${e.p.quals.join('・')}${e.past?'（活動終了）':''}" onclick="selectEntry('${e.p.id}','${e.seg.from}','${e.seg.to}','${e.seg.fromHalf}','${e.seg.toHalf}')">${segLabel} ${e.past?'活動終了':esc(e.p.quals.filter(q=>q!=='運転可').slice(0,1).join(''))+(e.p.quals.includes('運転可')?'🚗':'')}</div>`;
+    // バーの文字は職種でなく時刻を出す (職種は名前の横のバッジで分かる・金子さん 8/8要望②)
+    const timeLabel = (e.p.inTime?` 入${e.p.inTime}`:'') + (e.p.outTime?` 出${e.p.outTime}`:'');
+    html += `<div class="tl-bar ${e.past?'b-ended':'b-free'} ${sel?'selected':''} ${flashKeys.has('p|'+e.p.name)?'flash':''}" style="grid-row:${row}; grid-column:${c1+2} / ${c2+3};" title="${esc(e.p.name)} ${segLabel} ${e.p.quals.join('・')}${e.past?'（活動終了）':''}" onclick="selectEntry('${e.p.id}','${e.seg.from}','${e.seg.to}','${e.seg.fromHalf}','${e.seg.toHalf}')">${segLabel}${e.past?' 活動終了':timeLabel}</div>`;
     row++;
   }
   if(!visEntries.length){
@@ -950,6 +968,8 @@ document.getElementById('f-from').addEventListener('change', renderBoard);
 document.getElementById('f-to').addEventListener('change', renderBoard);
 document.getElementById('d-from').addEventListener('change', renderDmat);
 document.getElementById('d-to').addEventListener('change', renderDmat);
+// 勤怠入力: 日付欄の直接変更でも必ず再描画する。表示中と違う日付キーで保存される事故の防止 (v2.9 レビュー指摘)
+document.getElementById('rp-date').addEventListener('change', renderReport);
 
 /* ---------------- 支援者 詳細/追加/編集 ---------------- */
 function openPerson(pid){
@@ -963,13 +983,16 @@ function openPerson(pid){
     <p class="small">${esc(p.corp)}</p>
     <p style="margin:8px 0;">${qualBadges(p)}</p>
     <p>行ける期間: <b>${availText(p)}</b> ${p.note?`（${esc(p.note)}）`:''}</p>
-    ${p.inTime||p.outTime ? `<p class="small">🕘 予定時刻: 入り ${p.inTime||'—'} ／ 出 ${p.outTime||'—'}（割り当てたときに入ります）</p>` : ''}
+    ${p.inTime||p.outTime ? `<p class="small">🕘 予定時刻: 入り ${p.inTime||'—'} ／ 出 ${p.outTime||'—'}</p>` : ''}
+    ${p.transport ? `<p class="small">🚙 移動方法: ${esc(p.transport)}</p>` : ''}
     <h4 style="margin:14px 0 6px; color:var(--brand-dark);">支援履歴と入り・出の時刻（累計 ${total} 日）</h4>
     ${hist.length ? hist.map(a=>{
       const s = assignStatus(a);
+      const punches = (a.records||[]).filter(r=>r.inTime||r.outTime).sort((x,y)=>x.date.localeCompare(y.date));
       return `<div class="assign-item" style="display:block; border-bottom:1px dotted var(--line); padding:8px 0;">
         <div class="flex"><span>🏥 ${esc(site(a.siteId).name)}</span>
-          <span>${fmtRangeH(a)}（${days(a)}日間）</span><span class="badge ${s.cls}">${s.label}</span></div>
+          <span>${fmtRangeH(a)}（${days(a)}日間）</span><span class="badge ${s.cls}">${s.label}</span>
+          ${a.to >= TODAY ? `<button class="btn btn-sub btn-sm right" onclick="releaseAssignment('${a.id}')">⬇ シフトから外す</button>` : ''}</div>
         <div class="flex" style="margin-top:6px;">
           <span class="small">🕘 予定: 入り ${fmtD(a.from)}</span>
           <input type="time" id="pt-f-${a.id}" value="${a.fromTime||''}" style="max-width:120px;">
@@ -977,10 +1000,10 @@ function openPerson(pid){
           <input type="time" id="pt-t-${a.id}" value="${a.toTime||''}" style="max-width:120px;">
           <button class="btn btn-main btn-sm" onclick="savePersonTimes('${a.id}','${p.id}')">保存</button>
         </div>
-        ${a.actualFromTime||a.actualToTime ? `<div class="small" style="margin-top:4px;">✅ 実績: 入り ${a.actualFromTime||'—'} ／ 出 ${a.actualToTime||'—'}（ご本人が入力ページから記入）</div>` : ''}</div>`;
+        ${punches.length ? `<div class="small" style="margin-top:4px;">✅ 打刻: ${punches.map(r=>`${fmtD(r.date)} ${r.inTime||'—'}〜${r.outTime||'—'}`).join('　')}（ご本人が入力ページから日別に記入）</div>`
+          : (a.actualFromTime||a.actualToTime ? `<div class="small" style="margin-top:4px;">✅ 実績: 入り ${a.actualFromTime||'—'} ／ 出 ${a.actualToTime||'—'}（ご本人が入力ページから記入）</div>` : '')}</div>`;
     }).join('') : '<p class="small">まだ支援履歴はありません（支援先に割り当てると、ここで入り・出の時刻を入力できます）</p>'}
     <div class="flex" style="justify-content:flex-end; margin-top:14px;">
-      <button class="btn btn-warn btn-sm" onclick="deletePerson('${p.id}')">🗑 削除</button>
       <button class="btn btn-main btn-sm" onclick="openPersonForm('${p.id}')">✏️ 編集する</button>
     </div>`;
   document.getElementById('person-modal').classList.add('show');
@@ -1004,6 +1027,7 @@ let editingPersonName = null;
 let pfRanges = [];
 let pfQuals = [];
 let pfColor = null;
+let pfOrigInTime = '', pfOrigOutTime = '';
 const NAME_COLORS = ['#c0392b','#e07a3f','#b8860b','#2e7d32','#1a7f6e','#2f6db3','#8e44ad','#d81b60'];
 /* 所属による自動色+マーク: キャンナス=ピンクC・介事連=赤J (部分一致。色は手動選択が優先、マークは所属で常時表示) */
 const ORG_COLOR_RULES = [
@@ -1038,6 +1062,9 @@ function openPersonForm(pid){
   document.getElementById('pf-drivelv').value = p && p.driveLv ? String(p.driveLv) : '';
   document.getElementById('pf-intime').value = p ? (p.inTime||'') : '';
   document.getElementById('pf-outtime').value = p ? (p.outTime||'') : '';
+  pfOrigInTime = p ? (p.inTime||'') : '';     // 割当への反映は「今回変更した項目だけ」にするための元値 (v2.9)
+  pfOrigOutTime = p ? (p.outTime||'') : '';
+  document.getElementById('pf-transport').value = p ? (p.transport||'') : '';
   pfQuals = p ? [...p.quals] : [];
   pfColor = p ? (p.color || null) : null;
   pfRanges = p ? availRanges(p).map(r=>({...r})) : [{from:TODAY, to:addDays(TODAY,4)}];
@@ -1074,9 +1101,9 @@ function savePerson(){
     driveLv: Number(document.getElementById('pf-drivelv').value) || null,
     color: pfColor,
     avail: ranges,
-    // 予定時刻。既に割当済みのバーの時刻は上書きしない（割り当てるときの初期値として使う）
     inTime: document.getElementById('pf-intime').value || null,
     outTime: document.getElementById('pf-outtime').value || null,
+    transport: document.getElementById('pf-transport').value.trim() || null,
   };
   if(fields.driveLv && !fields.quals.includes('運転可')) fields.quals.push('運転可');
   // 新規追加時のみ、同名の既存者がいれば確認する (二重登録の防止)
@@ -1094,6 +1121,19 @@ function savePerson(){
       applyAssignClip(plans);
     }
     Object.assign(target, fields);
+    // v2.9: 予定時刻は「終わっていない割当」の予定にも反映する（「入力したのに反映されない」の修正・金子さん 8/9報告）。
+    // ただし今回の編集で【変えた項目だけ】反映する — メモ修正などの保存のたびに、
+    // 割当ごとに個別調整した時刻が既定値へ巻き戻るのを防ぐ (レビュー指摘)。
+    // 始まっている割当の「入り」は報告済みの事実に近いため触らない
+    const T = jstToday();
+    const inChanged = (fields.inTime||'') !== pfOrigInTime;
+    const outChanged = (fields.outTime||'') !== pfOrigOutTime;
+    for(const a of DATA.assignments.filter(x=>x.personId===target.id && x.to >= T)){
+      let changed = false;
+      if(inChanged && fields.inTime && a.from >= T && a.fromTime !== fields.inTime){ a.fromTime = fields.inTime; changed = true; }
+      if(outChanged && fields.outTime && a.toTime !== fields.outTime){ a.toTime = fields.outTime; changed = true; }
+      if(changed) flash(akey(a));
+    }
   }else{
     DATA.people.push({id:uid('p'), office:'', lodging:'', rentacar:false, ...fields});
   }
@@ -1102,10 +1142,38 @@ function savePerson(){
   closeModal('person-form-modal'); save();
 }
 function deletePerson(pid){
+  // v2.9: ボタンは撤去済み (金子さん「削除は不要」)。誤操作防止のため関数だけ残す
   const p = person(pid);
   if(!confirm(`${p.name}さんを削除しますか？（割当も一緒に削除されます）`)) return;
   DATA.assignments = DATA.assignments.filter(a=>a.personId!==pid);
   DATA.people = DATA.people.filter(x=>x.id!==pid);
+  closeModal('person-modal'); save();
+}
+/* v2.9: シフトから外す — 割当を解除して「動かせる人」(緑バー) に戻す (金子さん要望)。
+   始まっている割当は今日までを記録として残し、明日以降だけを外す (打刻・県報告データの保全) */
+function releaseAssignment(aid){
+  const a = DATA.assignments.find(x=>x.id===aid);
+  if(!a) return;
+  const p = person(a.personId), s = site(a.siteId);
+  const T = jstToday();
+  const hasFacts = (a.records||[]).some(r=>r.inTime||r.outTime) || a.actualFromTime || a.actualToTime;
+  if(a.from <= T){
+    // 始まっている(今日開始を含む)割当: 現場は夜にまとめて打刻するため、打刻がまだ無くても今日の分は記録として残す
+    if(a.to <= T){
+      if(hasFacts){ alert('この割当は本日までのため、外せる先の日程がありません。\n（過去の記録はそのまま残ります）'); return; }
+      if(!confirm(`${p.name}さんの「${s.name}」の割当（${fmtD(a.from)}〜${fmtD(a.to)}）を取り消しますか？\n\n※ 取り消すと、ご本人はこの分の勤怠入力ができなくなります。\n実際に活動された場合は取り消さないでください。`)) return;
+      DATA.assignments = DATA.assignments.filter(x=>x.id!==aid);
+      flash('p|'+p.name);
+    }else{
+      if(!confirm(`${p.name}さんを「${s.name}」から外します。\n\n・${fmtD(a.from)}〜本日(${fmtD(T)})は活動記録として残ります\n・明日以降は「動かせる人」（緑バー）に戻ります\n\nよろしいですか？`)) return;
+      a.to = T; a.toHalf = 'pm'; a.toTime = null;
+      flash(akey(a));
+    }
+  }else{
+    if(!confirm(`${p.name}さんを「${s.name}」から外します。\n\n・この割当（${fmtD(a.from)}〜${fmtD(a.to)}）は取り消され、「動かせる人」（緑バー）に戻ります\n\nよろしいですか？`)) return;
+    DATA.assignments = DATA.assignments.filter(x=>x.id!==aid);
+    flash('p|'+p.name);
+  }
   closeModal('person-modal'); save();
 }
 
@@ -1523,7 +1591,7 @@ function showOfferProposal(o){
   mergeTargetId = null;
   const periods = (o.periods||[]).filter(p=>p.from&&p.to).map(p=>`${fmtD(p.from)}〜${fmtD(p.to)}`).join('、');
   addMsg('ai',
-    `${o.replace_periods?'🔁 日程の「変更」として読み取りました（行ける期間を今回の内容に置き換えます）':'🙋 支援の「申し出」として読み取りました'}\n・お名前: ${o.person_name||'（記載なし）'}\n・所属: ${o.organization||'（記載なし）'}\n・人数: ${o.headcount||1}名\n・行ける期間: ${periods||'（記載なし）'}${o.quals&&o.quals.length?`\n・資格: ${o.quals.join('、')}`:''}${o.can_drive?'\n・🚗 運転可':''}${o.night_shift_ok?'\n・夜勤可':''}${o.notes?`\n・特記: ${o.notes}`:''}`);
+    `${o.replace_periods?'🔁 日程の「変更」として読み取りました（行ける期間を今回の内容に置き換えます）':'🙋 支援の「申し出」として読み取りました'}\n・お名前: ${o.person_name||'（記載なし）'}\n・所属: ${o.organization||'（記載なし）'}\n・人数: ${o.headcount||1}名\n・行ける期間: ${periods||'（記載なし）'}${o.quals&&o.quals.length?`\n・資格: ${o.quals.join('、')}`:''}${o.can_drive?'\n・🚗 運転可':''}${o.night_shift_ok?'\n・夜勤可':''}${o.transport?`\n・🚙 移動: ${o.transport}`:''}${o.notes?`\n・特記: ${o.notes}`:''}`);
   const dupes = findSamePerson(o);
   const dupHtml = dupes.length ? `
       <div class="dup-warn">
@@ -1572,6 +1640,7 @@ function editOffer(){
   document.getElementById('pf-name').value = o.person_name || '';
   document.getElementById('pf-corp').value = o.organization || '';
   document.getElementById('pf-note').value = [o.night_shift_ok?'夜勤可':null, o.notes||null].filter(Boolean).join('・').slice(0,80);
+  document.getElementById('pf-transport').value = o.transport || '';
   pfQuals = (o.quals||[]).filter(q=>QUALS.includes(q));
   if(o.can_drive && !pfQuals.includes('運転可')) pfQuals.push('運転可');
   pfRanges = (o.periods||[]).filter(p=>p.from&&p.to).map(p=>({from:p.from, to:p.to}));
@@ -1619,6 +1688,7 @@ async function approveOffer(){
     if(outT) target.outTime = outT;
     if(note && !(target.note||'').includes(note)) target.note = [target.note, note].filter(Boolean).join('・').slice(0,200);
     if((!target.corp || target.corp.includes('未登録')) && o.organization) target.corp = o.organization;
+    if(o.transport && !target.transport) target.transport = o.transport;
     document.getElementById('ai-proposal').innerHTML = '';
     currentOffer = null;
     flash('p|'+target.name);
@@ -1645,7 +1715,7 @@ async function approveOffer(){
       : `${o.organization||'所属未登録'} スタッフ${n>1? i+1 : ''}（氏名未登録）`;
     DATA.people.push({id:uid('p'), name, corp:o.organization||'（所属未登録）', office:'',
       quals:[...quals], note, driveLv:null, lodging:'', rentacar:false,
-      inTime: inT, outTime: outT, avail: periods.map(p=>({...p}))});
+      inTime: inT, outTime: outT, transport: o.transport||null, avail: periods.map(p=>({...p}))});
     flash('p|'+name);
   }
   document.getElementById('ai-proposal').innerHTML = '';
@@ -1829,9 +1899,13 @@ function dmatRows(){
   for(const p of DATA.people){
     const as = personAssignments(p.id).sort((a,b)=>a.from.localeCompare(b.from));
     if(as.length){
-      // 時刻は実績(本人の打刻)があれば実績、なければ予定を出す (v2.8 — v2.7までの見え方を維持)
-      for(const a of as) rows.push({p, from:a.from, to:a.to, fromHalf:a.fromHalf, toHalf:a.toHalf,
-        fromTime:a.actualFromTime || a.fromTime, toTime:a.actualToTime || a.toTime, confirmed:true});
+      // 時刻は 初日/最終日の日別打刻 → 旧実績 → 予定 の順で出す (v2.9 — 打刻の日別化に追従)
+      for(const a of as){
+        const din = ((a.records||[]).find(r=>r.date===a.from)||{}).inTime;
+        const dout = ((a.records||[]).find(r=>r.date===a.to)||{}).outTime;
+        rows.push({p, from:a.from, to:a.to, fromHalf:a.fromHalf, toHalf:a.toHalf,
+          fromTime: din || a.actualFromTime || a.fromTime, toTime: dout || a.actualToTime || a.toTime, confirmed:true});
+      }
     }else{
       for(const r of availRanges(p)) rows.push({p, from:r.from, to:r.to, fromHalf:'am', toHalf:'pm',
         fromTime:null, toTime:null, confirmed:false});
@@ -1951,8 +2025,11 @@ function renderReport(){
     el.innerHTML = `<div class="card"><p class="small">${fmtD(d)} に活動予定の方が登録されていません。<br>日付を変えてみるか、事務局にご連絡ください。</p></div>`;
     return;
   }
+  // v2.9: 打刻は (割当×日付) 単位。連日入っている方が毎日同じ欄を上書きしてしまう問題の修正 (金子さん 8/9報告)
+  const dayRec = a => (a.records||[]).find(r=>r.date===d) || null;
   el.innerHTML = rows.map(r=>{
-    const done = r.a.actualFromTime && r.a.actualToTime;
+    const rec = dayRec(r.a);
+    const done = rec && rec.inTime && rec.outTime;
     const plan = r.a.fromTime || r.a.toTime ? `予定 ${r.a.fromTime||'—'}〜${r.a.toTime||'—'}` : '';
     return `<div class="card rp-card ${done?'done':''}">
       <div class="flex" style="gap:8px;">
@@ -1962,30 +2039,36 @@ function renderReport(){
         ${done?'<span class="badge b-done right">✓ 入力済み</span>':'<span class="badge b-active right">未入力</span>'}
       </div>
       <div class="flex" style="margin-top:10px;">
-        <span class="small">入り</span>
-        <input type="time" id="rp-f-${r.a.id}" value="${r.a.actualFromTime||''}" style="max-width:130px;">
+        <span class="small">${fmtD(d)} 入り</span>
+        <input type="time" id="rp-f-${r.a.id}" value="${rec&&rec.inTime||''}" style="max-width:130px;">
         <span class="small">出</span>
-        <input type="time" id="rp-t-${r.a.id}" value="${r.a.actualToTime||''}" style="max-width:130px;">
+        <input type="time" id="rp-t-${r.a.id}" value="${rec&&rec.outTime||''}" style="max-width:130px;">
         <button class="btn btn-main btn-sm" onclick="saveReport('${r.a.id}')">保存</button>
       </div>
     </div>`;
-  }).join('') + `<p class="small">${fmtD(d)} の活動者 ${rows.length}名（入力済み ${rows.filter(r=>r.a.actualFromTime&&r.a.actualToTime).length}名）</p>`;
+  }).join('') + `<p class="small">${fmtD(d)} の活動者 ${rows.length}名（入力済み ${rows.filter(r=>{const c=dayRec(r.a); return c&&c.inTime&&c.outTime;}).length}名）　※日付ごとに入力できます</p>`;
 }
 async function saveReport(aid){
   const a = DATA.assignments.find(x=>x.id===aid);
   if(!a) return;
-  // 実績列にのみ書く。事務局が入れた予定時刻はここでは変わらない (v2.8 予定/実績の分離)
-  a.actualFromTime = document.getElementById('rp-f-'+aid).value || null;
-  a.actualToTime = document.getElementById('rp-t-'+aid).value || null;
+  const d = document.getElementById('rp-date').value || TODAY;
+  const inV = document.getElementById('rp-f-'+aid).value || null;
+  const outV = document.getElementById('rp-t-'+aid).value || null;
+  // 画面即時反映 (楽観)
+  a.records = (a.records||[]).filter(r=>r.date!==d).concat([{date:d, inTime:inV, outTime:outV}]);
   setSync('⏳ 保存中…', true);
   try{
-    // 編集した1行だけを送る。全量を送ると、開きっぱなしの古いタブが
-    // 他の支援者の入力済み実績を巻き戻してしまうため (v2.8 レビュー指摘)
+    // 編集した1件 (この人×この日) だけを送る。全量を送ると、開きっぱなしの古いタブが
+    // 他の支援者の入力済み実績を巻き戻してしまうため (v2.8 レビュー指摘の方針を踏襲)
     const res = await (await api('/api/data', {method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({assignments: [{id: aid, actualFromTime: a.actualFromTime, actualToTime: a.actualToTime}]})})).json();
+      body: JSON.stringify({records: [{assignmentId: aid, date: d, in: inV, out: outV}]})})).json();
     if(res.data) DATA = res.data;   // 他の方の最新の入力も一緒に反映される
     renderReport();
-    setSync(res.ok !== false ? '✓ 保存しました。ありがとうございます' : '⚠️ 保存に失敗しました。ページを再読み込みしてもう一度お試しください');
+    if(res.dropped){
+      setSync('⚠️ シフトが変更されたため保存できませんでした。最新の状態に更新したので、もう一度ご確認ください', true);
+    }else{
+      setSync(res.ok !== false ? '✓ 保存しました。ありがとうございます' : '⚠️ 保存に失敗しました。ページを再読み込みしてもう一度お試しください');
+    }
   }catch(e){
     setSync('⚠️ 保存に失敗 — 通信環境を確認して再操作してください', true);
   }
