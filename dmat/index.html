@@ -253,7 +253,7 @@
     <div id="sel-banner"></div>
     <div class="card" style="overflow-x:auto;"><div id="boardgrid"><p class="small">データを読み込んでいます…</p></div></div>
     <div id="outside-box"></div>
-    <p class="hint">表示は2週間ずつ（◀▶で移動・「期間で絞り込み」で任意範囲）｜1日 = 午前・午後の2マス｜名前の横は職種（<span class="jb j-nurse">看護</span><span class="jb j-care">介福</span><span class="jb j-reha">PT</span><span class="jb j-logi">ロジ</span>）｜🟢 緑 = 動かせる期間（バーをクリックで選択 → 支援先の行をクリックで割当）｜⬜ グレー = <b>活動終了（記録）</b>｜🟠 支援中・🔵 予定（バーをクリックで <b>✂️分ける</b>／<b>🔗元に戻す</b>／🗑解除・入り出の時刻もここ）｜<span class="out-today">🚪本日out</span> = その日に出る方｜<b style="color:#b8860b;">黄色い枠 = いま反映した項目</b></p>
+    <p class="hint">表示は2週間ずつ（◀▶で移動・「期間で絞り込み」で任意範囲）｜1日 = 午前・午後の2マス｜名前の横は職種（<span class="jb j-nurse">看護</span><span class="jb j-care">介福</span><span class="jb j-reha">PT</span><span class="jb j-logi">ロジ</span>）｜🟢 緑 = 動かせる期間（バーをクリックで選択 → 支援先の行をクリックで割当）｜⬜ グレー = <b>活動終了（記録）</b>｜🟠 支援中・🔵 予定（バーをクリックで <b>✂️分ける</b>／<b>🔗元に戻す</b>／🗑解除・活動開始/終了の時刻もここ）｜<span class="out-today">🚪本日out</span> = その日に出る方｜<b style="color:#b8860b;">黄色い枠 = いま反映した項目</b></p>
   </section>
 
   <!-- ============ DMAT用 支援者名簿（閲覧専用・/dmat/ でのみ表示） ============ -->
@@ -284,7 +284,8 @@
   <!-- ============ 支援者用 勤怠入力（/report/ でのみ表示・事後報告） ============ -->
   <section id="tab-report" class="tabpane">
     <div class="notice">
-      本日の活動が終わったら、<b>ご自身の入り・出の時刻</b>を入力してください（あとからの入力でかまいません）。<br>
+      本日の活動が終わったら、<b>ご自身の「現地活動開始」「現地活動終了」の時刻</b>を入力してください（あとからの入力でかまいません）。<br>
+      ※熊本への到着時刻ではなく、<b>現地で活動を開始/終了した時刻</b>です。<br>
       お名前をタップ → 時刻を入れて「保存」だけです。ログインは要りません。
     </div>
     <div class="chips">
@@ -368,10 +369,10 @@
       <div id="pf-ranges"></div>
       <button class="btn btn-sub btn-sm" onclick="addPfRange()">＋ 期間を追加</button>
     </div>
-    <div class="form-row"><label>入り・出の予定時刻（空欄OK）</label>
+    <div class="form-row"><label>活動開始・終了の予定時刻（空欄OK・熊本への到着時刻はメモへ）</label>
       <div class="flex">
-        <span class="small">入り</span><input type="time" id="pf-intime" style="max-width:130px;">
-        <span class="small">出</span><input type="time" id="pf-outtime" style="max-width:130px;">
+        <span class="small">開始</span><input type="time" id="pf-intime" style="max-width:130px;">
+        <span class="small">終了</span><input type="time" id="pf-outtime" style="max-width:130px;">
       </div>
       <p class="small" style="margin-top:4px;">時刻を変更して保存すると、終わっていない割当（バー）の予定時刻にも反映されます</p>
     </div>
@@ -469,12 +470,17 @@ const QUALS = ['介護福祉士','看護師','准看護師','ケアマネ','実�
 
 /* ---------------- データ (サーバーが正本) ---------------- */
 let DATA = {people:[], sites:[], assignments:[]};
+/* v3.1: このタブで明示的に削除したものだけを記録してサーバーに伝える。
+   以前は「画面に無い行=削除」だったため、複数人の同時利用で
+   古いタブの保存が他の人の新規登録を消していた (8/10-11 実害・金子さん報告) */
+let DELETED = {assignments: [], people: []};
+function markDeletedAssignment(id){ if(/^[0-9a-f-]{36}$/.test(id)) DELETED.assignments.push(id); }
+function markDeletedPerson(id){ if(/^[0-9a-f-]{36}$/.test(id)) DELETED.people.push(id); }
 async function load(){
   DATA = await (await api('/api/data')).json();
   renderAll();
 }
 /* 楽観保存: 先に画面へ反映し、サーバー同期は裏で行う。後続保存が走ったら古い応答は破棄 */
-let saveSeq = 0;
 function setSync(txt, hold){
   const el = document.getElementById('sync');
   if(!txt){ el.style.display='none'; return; }
@@ -482,17 +488,36 @@ function setSync(txt, hold){
   clearTimeout(setSync._t);
   if(!hold) setSync._t = setTimeout(()=>{ el.style.display='none'; }, 2500);
 }
+let saveInFlight = false, savePending = false;
 async function save(){
   renderAll();                        // ← 即時反映（体感速度）
-  const seq = ++saveSeq;
+  if(saveInFlight){ savePending = true; return; }   // v3.1: 保存は1本ずつ (連打は合流して最後に1回)
+  saveInFlight = true;
   setSync('⏳ 保存中…', true);
   try{
-    const res = await (await api('/api/data', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(DATA)})).json();
-    if(seq !== saveSeq) return;       // より新しい保存が進行中 → この応答は捨てる
-    if(res.data){ DATA = res.data; renderAll(); }   // サーバー採番のID(UUID)で置き換え
-    setSync(res.ok !== false ? '✓ 保存しました' : '⚠️ 保存に失敗しました');
+    do{
+      savePending = false;
+      const sentDeleted = {assignments: [...DELETED.assignments], people: [...DELETED.people]};
+      const res = await (await api('/api/data', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({...DATA, deleted: sentDeleted})})).json();
+      if(res.ok === false){
+        // 他の端末の変更との衝突など。サーバーの最新を取り込み直して仕切り直す (直前の1操作はやり直しをお願いする)
+        setSync('⚠️ 他の端末の変更と重なったため保存できませんでした。最新の内容に更新しました — お手数ですが直前の操作をもう一度お願いします', true);
+        await load();
+        return;
+      }
+      // 送った削除だけ消し込む (保存中に積まれた新しい削除は次の周回で送る)
+      DELETED.assignments = DELETED.assignments.filter(x=>!sentDeleted.assignments.includes(x));
+      DELETED.people = DELETED.people.filter(x=>!sentDeleted.people.includes(x));
+      if(res.data && !savePending){
+        DATA = res.data; renderAll();   // 保存中に編集が無ければサーバーの最新で置き換え
+      }
+      // 保存中に編集があった場合は手元のDATA(編集込み)を保持したまま、次の周回でそれを送る
+    }while(savePending);
+    setSync('✓ 保存しました');
   }catch(e){
-    if(seq === saveSeq) setSync('⚠️ 保存に失敗 — 通信環境を確認して再操作してください', true);
+    setSync('⚠️ 保存に失敗 — 通信環境を確認して再操作してください', true);
+  }finally{
+    saveInFlight = false;
   }
 }
 async function resetData(){
@@ -503,7 +528,7 @@ async function resetData(){
     setSync('✓ 初期化しました');
   }
 }
-function uid(pfx){ return pfx + Math.random().toString(36).slice(2,8); }
+function uid(pfx){ return crypto.randomUUID(); }   // v3.1: クライアント採番UUID (サーバーは on_conflict=id で冪等作成)
 
 /* いま反映した項目のハイライト (内容キーで管理: サーバー採番でIDが変わっても追従) */
 const flashKeys = new Set();
@@ -678,11 +703,11 @@ function openAssignMenu(aid){
     <h3>${esc(p.name)} — ${esc(s.name)}</h3>
     <p class="small" style="margin-bottom:12px;">現在の割当: ${fmtRangeH(a)}</p>
     <div class="form-row" style="background:var(--brand-pale); border-radius:10px; padding:10px 12px;">
-      <label>🕘 入り・出の予定時刻（DMAT報告用・空欄のままでもOK）</label>
+      <label>🕘 活動開始・終了の予定時刻（DMAT報告用・空欄のままでもOK）</label>
       <div class="flex">
-        <span class="small">入り ${fmtD(a.from)}</span>
+        <span class="small">開始 ${fmtD(a.from)}</span>
         <input type="time" id="asg-from-time" value="${a.fromTime||''}" style="max-width:130px;">
-        <span class="small">出 ${fmtD(a.to)}</span>
+        <span class="small">終了 ${fmtD(a.to)}</span>
         <input type="time" id="asg-to-time" value="${a.toTime||''}" style="max-width:130px;">
         <button class="btn btn-main btn-sm" onclick="saveAssignTimes()">時刻を保存</button>
       </div>
@@ -690,7 +715,7 @@ function openAssignMenu(aid){
         const punches = (a.records||[]).filter(r=>r.inTime||r.outTime).sort((x,y)=>x.date.localeCompare(y.date));
         return punches.length
           ? `✅ 打刻: ${punches.map(r=>`${fmtD(r.date)} ${r.inTime||'—'}〜${r.outTime||'—'}`).join('　')}`
-          : `✅ 実績: 入り ${a.actualFromTime||'—'} ／ 出 ${a.actualToTime||'—'}`;
+          : `✅ 実績: 活動開始 ${a.actualFromTime||'—'} ／ 活動終了 ${a.actualToTime||'—'}`;
       })()}（ご本人が「活動時間の入力」ページから記入したもの。ここでは変更できません）</p>
     </div>
     ${opts.length ? `
@@ -787,6 +812,7 @@ function mergeAssignment(){
     head.to = tail.to; head.toHalf = tail.toHalf;
     if(!head.toTime && tail.toTime) head.toTime = tail.toTime;
     head.records = [...(head.records||[]), ...(tail.records||[])];
+    markDeletedAssignment(tail.id);
     DATA.assignments = DATA.assignments.filter(x=>x.id !== tail.id);
     if(a.id === tail.id) menuAssignId = head.id;
     flash(akey(head));
@@ -813,6 +839,7 @@ function unassignBar(aid){
     : '';
   if(confirm(`${p.name}さんの ${s.name}（${fmtRangeH(a)}）への割当を解除しますか？${warn}`)){
     closeModal('assign-modal');
+    markDeletedAssignment(aid);
     DATA.assignments = DATA.assignments.filter(x=>x.id!==aid); save();
   }
 }
@@ -894,7 +921,7 @@ function renderBoard(){
   for(const s of sites){
     const assigned = siteAssigned(s.id);
     const needTxt = s.needs.map(n=>{
-      const have = assigned.filter(a=>qualMatches(person(a.personId), n.qual)).length;
+      const have = assigned.filter(a=>person(a.personId) && qualMatches(person(a.personId), n.qual)).length;
       return `${n.qual} ${have}/${n.count}`;
     }).join('・');
     html += `<div class="tl-sitehead ${selEntry?'droppable':''} ${flashKeys.has('s|'+s.name)?'flash':''}" style="grid-row:${row}; grid-column:1 / -1;" onclick="assignTo('${s.id}')"><span class="sh-in">
@@ -918,6 +945,7 @@ function renderBoard(){
     }
     for(const a of as){
       const p = person(a.personId), st = assignStatus(a);
+      if(!p) continue;   // 支援者が削除済みの孤児割当は表示しない (描画エラー防止・v3.1)
       html += `<div class="tl-name" style="grid-row:${row}; grid-column:1;" title="${esc(p.name)} ${esc(p.corp)} ${jobLabels(p).join('・')}" onclick="openPerson('${p.id}')">${nameHtml(p)}${jobBadges(p)} <span class="corp">${esc(p.corp)}</span></div>`;
       const {c1, c2} = clip(aStart(a), aEnd(a));
       html += `<div class="tl-bar ${st.cls} ${flashKeys.has(akey(a))?'flash':''}" style="grid-row:${row}; grid-column:${c1+2} / ${c2+3};" title="${esc(p.name)} ${barLabel(a)}（クリックで 分ける/解除）" onclick="openAssignMenu('${a.id}')">${barLabel(a)}</div>`;
@@ -945,7 +973,7 @@ function renderBoard(){
     const segLabel = fmtRangeH({from:e.seg.from, fromHalf:e.seg.fromHalf, to:e.seg.to, toHalf:e.seg.toHalf});
     const {c1, c2} = clip(slotNum(e.seg.from, e.seg.fromHalf), slotNum(e.seg.to, e.seg.toHalf==='am'?'am':'pm'));
     // バーの文字は職種でなく時刻を出す (職種は名前の横のバッジで分かる・金子さん 8/8要望②)
-    const timeLabel = (e.p.inTime?` 入${e.p.inTime}`:'') + (e.p.outTime?` 出${e.p.outTime}`:'');
+    const timeLabel = (e.p.inTime?` 始${e.p.inTime}`:'') + (e.p.outTime?` 終${e.p.outTime}`:'');
     html += `<div class="tl-bar ${e.past?'b-ended':'b-free'} ${sel?'selected':''} ${flashKeys.has('p|'+e.p.name)?'flash':''}" style="grid-row:${row}; grid-column:${c1+2} / ${c2+3};" title="${esc(e.p.name)} ${segLabel} ${e.p.quals.join('・')}${e.past?'（活動終了）':''}" onclick="selectEntry('${e.p.id}','${e.seg.from}','${e.seg.to}','${e.seg.fromHalf}','${e.seg.toHalf}')">${segLabel}${e.past?' 活動終了':timeLabel}</div>`;
     row++;
   }
@@ -989,9 +1017,9 @@ function openPerson(pid){
     <p class="small">${esc(p.corp)}</p>
     <p style="margin:8px 0;">${qualBadges(p)}</p>
     <p>行ける期間: <b>${availText(p)}</b> ${p.note?`（${esc(p.note)}）`:''}</p>
-    ${p.inTime||p.outTime ? `<p class="small">🕘 予定時刻: 入り ${p.inTime||'—'} ／ 出 ${p.outTime||'—'}</p>` : ''}
+    ${p.inTime||p.outTime ? `<p class="small">🕘 予定時刻: 活動開始 ${p.inTime||'—'} ／ 活動終了 ${p.outTime||'—'}</p>` : ''}
     ${p.transport ? `<p class="small">🚙 移動方法: ${esc(p.transport)}</p>` : ''}
-    <h4 style="margin:14px 0 6px; color:var(--brand-dark);">支援履歴と入り・出の時刻（累計 ${total} 日）</h4>
+    <h4 style="margin:14px 0 6px; color:var(--brand-dark);">支援履歴と活動開始・終了の時刻（累計 ${total} 日）</h4>
     ${hist.length ? hist.map(a=>{
       const s = assignStatus(a);
       const punches = (a.records||[]).filter(r=>r.inTime||r.outTime).sort((x,y)=>x.date.localeCompare(y.date));
@@ -1000,15 +1028,15 @@ function openPerson(pid){
           <span>${fmtRangeH(a)}（${days(a)}日間）</span><span class="badge ${s.cls}">${s.label}</span>
           ${a.to >= TODAY ? `<button class="btn btn-sub btn-sm right" onclick="releaseAssignment('${a.id}')">⬇ シフトから外す</button>` : ''}</div>
         <div class="flex" style="margin-top:6px;">
-          <span class="small">🕘 予定: 入り ${fmtD(a.from)}</span>
+          <span class="small">🕘 予定: 開始 ${fmtD(a.from)}</span>
           <input type="time" id="pt-f-${a.id}" value="${a.fromTime||''}" style="max-width:120px;">
-          <span class="small">出 ${fmtD(a.to)}</span>
+          <span class="small">終了 ${fmtD(a.to)}</span>
           <input type="time" id="pt-t-${a.id}" value="${a.toTime||''}" style="max-width:120px;">
           <button class="btn btn-main btn-sm" onclick="savePersonTimes('${a.id}','${p.id}')">保存</button>
         </div>
-        ${punches.length ? `<div class="small" style="margin-top:4px;">✅ 打刻: ${punches.map(r=>`${fmtD(r.date)} ${r.inTime||'—'}〜${r.outTime||'—'}`).join('　')}（ご本人が入力ページから日別に記入）</div>`
-          : (a.actualFromTime||a.actualToTime ? `<div class="small" style="margin-top:4px;">✅ 実績: 入り ${a.actualFromTime||'—'} ／ 出 ${a.actualToTime||'—'}（ご本人が入力ページから記入）</div>` : '')}</div>`;
-    }).join('') : '<p class="small">まだ支援履歴はありません（支援先に割り当てると、ここで入り・出の時刻を入力できます）</p>'}
+        ${punches.length ? `<div class="small" style="margin-top:4px;">✅ 打刻(活動開始〜終了): ${punches.map(r=>`${fmtD(r.date)} ${r.inTime||'—'}〜${r.outTime||'—'}`).join('　')}（ご本人が入力ページから日別に記入）</div>`
+          : (a.actualFromTime||a.actualToTime ? `<div class="small" style="margin-top:4px;">✅ 実績: 活動開始 ${a.actualFromTime||'—'} ／ 活動終了 ${a.actualToTime||'—'}（ご本人が入力ページから記入）</div>` : '')}</div>`;
+    }).join('') : '<p class="small">まだ支援履歴はありません（支援先に割り当てると、ここで活動開始・終了の時刻を入力できます）</p>'}
     <div class="flex" style="justify-content:flex-end; margin-top:14px;">
       <button class="btn btn-main btn-sm" onclick="openPersonForm('${p.id}')">✏️ 編集する</button>
     </div>`;
@@ -1151,6 +1179,8 @@ function deletePerson(pid){
   // v2.9: ボタンは撤去済み (金子さん「削除は不要」)。誤操作防止のため関数だけ残す
   const p = person(pid);
   if(!confirm(`${p.name}さんを削除しますか？（割当も一緒に削除されます）`)) return;
+  DATA.assignments.filter(a=>a.personId===pid).forEach(a=>markDeletedAssignment(a.id));
+  markDeletedPerson(pid);
   DATA.assignments = DATA.assignments.filter(a=>a.personId!==pid);
   DATA.people = DATA.people.filter(x=>x.id!==pid);
   closeModal('person-modal'); save();
@@ -1168,6 +1198,7 @@ function releaseAssignment(aid){
     if(a.to <= T){
       if(hasFacts){ alert('この割当は本日までのため、外せる先の日程がありません。\n（過去の記録はそのまま残ります）'); return; }
       if(!confirm(`${p.name}さんの「${s.name}」の割当（${fmtD(a.from)}〜${fmtD(a.to)}）を取り消しますか？\n\n※ 取り消すと、ご本人はこの分の勤怠入力ができなくなります。\n実際に活動された場合は取り消さないでください。`)) return;
+      markDeletedAssignment(aid);
       DATA.assignments = DATA.assignments.filter(x=>x.id!==aid);
       flash('p|'+p.name);
     }else{
@@ -1177,6 +1208,7 @@ function releaseAssignment(aid){
     }
   }else{
     if(!confirm(`${p.name}さんを「${s.name}」から外します。\n\n・この割当（${fmtD(a.from)}〜${fmtD(a.to)}）は取り消され、「動かせる人」（緑バー）に戻ります\n\nよろしいですか？`)) return;
+    markDeletedAssignment(aid);
     DATA.assignments = DATA.assignments.filter(x=>x.id!==aid);
     flash('p|'+p.name);
   }
@@ -1514,7 +1546,7 @@ function assignClipText(plans){
 }
 function applyAssignClip(plans){
   for(const pl of plans){
-    if(pl.action==='remove'){ DATA.assignments = DATA.assignments.filter(x=>x.id!==pl.a.id); continue; }
+    if(pl.action==='remove'){ markDeletedAssignment(pl.a.id); DATA.assignments = DATA.assignments.filter(x=>x.id!==pl.a.id); continue; }
     const a = pl.a, orig = {from:a.from, to:a.to, fromHalf:a.fromHalf, toHalf:a.toHalf, fromTime:a.fromTime, toTime:a.toTime};
     // 1本目は元のidを使い回す（時刻・活動記録・DB上の実績を保持）
     const first = pl.segs[0];
@@ -2000,7 +2032,7 @@ function renderDmat(){
 }
 function dmatCopy(){
   const rows = dmatRows();
-  const txt = 'お名前\t資格\t入りの日時\t出の日時\n' +
+  const txt = 'お名前\t資格\t活動開始\t活動終了\n' +
     rows.map(r=>[r.p.name, jobOf(r.p),
       dtText(r.from,r.fromHalf,r.fromTime), dtText(r.to,r.toHalf,r.toTime)].join('\t')).join('\n');
   navigator.clipboard.writeText(txt).then(()=>alert('名簿をコピーしました。メールやメッセージにそのまま貼り付けられます。'))
@@ -2036,18 +2068,16 @@ function renderReport(){
   el.innerHTML = rows.map(r=>{
     const rec = dayRec(r.a);
     const done = rec && rec.inTime && rec.outTime;
-    const plan = r.a.fromTime || r.a.toTime ? `予定 ${r.a.fromTime||'—'}〜${r.a.toTime||'—'}` : '';
     return `<div class="card rp-card ${done?'done':''}">
       <div class="flex" style="gap:8px;">
         <b style="font-size:16px;">${esc(r.p.name)}</b>${jobBadges(r.p)}
         ${r.s?`<span class="small">🏥 ${esc(r.s.name)}</span>`:''}
-        ${plan?`<span class="small" style="color:var(--muted);">${plan}</span>`:''}
         ${done?'<span class="badge b-done right">✓ 入力済み</span>':'<span class="badge b-active right">未入力</span>'}
       </div>
       <div class="flex" style="margin-top:10px;">
-        <span class="small">${fmtD(d)} 入り</span>
+        <span class="small">${fmtD(d)} 活動開始</span>
         <input type="time" id="rp-f-${r.a.id}" value="${rec&&rec.inTime||''}" style="max-width:130px;">
-        <span class="small">出</span>
+        <span class="small">活動終了</span>
         <input type="time" id="rp-t-${r.a.id}" value="${rec&&rec.outTime||''}" style="max-width:130px;">
         <button class="btn btn-main btn-sm" onclick="saveReport('${r.a.id}')">保存</button>
       </div>
