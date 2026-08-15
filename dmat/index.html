@@ -411,7 +411,7 @@
 </div>
 
 <footer>
-  <div id="footer-text">災害支援シフト調整プロトタイプ v2.9（デモ用架空データ）</div>
+  <div id="footer-text">災害支援シフト調整プロトタイプ v3.2（デモ用架空データ）</div>
   <a class="nagara-logo" href="https://nagarainc.com/" target="_blank" rel="noopener" title="株式会社NAGARA（このツールの提供元）"><svg viewBox="208 289 783.3 621" aria-label="NAGARA"><path d="M979.061 417.569C927.432 263.672 714.22 246.103 632.147 374.767C623.686 388.051 623.406 404.974 631.264 418.645L632.621 420.992C644.032 440.8 669.028 447.948 689.266 437.355C690.429 436.752 691.592 436.171 692.754 435.59C769.983 397.632 860.194 454.902 860.194 540.958V680.968C860.194 715.696 835.692 745.774 801.589 752.383C801.287 752.448 800.964 752.512 800.663 752.577C783.073 755.871 765.354 747.453 756.44 731.951C706.146 644.647 647.218 542.314 598.818 458.347C590.766 443.62 573.37 413.78 556.792 385.317C494.118 277.71 344.634 260.162 260.344 351.838C244.584 368.976 231.838 389.278 223.398 412.38C222.365 415.222 221.267 418.021 220.169 420.82C201.265 469.112 210.028 713.263 210.028 714.469C210.222 736.666 214.571 761.641 221.59 781.47C274.317 938.339 493.149 952.742 572.186 818.481C579.958 805.283 580.066 788.92 572.423 775.657C560.818 755.505 535.219 748.551 514.851 759.79C513.732 760.414 512.634 760.995 511.514 761.577C433.618 802.204 340.457 744.568 340.457 656.704V524.853C340.457 484.377 370.406 449.843 410.581 444.848C410.947 444.804 411.291 444.761 411.636 444.718C428.408 442.738 444.728 451.07 453.167 465.71C517.564 577.473 586.503 697.18 651.955 810.816C714.134 918.768 865.189 933.774 945.625 838.633C958.457 823.454 968.942 806.079 976.284 786.745C977.382 783.86 978.544 780.997 979.729 778.133C1000.38 728.248 986.403 535.554 990.128 484.011C990.192 482.956 990.235 481.879 990.235 480.824C989.999 458.67 986.102 437.377 979.104 417.569H979.061Z" fill="#004AAD"/> <path d="M521.095 756.904C495.517 772.471 465.483 781.449 433.36 781.449C340.048 781.449 264.435 705.814 264.435 612.502C264.435 530.559 322.803 462.222 400.246 446.807C365.368 455.892 340.414 487.908 340.414 524.832V656.66C340.414 744.503 433.575 802.139 511.471 761.533C512.59 760.952 513.71 760.349 514.808 759.746C516.853 758.605 518.963 757.658 521.095 756.904Z" fill="#617CC3"/> <path d="M938.154 586.515C938.154 668.739 879.42 737.248 801.589 752.362C835.671 745.752 860.172 715.696 860.172 680.946V540.958C860.172 458.089 776.506 401.895 701.345 431.779C722.121 422.65 745.072 417.59 769.207 417.59C862.519 417.59 938.132 493.226 938.132 586.515H938.154Z" fill="#617CC3"/></svg><span>NAGARA</span></a>
 </footer>
 
@@ -853,7 +853,8 @@ function renderBoard(){
   /* 動かせる人 = 人×期間 の行 (割当済み区間は半日単位で差し引き) */
   const entries = [];
   const noAvail = [];
-  let oldCount = 0;   // 1週間より前に終わった未割当の数（件数のみ案内）
+  let oldCount = 0;   // 1週間より前に終わった未割当
+  const oldHidden = [];   // v3.2: 件数だけでなく名前つきで「期間の外」欄に出す (オレンジさん要望)
   DATA.people
     .filter(p=>!boardQualFilter || p.quals.includes(boardQualFilter))
     .filter(p=>!kw || (p.name + p.corp).includes(kw))
@@ -866,7 +867,7 @@ function renderBoard(){
         if(fF && seg.to < fF) return;
         if(fT && seg.from > fT) return;
         const past = seg.to < TODAY;
-        if(past && !fF && !fT && seg.to < addDays(TODAY, -7)){ oldCount++; return; }
+        if(past && !fF && !fT && seg.to < addDays(TODAY, -7)){ oldCount++; oldHidden.push({p, seg}); return; }
         entries.push({p, seg, past});
       }));
     });
@@ -960,7 +961,7 @@ function renderBoard(){
   const inWin = e => slotNum(e.seg.to, e.seg.toHalf==='am'?'am':'pm') >= firstSlot && slotNum(e.seg.from, e.seg.fromHalf) <= lastSlot;
   const visEntries = entries.filter(inWin);
   const outEntries = entries.filter(e=>!inWin(e));
-  html += `<div class="tl-freehead" style="grid-row:${row}; grid-column:1 / -1;"><span class="fh-in">🟢 動かせる人（${visEntries.length}枠）— バーをクリックして選択 → 上の支援先へ${oldCount?`　<span style="font-weight:400; font-size:11px;">※1週間より前に終わった未割当 ${oldCount}件は非表示（「期間で絞り込み」で表示できます）</span>`:''}</span></div>`;
+  html += `<div class="tl-freehead" style="grid-row:${row}; grid-column:1 / -1;"><span class="fh-in">🟢 動かせる人（${visEntries.length}枠）— バーをクリックして選択 → 上の支援先へ${oldCount?`　<span style="font-weight:400; font-size:11px;">※1週間より前に終わった未割当 ${oldCount}件は下の「期間の外」欄にあります</span>`:''}</span></div>`;
   row++;
   // 職種フィルタは「動かせる人」のすぐ下に置く (金子さん 8/8要望①)。
   // グリッドは横スクロールするため sticky で常に画面内に収める (スマホでチップが圏外に出ない)
@@ -989,12 +990,13 @@ function renderBoard(){
 
   /* 表示期間の外にいる人を必ず見えるようにする (件数だけでなく氏名と日付・ジャンプ導線を出す) */
   const ob = document.getElementById('outside-box');
-  if(outEntries.length){
-    const list = outEntries
+  const outsideAll = [...outEntries, ...oldHidden];   // 未来の期間外 + 1週間より前に終わった未割当 (v3.2)
+  if(outsideAll.length){
+    const list = outsideAll
       .sort((a,b)=>a.seg.from.localeCompare(b.seg.from))
       .map(e=>`<a href="#" onclick="jumpTo('${e.seg.from}');return false;" style="white-space:nowrap;">${esc(e.p.name)} <span class="small">${fmtD(e.seg.from)}〜${fmtD(e.seg.to)}</span></a>`)
       .join('　/　');
-    ob.innerHTML = `<div class="outside">📅 <b>表示している期間の外に ${outEntries.length}枠</b>あります（名前をクリックするとその期間に移動します）<br>${list}</div>`;
+    ob.innerHTML = `<div class="outside">📅 <b>表示している期間の外に ${outsideAll.length}枠</b>あります（名前をクリックするとその期間に移動します）<br>${list}</div>`;
   }else ob.innerHTML = '';
 }
 document.getElementById('board-search').addEventListener('input', renderBoard);
@@ -1624,6 +1626,68 @@ function personSummary(p){
   return `${p.corp}｜${q}｜${av}`;
 }
 
+/* v3.2: AI秘書への削除依頼 (金子さん・オレンジさん要望「消すのはAIに頼む形にしたい」)。
+   打刻が入っている方は削除不可 (記録保全)。確認カード → confirm の2段階 */
+let currentDeleteTarget = null;
+function showDeleteProposal(t){
+  currentDeleteTarget = t;
+  const q = normName(t.person_name || '');
+  const cands = DATA.people.filter(p=>{
+    const n = normName(p.name);
+    return q && (n.includes(q) || q.includes(n));
+  });
+  if(!cands.length){
+    addMsg('ai', `🔍 「${t.person_name}」さんが名簿に見つかりませんでした。お名前の表記を確認してもう一度お送りください。`);
+    currentDeleteTarget = null;
+    persistThread();
+    return;
+  }
+  const rows = cands.map(p=>{
+    const asgs = DATA.assignments.filter(a=>a.personId===p.id);
+    const punches = asgs.flatMap(a=>(a.records||[]).filter(r=>r.inTime||r.outTime));
+    const info = `${personSummary(p)}｜割当${asgs.length}件${punches.length?`｜⏱打刻${punches.length}日分あり（削除不可）`:''}`;
+    return `<label class="prop-cand"><input type="radio" name="delsel" value="${p.id}" ${cands.length===1?'checked':''}>
+      <b>${esc(p.name)}</b> <span class="small">${esc(info)}</span></label>`;
+  }).join('');
+  document.getElementById('ai-proposal').innerHTML = `
+    <div class="proposal">
+      <h4>🗑 削除の依頼として読み取りました${t.qualifier?`（${esc(t.qualifier)}）`:''}</h4>
+      ${cands.length>1?'<p class="small">同じお名前の方が複数います。削除する方を選んでください。</p>':''}
+      ${rows}
+      <p class="small">削除すると名簿・割当から消えます。本人の打刻が入っている方は記録保全のため削除できません。</p>
+      <div class="flex" style="margin-top:10px;">
+        <button class="btn btn-sub" onclick="rejectAI()">🚫 やめる</button>
+        <button class="btn btn-warn right" onclick="aiDeletePerson()">🗑 削除する</button>
+      </div>
+    </div>`;
+  scrollChat();
+}
+async function aiDeletePerson(){
+  const sel = document.querySelector('#ai-proposal input[name=delsel]:checked');
+  if(!sel){ alert('削除する方を選んでください'); return; }
+  const p = person(sel.value);
+  if(!p) return;
+  const asgs = DATA.assignments.filter(a=>a.personId===p.id);
+  const hasFacts = asgs.some(a=>(a.records||[]).some(r=>r.inTime||r.outTime) || a.actualFromTime || a.actualToTime);
+  if(hasFacts){
+    addMsg('ai', `⛔ ${p.name}さんにはご本人の打刻が残っているため削除できません（活動記録の保全のため）。
+名簿から外したい場合は、お名前クリック →「⬇シフトから外す」をご利用ください。`);
+    persistThread();
+    return;
+  }
+  if(!confirm(`${p.name}さん（${p.corp}）を削除します。
+${asgs.length?`割当 ${asgs.length}件も一緒に取り消されます。
+`:''}よろしいですか？`)) return;
+  asgs.forEach(a=>markDeletedAssignment(a.id));
+  markDeletedPerson(p.id);
+  DATA.assignments = DATA.assignments.filter(a=>a.personId!==p.id);
+  DATA.people = DATA.people.filter(x=>x.id!==p.id);
+  document.getElementById('ai-proposal').innerHTML = '';
+  currentDeleteTarget = null;
+  addMsg('ai', `🗑 「${p.name}」さんを削除しました。`);
+  persistThread();
+  await save();
+}
 function showOfferProposal(o){
   currentOffer = o;
   mergeTargetId = null;
@@ -1665,7 +1729,7 @@ function showOfferProposal(o){
 /* 却下: 提案を破棄。修正内容は続きのメッセージで送れる */
 function rejectAI(){
   document.getElementById('ai-proposal').innerHTML = '';
-  currentOffer = null; currentProposal = null;
+  currentOffer = null; currentProposal = null; currentDeleteTarget = null;
   addMsg('ai', '🚫 提案を却下しました。\n読み取りが違っていた場合は「正しくは◯◯です」のように続けて送ってください。読み取り直します。');
   persistThread();
 }
@@ -1677,7 +1741,7 @@ function editOffer(){
   document.getElementById('pf-title').textContent = '支援者を編集して登録';
   document.getElementById('pf-name').value = o.person_name || '';
   document.getElementById('pf-corp').value = o.organization || '';
-  document.getElementById('pf-note').value = [o.night_shift_ok?'夜勤可':null, o.notes||null].filter(Boolean).join('・').slice(0,80);
+  document.getElementById('pf-note').value = [o.night_shift_ok?'夜勤可':null, o.notes||null].filter(Boolean).join('・').slice(0,1000);
   document.getElementById('pf-transport').value = o.transport || '';
   pfQuals = (o.quals||[]).filter(q=>QUALS.includes(q));
   if(o.can_drive && !pfQuals.includes('運転可')) pfQuals.push('運転可');
@@ -1700,7 +1764,7 @@ async function approveOffer(){
   // AIが読み取った入り/出の時刻は、割り当てたときに自動で入るよう支援者に持たせておく
   const inT = /^\d{1,2}:\d{2}$/.test(o.in_time||'') ? o.in_time.padStart(5,'0') : null;
   const outT = /^\d{1,2}:\d{2}$/.test(o.out_time||'') ? o.out_time.padStart(5,'0') : null;
-  const note = [o.night_shift_ok?'夜勤可':null, o.notes||null].filter(Boolean).join('・').slice(0,80);
+  const note = [o.night_shift_ok?'夜勤可':null, o.notes||null].filter(Boolean).join('・').slice(0,1000);   // 長文テンプレ運用に合わせ上限拡大 (v3.2)
 
   // 「同じ方」が選ばれていれば新規作成せず、既存レコードに期間を追加する
   const sel = document.querySelector('#ai-proposal input[name=dupsel]:checked');
@@ -1724,7 +1788,7 @@ async function approveOffer(){
     quals.forEach(q=>{ if(!target.quals.includes(q)) target.quals.push(q); });   // 資格は失わせない
     if(inT) target.inTime = inT;
     if(outT) target.outTime = outT;
-    if(note && !(target.note||'').includes(note)) target.note = [target.note, note].filter(Boolean).join('・').slice(0,200);
+    if(note && !(target.note||'').includes(note)) target.note = [target.note, note].filter(Boolean).join('・').slice(0,2000);
     if((!target.corp || target.corp.includes('未登録')) && o.organization) target.corp = o.organization;
     if(o.transport && !target.transport) target.transport = o.transport;
     document.getElementById('ai-proposal').innerHTML = '';
@@ -1786,6 +1850,12 @@ async function runAI(){
   if(usedApi && apiRaw && apiRaw.message_type === 'offer' && apiRaw.offer){
     if(aiReply) addMsg('ai', aiReply, {parsed: apiRaw});
     showOfferProposal(apiRaw.offer);
+    persistThread();
+    return;
+  }
+  if(usedApi && apiRaw && apiRaw.message_type === 'delete' && apiRaw.delete_target){
+    if(aiReply) addMsg('ai', aiReply, {parsed: apiRaw});
+    showDeleteProposal(apiRaw.delete_target);
     persistThread();
     return;
   }
