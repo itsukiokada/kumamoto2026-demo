@@ -223,6 +223,7 @@
 <nav>
   <button data-tab="board" class="active">📋 調整ボード</button>
   <button data-tab="ai">🤖 AI秘書</button>
+  <button data-tab="history">📜 活動履歴</button>
 </nav>
 <main>
 
@@ -299,6 +300,23 @@
   </section>
 
   <!-- ============ AI秘書 ============ -->
+  <!-- ============ 活動履歴（誰が・いつ・どこで・何時から何時まで） ============ -->
+  <section id="tab-history" class="tabpane">
+    <div class="notice">
+      これまでの<b>活動の記録</b>です（日ごと×お一人ずつ）。時刻はご本人の打刻。県への報告やバックアップには「テキストでコピー」をお使いください（そのまま表計算ソフトに貼れます）。
+    </div>
+    <div class="chips">
+      <span class="small">期間:</span>
+      <input type="date" id="h-from" style="max-width:170px;">
+      <span class="small">〜</span>
+      <input type="date" id="h-to" style="max-width:170px;">
+      <button class="btn btn-sub btn-sm" onclick="document.getElementById('h-from').value='';document.getElementById('h-to').value='';renderHistory();">クリア</button>
+      <span class="small" id="history-count"></span>
+      <button class="btn btn-sub btn-sm right" onclick="historyCopy()">📋 テキストでコピー</button>
+    </div>
+    <div class="card" style="overflow-x:auto;"><div id="history-list"><p class="small">読み込み中…</p></div></div>
+  </section>
+
   <section id="tab-ai" class="tabpane">
     <div class="ai-layout">
       <aside class="thread-side">
@@ -369,13 +387,7 @@
       <div id="pf-ranges"></div>
       <button class="btn btn-sub btn-sm" onclick="addPfRange()">＋ 期間を追加</button>
     </div>
-    <div class="form-row"><label>活動開始・終了の予定時刻（空欄OK・熊本への到着時刻はメモへ）</label>
-      <div class="flex">
-        <span class="small">開始</span><input type="time" id="pf-intime" style="max-width:130px;">
-        <span class="small">終了</span><input type="time" id="pf-outtime" style="max-width:130px;">
-      </div>
-      <p class="small" style="margin-top:4px;">時刻を変更して保存すると、終わっていない割当（バー）の予定時刻にも反映されます</p>
-    </div>
+
     <div class="flex" style="justify-content:flex-end;">
       <button class="btn btn-sub" onclick="closeModal('person-form-modal')">やめる</button>
       <button class="btn btn-main" onclick="savePerson()">保存する</button>
@@ -411,7 +423,7 @@
 </div>
 
 <footer>
-  <div id="footer-text">災害支援シフト調整プロトタイプ v3.2（デモ用架空データ）</div>
+  <div id="footer-text">災害支援シフト調整プロトタイプ v3.3（デモ用架空データ）</div>
   <a class="nagara-logo" href="https://nagarainc.com/" target="_blank" rel="noopener" title="株式会社NAGARA（このツールの提供元）"><svg viewBox="208 289 783.3 621" aria-label="NAGARA"><path d="M979.061 417.569C927.432 263.672 714.22 246.103 632.147 374.767C623.686 388.051 623.406 404.974 631.264 418.645L632.621 420.992C644.032 440.8 669.028 447.948 689.266 437.355C690.429 436.752 691.592 436.171 692.754 435.59C769.983 397.632 860.194 454.902 860.194 540.958V680.968C860.194 715.696 835.692 745.774 801.589 752.383C801.287 752.448 800.964 752.512 800.663 752.577C783.073 755.871 765.354 747.453 756.44 731.951C706.146 644.647 647.218 542.314 598.818 458.347C590.766 443.62 573.37 413.78 556.792 385.317C494.118 277.71 344.634 260.162 260.344 351.838C244.584 368.976 231.838 389.278 223.398 412.38C222.365 415.222 221.267 418.021 220.169 420.82C201.265 469.112 210.028 713.263 210.028 714.469C210.222 736.666 214.571 761.641 221.59 781.47C274.317 938.339 493.149 952.742 572.186 818.481C579.958 805.283 580.066 788.92 572.423 775.657C560.818 755.505 535.219 748.551 514.851 759.79C513.732 760.414 512.634 760.995 511.514 761.577C433.618 802.204 340.457 744.568 340.457 656.704V524.853C340.457 484.377 370.406 449.843 410.581 444.848C410.947 444.804 411.291 444.761 411.636 444.718C428.408 442.738 444.728 451.07 453.167 465.71C517.564 577.473 586.503 697.18 651.955 810.816C714.134 918.768 865.189 933.774 945.625 838.633C958.457 823.454 968.942 806.079 976.284 786.745C977.382 783.86 978.544 780.997 979.729 778.133C1000.38 728.248 986.403 535.554 990.128 484.011C990.192 482.956 990.235 481.879 990.235 480.824C989.999 458.67 986.102 437.377 979.104 417.569H979.061Z" fill="#004AAD"/> <path d="M521.095 756.904C495.517 772.471 465.483 781.449 433.36 781.449C340.048 781.449 264.435 705.814 264.435 612.502C264.435 530.559 322.803 462.222 400.246 446.807C365.368 455.892 340.414 487.908 340.414 524.832V656.66C340.414 744.503 433.575 802.139 511.471 761.533C512.59 760.952 513.71 760.349 514.808 759.746C516.853 758.605 518.963 757.658 521.095 756.904Z" fill="#617CC3"/> <path d="M938.154 586.515C938.154 668.739 879.42 737.248 801.589 752.362C835.671 745.752 860.172 715.696 860.172 680.946V540.958C860.172 458.089 776.506 401.895 701.345 431.779C722.121 422.65 745.072 417.59 769.207 417.59C862.519 417.59 938.132 493.226 938.132 586.515H938.154Z" fill="#617CC3"/></svg><span>NAGARA</span></a>
 </footer>
 
@@ -571,8 +583,11 @@ function aEnd(a){ return slotNum(a.to, a.toHalf==='am'?'am':'pm'); }
 function fmtRangeH(a){ return `${fmtD(a.from)}${a.fromHalf==='pm'?'午後':''}〜${fmtD(a.to)}${a.toHalf==='am'?'午前':''}`; }
 /* 割当バーの表示。時刻があれば時刻、なければ午前/午後を必ず出す（DMAT名簿と同じ粒度で読めるように） */
 function barLabel(a){
-  const f = `${fmtD(a.from)} ${a.fromTime ? a.fromTime : (a.fromHalf==='pm'?'午後':'午前')}`;
-  const t = `${fmtD(a.to)} ${a.toTime ? a.toTime : (a.toHalf==='am'?'午前':'午後')}`;
+  // v3.3: 表示は 打刻 → 旧実績 → AI由来の予定 → 午前/午後 の順 (手入力の予定は廃止・データは温存)
+  const din = ((a.records||[]).find(r=>r.date===a.from)||{}).inTime || a.actualFromTime || a.fromTime;
+  const dout = ((a.records||[]).find(r=>r.date===a.to)||{}).outTime || a.actualToTime || a.toTime;
+  const f = `${fmtD(a.from)} ${din ? din : (a.fromHalf==='pm'?'午後':'午前')}`;
+  const t = `${fmtD(a.to)} ${dout ? dout : (a.toHalf==='am'?'午前':'午後')}`;
   return `${f}〜${t}`;
 }
 /* 今日この支援先を出る人（当日out）を施設ヘッダーに出すための抽出 */
@@ -629,6 +644,7 @@ document.querySelectorAll('nav button').forEach(b=>{
     document.querySelectorAll('.tabpane').forEach(x=>x.classList.remove('show'));
     b.classList.add('active');
     document.getElementById('tab-'+b.dataset.tab).classList.add('show');
+    if(b.dataset.tab === 'history') renderHistory();
   };
 });
 
@@ -703,14 +719,7 @@ function openAssignMenu(aid){
     <h3>${esc(p.name)} — ${esc(s.name)}</h3>
     <p class="small" style="margin-bottom:12px;">現在の割当: ${fmtRangeH(a)}</p>
     <div class="form-row" style="background:var(--brand-pale); border-radius:10px; padding:10px 12px;">
-      <label>🕘 活動開始・終了の予定時刻（DMAT報告用・空欄のままでもOK）</label>
-      <div class="flex">
-        <span class="small">開始 ${fmtD(a.from)}</span>
-        <input type="time" id="asg-from-time" value="${a.fromTime||''}" style="max-width:130px;">
-        <span class="small">終了 ${fmtD(a.to)}</span>
-        <input type="time" id="asg-to-time" value="${a.toTime||''}" style="max-width:130px;">
-        <button class="btn btn-main btn-sm" onclick="saveAssignTimes()">時刻を保存</button>
-      </div>
+      <label>🕘 時刻（ご本人の打刻・「活動時間の入力」ページから記入されます）</label>
       <p class="small" style="margin-top:4px;">${(()=>{
         const punches = (a.records||[]).filter(r=>r.inTime||r.outTime).sort((x,y)=>x.date.localeCompare(y.date));
         return punches.length
@@ -731,15 +740,6 @@ function openAssignMenu(aid){
       <button class="btn btn-sub btn-sm" onclick="closeModal('assign-modal')">閉じる</button>
     </div>`;
   document.getElementById('assign-modal').classList.add('show');
-}
-function saveAssignTimes(){
-  const a = DATA.assignments.find(x=>x.id===menuAssignId);
-  if(!a) return;
-  a.fromTime = document.getElementById('asg-from-time').value || null;
-  a.toTime = document.getElementById('asg-to-time').value || null;
-  closeModal('assign-modal');
-  flash(akey(a));
-  save();
 }
 function splitAssignment(){
   const a = DATA.assignments.find(x=>x.id===menuAssignId);
@@ -1011,50 +1011,32 @@ document.getElementById('rp-date').addEventListener('change', renderReport);
 function openPerson(pid){
   const p = person(pid);
   const st = personStatus(p);
-  const hist = personAssignments(pid).sort((a,b)=>b.from.localeCompare(a.from));
-  const total = hist.filter(a=>a.to<TODAY).reduce((n,a)=>n+days(a),0);
+  const T = jstToday();
+  const hist = personAssignments(pid);
+  const totalDays = hist.filter(a=>a.to < T).reduce((n,a)=>n+days(a),0);
+  const current = hist.filter(a=>a.to >= T).sort((a,b)=>a.from.localeCompare(b.from));
+  // v3.3: 金子さん要望「シンプルに」— 名前・所属・資格・期間・メモ・シフトから外す だけ。
+  // 履歴・時刻の閲覧は「📜活動履歴」タブに集約 (データは消えていない)
   document.getElementById('person-modal-body').innerHTML = `
     <div class="flex"><h3 style="${personColor(p)?`color:${personColor(p)};`:''}">${orgMarkHtml(p)}${esc(p.name)}</h3><span class="badge ${st.cls}">${st.label}</span>
       <button class="btn btn-sub btn-sm right" onclick="closeModal('person-modal')">閉じる</button></div>
     <p class="small">${esc(p.corp)}</p>
     <p style="margin:8px 0;">${qualBadges(p)}</p>
-    <p>行ける期間: <b>${availText(p)}</b> ${p.note?`（${esc(p.note)}）`:''}</p>
-    ${p.inTime||p.outTime ? `<p class="small">🕘 予定時刻: 活動開始 ${p.inTime||'—'} ／ 活動終了 ${p.outTime||'—'}</p>` : ''}
+    <p>行ける期間: <b>${availText(p)}</b></p>
     ${p.transport ? `<p class="small">🚙 移動方法: ${esc(p.transport)}</p>` : ''}
-    <h4 style="margin:14px 0 6px; color:var(--brand-dark);">支援履歴と活動開始・終了の時刻（累計 ${total} 日）</h4>
-    ${hist.length ? hist.map(a=>{
-      const s = assignStatus(a);
-      const punches = (a.records||[]).filter(r=>r.inTime||r.outTime).sort((x,y)=>x.date.localeCompare(y.date));
-      return `<div class="assign-item" style="display:block; border-bottom:1px dotted var(--line); padding:8px 0;">
-        <div class="flex"><span>🏥 ${esc(site(a.siteId).name)}</span>
-          <span>${fmtRangeH(a)}（${days(a)}日間）</span><span class="badge ${s.cls}">${s.label}</span>
-          ${a.to >= TODAY ? `<button class="btn btn-sub btn-sm right" onclick="releaseAssignment('${a.id}')">⬇ シフトから外す</button>` : ''}</div>
-        <div class="flex" style="margin-top:6px;">
-          <span class="small">🕘 予定: 開始 ${fmtD(a.from)}</span>
-          <input type="time" id="pt-f-${a.id}" value="${a.fromTime||''}" style="max-width:120px;">
-          <span class="small">終了 ${fmtD(a.to)}</span>
-          <input type="time" id="pt-t-${a.id}" value="${a.toTime||''}" style="max-width:120px;">
-          <button class="btn btn-main btn-sm" onclick="savePersonTimes('${a.id}','${p.id}')">保存</button>
-        </div>
-        ${punches.length ? `<div class="small" style="margin-top:4px;">✅ 打刻(活動開始〜終了): ${punches.map(r=>`${fmtD(r.date)} ${r.inTime||'—'}〜${r.outTime||'—'}`).join('　')}（ご本人が入力ページから日別に記入）</div>`
-          : (a.actualFromTime||a.actualToTime ? `<div class="small" style="margin-top:4px;">✅ 実績: 活動開始 ${a.actualFromTime||'—'} ／ 活動終了 ${a.actualToTime||'—'}（ご本人が入力ページから記入）</div>` : '')}</div>`;
-    }).join('') : '<p class="small">まだ支援履歴はありません（支援先に割り当てると、ここで活動開始・終了の時刻を入力できます）</p>'}
+    ${p.note ? `<p class="small" style="white-space:pre-wrap;">📝 ${esc(p.note)}</p>` : ''}
+    ${current.length ? `<h4 style="margin:14px 0 6px; color:var(--brand-dark);">いまの割当</h4>` +
+      current.map(a=>`<div class="flex" style="border-bottom:1px dotted var(--line); padding:6px 0;">
+        <span>🏥 ${esc(site(a.siteId).name)}</span><span>${fmtRangeH(a)}</span>
+        <button class="btn btn-sub btn-sm right" onclick="releaseAssignment('${a.id}')">⬇ シフトから外す</button>
+      </div>`).join('') : ''}
+    ${totalDays ? `<p class="small" style="margin-top:10px;">これまでの活動 ${totalDays}日 — 日ごとの記録は「📜 活動履歴」タブでご覧いただけます</p>` : ''}
     <div class="flex" style="justify-content:flex-end; margin-top:14px;">
       <button class="btn btn-main btn-sm" onclick="openPersonForm('${p.id}')">✏️ 編集する</button>
     </div>`;
   document.getElementById('person-modal').classList.add('show');
 }
-/* 支援者の詳細画面から入り・出の時刻を保存する（割当バーを押さなくても入力できるように） */
-function savePersonTimes(aid, pid){
-  const a = DATA.assignments.find(x=>x.id===aid);
-  if(!a) return;
-  a.fromTime = document.getElementById('pt-f-'+aid).value || null;
-  a.toTime = document.getElementById('pt-t-'+aid).value || null;
-  flash(akey(a));
-  save();
-  openPerson(pid);   // 保存後も同じ画面を開いたままにする
-  setSync('✓ 時刻を保存しました');
-}
+/* v3.3: 時刻はご本人の打刻に一本化 (金子さん承認)。savePersonTimes は撤去済み */
 function closeModal(id){ document.getElementById(id).classList.remove('show'); }
 document.querySelectorAll('.modal-bg').forEach(m=>m.addEventListener('click', e=>{ if(e.target===m) m.classList.remove('show'); }));
 
@@ -1063,7 +1045,6 @@ let editingPersonName = null;
 let pfRanges = [];
 let pfQuals = [];
 let pfColor = null;
-let pfOrigInTime = '', pfOrigOutTime = '';
 const NAME_COLORS = ['#c0392b','#e07a3f','#b8860b','#2e7d32','#1a7f6e','#2f6db3','#8e44ad','#d81b60'];
 /* 所属による自動色+マーク: キャンナス=ピンクC・介事連=赤J (部分一致。色は手動選択が優先、マークは所属で常時表示) */
 const ORG_COLOR_RULES = [
@@ -1096,10 +1077,6 @@ function openPersonForm(pid){
   document.getElementById('pf-corp').value = p ? p.corp : '';
   document.getElementById('pf-note').value = p ? (p.note||'') : '';
   document.getElementById('pf-drivelv').value = p && p.driveLv ? String(p.driveLv) : '';
-  document.getElementById('pf-intime').value = p ? (p.inTime||'') : '';
-  document.getElementById('pf-outtime').value = p ? (p.outTime||'') : '';
-  pfOrigInTime = p ? (p.inTime||'') : '';     // 割当への反映は「今回変更した項目だけ」にするための元値 (v2.9)
-  pfOrigOutTime = p ? (p.outTime||'') : '';
   document.getElementById('pf-transport').value = p ? (p.transport||'') : '';
   pfQuals = p ? [...p.quals] : [];
   pfColor = p ? (p.color || null) : null;
@@ -1137,8 +1114,6 @@ function savePerson(){
     driveLv: Number(document.getElementById('pf-drivelv').value) || null,
     color: pfColor,
     avail: ranges,
-    inTime: document.getElementById('pf-intime').value || null,
-    outTime: document.getElementById('pf-outtime').value || null,
     transport: document.getElementById('pf-transport').value.trim() || null,
   };
   if(fields.driveLv && !fields.quals.includes('運転可')) fields.quals.push('運転可');
@@ -1157,19 +1132,6 @@ function savePerson(){
       applyAssignClip(plans);
     }
     Object.assign(target, fields);
-    // v2.9: 予定時刻は「終わっていない割当」の予定にも反映する（「入力したのに反映されない」の修正・金子さん 8/9報告）。
-    // ただし今回の編集で【変えた項目だけ】反映する — メモ修正などの保存のたびに、
-    // 割当ごとに個別調整した時刻が既定値へ巻き戻るのを防ぐ (レビュー指摘)。
-    // 始まっている割当の「入り」は報告済みの事実に近いため触らない
-    const T = jstToday();
-    const inChanged = (fields.inTime||'') !== pfOrigInTime;
-    const outChanged = (fields.outTime||'') !== pfOrigOutTime;
-    for(const a of DATA.assignments.filter(x=>x.personId===target.id && x.to >= T)){
-      let changed = false;
-      if(inChanged && fields.inTime && a.from >= T && a.fromTime !== fields.inTime){ a.fromTime = fields.inTime; changed = true; }
-      if(outChanged && fields.outTime && a.toTime !== fields.outTime){ a.toTime = fields.outTime; changed = true; }
-      if(changed) flash(akey(a));
-    }
   }else{
     DATA.people.push({id:uid('p'), office:'', lodging:'', rentacar:false, ...fields});
   }
@@ -2179,6 +2141,64 @@ async function saveReport(aid){
     setSync('⚠️ 保存に失敗 — 通信環境を確認して再操作してください', true);
   }
 }
+
+/* ---------------- 活動履歴 (誰が・いつ・どこで・何時から何時まで) ---------------- */
+function historyRows(){
+  const T = jstToday();
+  const fF = document.getElementById('h-from').value || null;
+  const fT = document.getElementById('h-to').value || null;
+  const rows = [];
+  for(const a of DATA.assignments){
+    const p = person(a.personId), s = site(a.siteId);
+    if(!p) continue;
+    let d = a.from;
+    while(d <= a.to && d <= T){   // 記録なので今日まで (未来の予定は調整ボードで)
+      if((!fF || d >= fF) && (!fT || d <= fT)){
+        const rec = (a.records||[]).find(r=>r.date===d) || {};
+        rows.push({date: d, name: p.name, corp: p.corp, site: s ? s.name : '—',
+          in: rec.inTime || (d===a.from ? a.actualFromTime : null) || null,
+          out: rec.outTime || (d===a.to ? a.actualToTime : null) || null,
+          punched: !!(rec.inTime || rec.outTime)});
+      }
+      d = addDays(d, 1);
+    }
+  }
+  return rows.sort((x,y)=>y.date.localeCompare(x.date) || x.site.localeCompare(y.site) || x.name.localeCompare(y.name));
+}
+function renderHistory(){
+  const rows = historyRows();
+  const el = document.getElementById('history-list');
+  if(!rows.length){ el.innerHTML = '<p class="small">この期間の活動記録はありません</p>'; document.getElementById('history-count').textContent=''; return; }
+  let html = `<table style="border-collapse:collapse; width:100%; min-width:640px; font-size:13.5px;">
+    <tr style="text-align:left; border-bottom:2px solid var(--line);">
+      <th style="padding:6px 8px;">日付</th><th style="padding:6px 8px;">お名前</th><th style="padding:6px 8px;">所属</th>
+      <th style="padding:6px 8px;">支援先</th><th style="padding:6px 8px;">活動開始</th><th style="padding:6px 8px;">活動終了</th></tr>`;
+  let prevDate = null;
+  for(const r of rows){
+    const dateCell = r.date === prevDate ? '' : `${fmtD(r.date)}`;
+    prevDate = r.date;
+    html += `<tr style="border-bottom:1px dotted var(--line); ${r.punched?'':'color:var(--muted);'}">
+      <td style="padding:5px 8px; font-weight:${dateCell?'700':'400'};">${dateCell}</td>
+      <td style="padding:5px 8px;">${esc(r.name)}</td>
+      <td style="padding:5px 8px;" class="small">${esc(r.corp)}</td>
+      <td style="padding:5px 8px;" class="small">${esc(r.site)}</td>
+      <td style="padding:5px 8px;">${r.in || '—'}</td>
+      <td style="padding:5px 8px;">${r.out || '—'}</td></tr>`;
+  }
+  html += '</table>';
+  el.innerHTML = html;
+  const punched = rows.filter(r=>r.punched).length;
+  document.getElementById('history-count').textContent = `${rows.length}件（打刻あり ${punched}件）`;
+}
+function historyCopy(){
+  const rows = historyRows();
+  const txt = '日付\tお名前\t所属\t支援先\t活動開始\t活動終了\n' +
+    rows.map(r=>[r.date, r.name, r.corp, r.site, r.in||'', r.out||''].join('\t')).join('\n');
+  navigator.clipboard.writeText(txt).then(()=>alert('活動履歴をコピーしました。表計算ソフトにそのまま貼り付けられます。'))
+    .catch(()=>prompt('コピーしてお使いください', txt));
+}
+document.getElementById('h-from').addEventListener('change', renderHistory);
+document.getElementById('h-to').addEventListener('change', renderHistory);
 
 /* 本番モード: デモ表示を消し、実データ運用向けの見た目に */
 if(IS_PROD){
