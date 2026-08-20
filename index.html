@@ -49,7 +49,7 @@
   .chips{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px; align-items:center;}
   .chip{border:1.5px solid var(--line); background:#fff; border-radius:999px; padding:6px 16px; font-size:14px; cursor:pointer; font-weight:600; color:var(--sub);}
   .chip.on{background:var(--brand); border-color:var(--brand); color:#fff;}
-  input[type=text], textarea, input[type=date], input[type=number], select{
+  input[type=text], textarea, input[type=date], input[type=time], input[type=number], select{
     border:1.5px solid var(--line); border-radius:10px; padding:9px 12px; font-size:16px; font-family:inherit; background:#fff; width:100%;}
     /* ↑16px未満だとiOSがフォーカス時に自動ズームするため16px固定 */
   textarea{resize:vertical; min-height:110px;}
@@ -423,7 +423,7 @@
 </div>
 
 <footer>
-  <div id="footer-text">災害支援シフト調整プロトタイプ v3.3（デモ用架空データ）</div>
+  <div id="footer-text">災害支援シフト調整プロトタイプ v3.4（デモ用架空データ）</div>
   <a class="nagara-logo" href="https://nagarainc.com/" target="_blank" rel="noopener" title="株式会社NAGARA（このツールの提供元）"><svg viewBox="208 289 783.3 621" aria-label="NAGARA"><path d="M979.061 417.569C927.432 263.672 714.22 246.103 632.147 374.767C623.686 388.051 623.406 404.974 631.264 418.645L632.621 420.992C644.032 440.8 669.028 447.948 689.266 437.355C690.429 436.752 691.592 436.171 692.754 435.59C769.983 397.632 860.194 454.902 860.194 540.958V680.968C860.194 715.696 835.692 745.774 801.589 752.383C801.287 752.448 800.964 752.512 800.663 752.577C783.073 755.871 765.354 747.453 756.44 731.951C706.146 644.647 647.218 542.314 598.818 458.347C590.766 443.62 573.37 413.78 556.792 385.317C494.118 277.71 344.634 260.162 260.344 351.838C244.584 368.976 231.838 389.278 223.398 412.38C222.365 415.222 221.267 418.021 220.169 420.82C201.265 469.112 210.028 713.263 210.028 714.469C210.222 736.666 214.571 761.641 221.59 781.47C274.317 938.339 493.149 952.742 572.186 818.481C579.958 805.283 580.066 788.92 572.423 775.657C560.818 755.505 535.219 748.551 514.851 759.79C513.732 760.414 512.634 760.995 511.514 761.577C433.618 802.204 340.457 744.568 340.457 656.704V524.853C340.457 484.377 370.406 449.843 410.581 444.848C410.947 444.804 411.291 444.761 411.636 444.718C428.408 442.738 444.728 451.07 453.167 465.71C517.564 577.473 586.503 697.18 651.955 810.816C714.134 918.768 865.189 933.774 945.625 838.633C958.457 823.454 968.942 806.079 976.284 786.745C977.382 783.86 978.544 780.997 979.729 778.133C1000.38 728.248 986.403 535.554 990.128 484.011C990.192 482.956 990.235 481.879 990.235 480.824C989.999 458.67 986.102 437.377 979.104 417.569H979.061Z" fill="#004AAD"/> <path d="M521.095 756.904C495.517 772.471 465.483 781.449 433.36 781.449C340.048 781.449 264.435 705.814 264.435 612.502C264.435 530.559 322.803 462.222 400.246 446.807C365.368 455.892 340.414 487.908 340.414 524.832V656.66C340.414 744.503 433.575 802.139 511.471 761.533C512.59 760.952 513.71 760.349 514.808 759.746C516.853 758.605 518.963 757.658 521.095 756.904Z" fill="#617CC3"/> <path d="M938.154 586.515C938.154 668.739 879.42 737.248 801.589 752.362C835.671 745.752 860.172 715.696 860.172 680.946V540.958C860.172 458.089 776.506 401.895 701.345 431.779C722.121 422.65 745.072 417.59 769.207 417.59C862.519 417.59 938.132 493.226 938.132 586.515H938.154Z" fill="#617CC3"/></svg><span>NAGARA</span></a>
 </footer>
 
@@ -514,6 +514,7 @@ async function save(){
       if(res.ok === false){
         // 他の端末の変更との衝突など。サーバーの最新を取り込み直して仕切り直す (直前の1操作はやり直しをお願いする)
         setSync('⚠️ 他の端末の変更と重なったため保存できませんでした。最新の内容に更新しました — お手数ですが直前の操作をもう一度お願いします', true);
+        closeModal('assign-modal');   // v3.4: 開きっぱなしの編集メニューが取り込んだ最新を上書きしないよう閉じる
         await load();
         return;
       }
@@ -706,6 +707,7 @@ function assignTo(sid){
 }
 /* 割当バークリック → 分ける / 解除 のメニュー */
 let menuAssignId = null;
+let menuSnapshot = null;   // v3.4: メニューを開いた時点の期間・時刻 (巻き戻し保存の防止用)
 function openAssignMenu(aid){
   const a = DATA.assignments.find(x=>x.id===aid);
   if(!a) return;
@@ -719,36 +721,122 @@ function openAssignMenu(aid){
     <h3>${esc(p.name)} — ${esc(s.name)}</h3>
     <p class="small" style="margin-bottom:12px;">現在の割当: ${fmtRangeH(a)}</p>
     <div class="form-row" style="background:var(--brand-pale); border-radius:10px; padding:10px 12px;">
-      <label>🕘 時刻（ご本人の打刻・「活動時間の入力」ページから記入されます）</label>
+      <label>🕘 ご本人の打刻（「活動時間の入力」ページから記入されます）</label>
       <p class="small" style="margin-top:4px;">${(()=>{
         const punches = (a.records||[]).filter(r=>r.inTime||r.outTime).sort((x,y)=>x.date.localeCompare(y.date));
         return punches.length
           ? `✅ 打刻: ${punches.map(r=>`${fmtD(r.date)} ${r.inTime||'—'}〜${r.outTime||'—'}`).join('　')}`
           : `✅ 実績: 活動開始 ${a.actualFromTime||'—'} ／ 活動終了 ${a.actualToTime||'—'}`;
-      })()}（ご本人が「活動時間の入力」ページから記入したもの。ここでは変更できません）</p>
+      })()}（打刻はここでは変更できません。予定の時刻はすぐ下の「期間と時刻を直す」から変えられます）</p>
+    </div>
+    <div class="form-row" style="background:#fff7e6; border-radius:10px; padding:10px 12px;">
+      <label>📝 期間と時刻を直す（v3.4）</label>
+      <p class="small" style="margin:4px 0 6px;">この割当の日付と「何時から・何時まで」の予定を直せます。時刻を入れるとバーと名簿は午前/午後ではなく時刻で表示されます（ご本人の打刻があるときは打刻を優先して表示）。</p>
+      <div class="flex" style="flex-wrap:wrap; gap:6px; align-items:center;">
+        <input type="date" id="ed-from" value="${a.from}" style="max-width:160px;">
+        <input type="time" id="ed-fromtime" value="${a.fromTime||''}" style="max-width:120px;"><span class="small">から</span>
+      </div>
+      <div class="flex" style="flex-wrap:wrap; gap:6px; align-items:center; margin-top:6px;">
+        <input type="date" id="ed-to" value="${a.to}" style="max-width:160px;">
+        <input type="time" id="ed-totime" value="${a.toTime||''}" style="max-width:120px;"><span class="small">まで</span>
+        <button class="btn btn-main btn-sm" onclick="editAssignment()">💾 保存</button>
+      </div>
+      <p class="small" style="margin-top:4px;">時刻を空にすると午前/午後の表示に戻ります（ご本人の打刻・実績が記入済みの割当は、そちらを優先して表示します）。夜勤（夕方〜翌朝）は<b>終了日は夜勤に入る日のまま</b>にして、終了時刻に翌朝の時刻を入れてください（例: 8/17の夜勤 → 終了日 8/17・終了時刻 9:00）。日付を変えると、その側の午前/午後の区分は全日に戻ります。</p>
     </div>
     ${opts.length ? `
     <div class="form-row"><label>✂️ 途中で分ける — 選んだ時点から後ろがこの支援先から外れて「動かせる人」（緑バー）に戻ります。緑バーを選んで別の支援先に割り当ててください。</label>
       <div class="flex">
-        <select id="split-at" style="max-width:220px;">${opts.join('')}</select>
+        <select id="split-at" style="max-width:220px;" onchange="updateSplitPreview()">${opts.join('')}</select>
+        <input type="time" id="split-time" style="max-width:120px;" title="前半の最終日の退出時刻（任意）" oninput="updateSplitPreview()">
         <button class="btn btn-main btn-sm" onclick="splitAssignment()">✂️ ここで分ける</button>
       </div>
+      <p class="small" id="split-preview" style="margin-top:4px;"></p>
     </div>` : '<p class="small">この割当は半日ぶんのため、これ以上分割できません。</p>'}
     ${mergeInfo(a)}
     <div class="flex" style="justify-content:flex-end; margin-top:16px;">
       <button class="btn btn-warn btn-sm" onclick="unassignBar('${a.id}')">🗑 割当をすべて解除</button>
-      <button class="btn btn-sub btn-sm" onclick="closeModal('assign-modal')">閉じる</button>
+      <button class="btn btn-sub btn-sm" onclick="closeAssignModal()">閉じる</button>
     </div>`;
+  // v3.4: 開いた時点の値を控える (保存時に他の操作による変更と食い違ったら巻き戻さない)
+  menuSnapshot = {from:a.from, to:a.to, fromHalf:a.fromHalf, toHalf:a.toHalf, fromTime:a.fromTime||null, toTime:a.toTime||null};
   document.getElementById('assign-modal').classList.add('show');
+  updateSplitPreview();
+}
+/* v3.4: 分割の結果予告 (「8/22 午前から」+時刻 の意味が1日ズレて伝わる事故防止) */
+function updateSplitPreview(){
+  const a = DATA.assignments.find(x=>x.id===menuAssignId);
+  const sel = document.getElementById('split-at'), el = document.getElementById('split-preview');
+  if(!a || !sel || !el) return;
+  const cut = Number(sel.value) - 1;
+  const t = (document.getElementById('split-time')||{}).value || null;
+  el.innerHTML = `→ 前半: ${fmtD(a.from)}〜<b>${fmtD(slotToDate(cut))} ${t ? t+'まで' : (slotHalf(cut)==='am'?'午前まで':'午後まで')}</b>　後半: ${fmtD(slotToDate(cut+1))} ${slotHalf(cut+1)==='am'?'午前':'午後'}から（緑バーに戻ります）`;
+}
+/* v3.4: 「期間と時刻を直す」に未保存の入力があれば確認してから閉じる */
+function closeAssignModal(){
+  const a = DATA.assignments.find(x=>x.id===menuAssignId);
+  const ef = document.getElementById('ed-from');
+  if(a && ef){
+    const dirty = ef.value!==a.from || document.getElementById('ed-to').value!==a.to
+      || (document.getElementById('ed-fromtime').value||null)!==(a.fromTime||null)
+      || (document.getElementById('ed-totime').value||null)!==(a.toTime||null);
+    if(dirty && !confirm('「期間と時刻を直す」に保存していない変更があります。保存せずに閉じますか？')) return;
+  }
+  closeModal('assign-modal');
 }
 function splitAssignment(){
   const a = DATA.assignments.find(x=>x.id===menuAssignId);
   if(!a) return;
   const cut = Number(document.getElementById('split-at').value) - 1;  // 前半の終了スロット
   if(cut < aStart(a)) return;
+  const cutTime = (document.getElementById('split-time')||{}).value || null;
+  // 切り落とす後ろ側に打刻が残る場合は確認 (editAssignmentと同じ保護・v3.4レビュー指摘)
+  const newTo = slotToDate(cut);
+  const stranded = (a.records||[]).filter(r=>(r.inTime||r.outTime) && r.date > newTo);
+  if(stranded.length && !confirm(`⚠️ 分けた後ろ側にご本人の打刻が ${stranded.length}日分 あります（${stranded.map(r=>fmtD(r.date)).join('・')}）。\n後半を別の支援先に割り当て直せば打刻はそちらへ引き継がれますが、割り当てないままだと見えなくなります。分けますか？`)) return;
   a.to = slotToDate(cut); a.toHalf = slotHalf(cut);
+  a.toTime = cutTime;   // 終了日が変わるため元の終了時刻は引き継がない (v3.4: 12:00〜14:00が分割後も残る誤表示の修正)
   closeModal('assign-modal');
   flash(akey(a), 'p|'+person(a.personId).name);
+  save();
+}
+/* v3.4: 割当の期間と予定時刻の編集 (金子さん要望: 分割後の時間が直せない・午前/午後が自動でついて実態と合わない) */
+function editAssignment(){
+  const a = DATA.assignments.find(x=>x.id===menuAssignId);
+  if(!a) return;
+  const p = person(a.personId), s = site(a.siteId);
+  const nf = document.getElementById('ed-from').value;
+  const nt = document.getElementById('ed-to').value;
+  const nft = document.getElementById('ed-fromtime').value || null;
+  const ntt = document.getElementById('ed-totime').value || null;
+  if(!nf || !nt){ alert('開始日と終了日を入れてください'); return; }
+  if(nt < nf){ alert('終了日が開始日より前になっています'); return; }
+  // メニューを開いた後に他の操作 (他の端末の保存の取り込み等) で値が変わっていたら、古い画面からの巻き戻し保存を止める
+  if(menuSnapshot && (a.from!==menuSnapshot.from || a.to!==menuSnapshot.to
+      || (a.fromTime||null)!==menuSnapshot.fromTime || (a.toTime||null)!==menuSnapshot.toTime
+      || a.fromHalf!==menuSnapshot.fromHalf || a.toHalf!==menuSnapshot.toHalf)){
+    alert('この割当は開いている間に別の操作で変更されました。最新の内容を表示し直しますので、お手数ですがもう一度入力してください。');
+    openAssignMenu(a.id); return;
+  }
+  // 日付を変えた側の半日区分は全日に戻す (細かさは時刻で表現する。AIの日程変更 planAssignClip と同じ規則)
+  const nfh = nf !== a.from ? 'am' : (a.fromHalf==='pm'?'pm':'am');
+  const nth = nt !== a.to ? 'pm' : (a.toHalf==='am'?'am':'pm');
+  // 同じ人の他の割当と重ならないか (サーバーの二重予約禁止と同じ半日単位で事前チェック)
+  const s0 = slotNum(nf, nfh), e0 = slotNum(nt, nth);
+  const hit = personAssignments(a.personId).find(b=>b.id!==a.id && aStart(b)<=e0 && s0<=aEnd(b));
+  if(hit){ const hs = site(hit.siteId); alert(`${p.name}さんは ${fmtRangeH(hit)} に${hs?hs.name:'別の支援先'}へ割当済みのため、この期間には変更できません。先にそちらを調整してください。`); return; }
+  // 新しい期間の外に打刻が残る場合は消える前に確認
+  const stranded = (a.records||[]).filter(r=>(r.inTime||r.outTime) && (r.date<nf || r.date>nt));
+  if(stranded.length && !confirm(`⚠️ 新しい期間の外にご本人の打刻が ${stranded.length}日分 あります（${stranded.map(r=>fmtD(r.date)).join('・')}）。\n期間を変えるとこの打刻は見えなくなります。よろしいですか？`)) return;
+  // 行ける期間の外への変更は誤入力の可能性が高いので確認 (日付の打ち間違いでバーが行方不明になる事故防止)
+  if(availRanges(p).length && !availCovers(p, nf, nt)
+      && !confirm(`⚠️ 入力した期間（${fmtD(nf)}〜${fmtD(nt)}）は、${p.name}さんの「行ける期間」（${availText(p)}）の外を含みます。\n日付の入力間違いではありませんか？このまま保存しますか？`)) return;
+  a.from = nf; a.to = nt; a.fromHalf = nfh; a.toHalf = nth;
+  a.fromTime = nft; a.toTime = ntt;
+  // 支援先の期間から外れる場合は支援先側を自動で広げる (assignTo と同じ)
+  if(a.from < s.from){ s.from = a.from; flash('s|'+s.name); }
+  if(a.to > s.to){ s.to = a.to; flash('s|'+s.name); }
+  closeModal('assign-modal');
+  flash(akey(a), 'p|'+p.name);
   save();
 }
 
@@ -810,7 +898,7 @@ function mergeAssignment(){
     // 2本の割当を1本に統合（後ろ側のレコードを削除）
     const head = c.from, tail = c.tail;
     head.to = tail.to; head.toHalf = tail.toHalf;
-    if(!head.toTime && tail.toTime) head.toTime = tail.toTime;
+    head.toTime = tail.toTime || null;   // v3.4: 結合後の終端はtail側なので時刻も無条件にtail側を採用 (古い切れ目時刻の残留防止)
     head.records = [...(head.records||[]), ...(tail.records||[])];
     markDeletedAssignment(tail.id);
     DATA.assignments = DATA.assignments.filter(x=>x.id !== tail.id);
@@ -822,6 +910,7 @@ function mergeAssignment(){
     const end = selEl ? Number(selEl.value) : c.e;
     if(end < c.s || end > c.e) return;
     a.to = slotToDate(end); a.toHalf = slotHalf(end);
+    a.toTime = null;   // v3.4: 空き期間を戻すと終端は必ず後ろに延びるため古い終了時刻は無条件で消す (同日内の午前→午後延長でも残さない)
     if(a.to > s.to){ s.to = a.to; flash('s|'+s.name); }   // 支援先期間を自動で広げる
     flash(akey(a));
   }
@@ -1038,7 +1127,11 @@ function openPerson(pid){
 }
 /* v3.3: 時刻はご本人の打刻に一本化 (金子さん承認)。savePersonTimes は撤去済み */
 function closeModal(id){ document.getElementById(id).classList.remove('show'); }
-document.querySelectorAll('.modal-bg').forEach(m=>m.addEventListener('click', e=>{ if(e.target===m) m.classList.remove('show'); }));
+document.querySelectorAll('.modal-bg').forEach(m=>m.addEventListener('click', e=>{
+  if(e.target!==m) return;
+  if(m.id==='assign-modal'){ closeAssignModal(); return; }   // v3.4: 背景タップでも未保存入力の確認を通す
+  m.classList.remove('show');
+}));
 
 let editingPersonId = null;
 let editingPersonName = null;
