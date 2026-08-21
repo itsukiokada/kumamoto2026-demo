@@ -129,6 +129,8 @@
   .tl-bar{height:20px; border-radius:99px; font-size:10px; font-weight:700; display:flex; align-items:center; justify-content:center; margin:3px 1px; color:#fff; overflow:hidden; white-space:nowrap; cursor:pointer;}
   .tl-bar.b-active{background:var(--accent);}
   .tl-bar.b-planned{background:var(--blue);}
+  .tl-bar.b-night{background:#414a86;}   /* 夜勤サイトへの割当 (v3.5) */
+  .tl-bar.b-planned.b-night{background:#6b74b8;}   /* 夜勤×予定は薄い紺 (支援中との区別を残す) */
   .tl-bar.b-done{background:#9aa39b;}
   .tl-bar.b-free{background:#3f9e50;}
   .tl-bar.b-ended{background:#a8b0a9;}   /* 活動終了（記録として表示） */
@@ -155,7 +157,7 @@
   .flex{display:flex; gap:10px; align-items:center; flex-wrap:wrap;}
   .right{margin-left:auto;}
   .small{font-size:12px; color:var(--sub);}
-  .range-row{display:flex; gap:8px; align-items:center; margin-bottom:6px;}
+  .range-row{display:flex; gap:8px; align-items:center; margin-bottom:6px; flex-wrap:wrap;}   /* v3.5: スマホで🌙チェックが画面外に出ないよう折り返す */
   footer{padding:20px 24px 34px; text-align:center; font-size:12px; color:var(--sub);
     display:flex; flex-direction:column; align-items:center; gap:2px;}
 
@@ -423,7 +425,7 @@
 </div>
 
 <footer>
-  <div id="footer-text">災害支援シフト調整プロトタイプ v3.4（デモ用架空データ）</div>
+  <div id="footer-text">災害支援シフト調整プロトタイプ v3.5（デモ用架空データ）</div>
   <a class="nagara-logo" href="https://nagarainc.com/" target="_blank" rel="noopener" title="株式会社NAGARA（このツールの提供元）"><svg viewBox="208 289 783.3 621" aria-label="NAGARA"><path d="M979.061 417.569C927.432 263.672 714.22 246.103 632.147 374.767C623.686 388.051 623.406 404.974 631.264 418.645L632.621 420.992C644.032 440.8 669.028 447.948 689.266 437.355C690.429 436.752 691.592 436.171 692.754 435.59C769.983 397.632 860.194 454.902 860.194 540.958V680.968C860.194 715.696 835.692 745.774 801.589 752.383C801.287 752.448 800.964 752.512 800.663 752.577C783.073 755.871 765.354 747.453 756.44 731.951C706.146 644.647 647.218 542.314 598.818 458.347C590.766 443.62 573.37 413.78 556.792 385.317C494.118 277.71 344.634 260.162 260.344 351.838C244.584 368.976 231.838 389.278 223.398 412.38C222.365 415.222 221.267 418.021 220.169 420.82C201.265 469.112 210.028 713.263 210.028 714.469C210.222 736.666 214.571 761.641 221.59 781.47C274.317 938.339 493.149 952.742 572.186 818.481C579.958 805.283 580.066 788.92 572.423 775.657C560.818 755.505 535.219 748.551 514.851 759.79C513.732 760.414 512.634 760.995 511.514 761.577C433.618 802.204 340.457 744.568 340.457 656.704V524.853C340.457 484.377 370.406 449.843 410.581 444.848C410.947 444.804 411.291 444.761 411.636 444.718C428.408 442.738 444.728 451.07 453.167 465.71C517.564 577.473 586.503 697.18 651.955 810.816C714.134 918.768 865.189 933.774 945.625 838.633C958.457 823.454 968.942 806.079 976.284 786.745C977.382 783.86 978.544 780.997 979.729 778.133C1000.38 728.248 986.403 535.554 990.128 484.011C990.192 482.956 990.235 481.879 990.235 480.824C989.999 458.67 986.102 437.377 979.104 417.569H979.061Z" fill="#004AAD"/> <path d="M521.095 756.904C495.517 772.471 465.483 781.449 433.36 781.449C340.048 781.449 264.435 705.814 264.435 612.502C264.435 530.559 322.803 462.222 400.246 446.807C365.368 455.892 340.414 487.908 340.414 524.832V656.66C340.414 744.503 433.575 802.139 511.471 761.533C512.59 760.952 513.71 760.349 514.808 759.746C516.853 758.605 518.963 757.658 521.095 756.904Z" fill="#617CC3"/> <path d="M938.154 586.515C938.154 668.739 879.42 737.248 801.589 752.362C835.671 745.752 860.172 715.696 860.172 680.946V540.958C860.172 458.089 776.506 401.895 701.345 431.779C722.121 422.65 745.072 417.59 769.207 417.59C862.519 417.59 938.132 493.226 938.132 586.515H938.154Z" fill="#617CC3"/></svg><span>NAGARA</span></a>
 </footer>
 
@@ -599,7 +601,7 @@ function leavingToday(siteId){
 }
 /* 調整可能シフト = 複数期間 (p.avail: [{from,to},...] 日単位) */
 function availRanges(p){ return p.avail || (p.from ? [{from:p.from, to:p.to}] : []); }
-function availText(p){ return availRanges(p).map(r=>`${fmtD(r.from)}〜${fmtD(r.to)}`).join('、') || '未提出'; }
+function availText(p){ return availRanges(p).map(r=>`${r.night?'🌙':''}${fmtD(r.from)}〜${fmtD(r.to)}`).join('、') || '未提出'; }
 function availOverlap(p, from, to){ return availRanges(p).find(r=>r.from<=to && from<=r.to) || null; }
 function availCovers(p, from, to){ return availRanges(p).some(r=>r.from<=from && to<=r.to); }
 function isFreeFor(p, from, to, fromHalf, toHalf){
@@ -620,7 +622,7 @@ function freeSegments(p, r){
     });
   }
   return segs.filter(([s,e])=>s<=e)
-    .map(([s,e])=>({from:slotToDate(s), fromHalf:slotHalf(s), to:slotToDate(e), toHalf:slotHalf(e)}));
+    .map(([s,e])=>({from:slotToDate(s), fromHalf:slotHalf(s), to:slotToDate(e), toHalf:slotHalf(e), night:!!r.night}));
 }
 function siteAssigned(sid){ return DATA.assignments.filter(a=>a.siteId===sid && a.to>=TODAY); }
 /* 「〜以上」の資格読み替え (例: 初任者研修の枠は実務者研修・介護福祉士でも充足) */
@@ -1015,7 +1017,7 @@ function renderBoard(){
       return `${n.qual} ${have}/${n.count}`;
     }).join('・');
     html += `<div class="tl-sitehead ${selEntry?'droppable':''} ${flashKeys.has('s|'+s.name)?'flash':''}" style="grid-row:${row}; grid-column:1 / -1;" onclick="assignTo('${s.id}')"><span class="sh-in">
-      🏥 ${esc(s.name)}
+      ${/夜勤/.test(s.name)?'🌙':'🏥'} ${esc(s.name)}
       <span style="font-weight:400; font-size:11px;">📍${esc(s.area)}｜${fmtD(s.from)}〜${fmtD(s.to)}｜${needTxt}</span>
       ${s.note?`<span style="font-weight:400; font-size:11px;">📝${esc(s.note)}</span>`:''}
       ${leavingToday(s.id).length?`<span class="out-today">🚪本日out: ${esc(leavingToday(s.id).join('、'))}</span>`:''}
@@ -1038,7 +1040,8 @@ function renderBoard(){
       if(!p) continue;   // 支援者が削除済みの孤児割当は表示しない (描画エラー防止・v3.1)
       html += `<div class="tl-name" style="grid-row:${row}; grid-column:1;" title="${esc(p.name)} ${esc(p.corp)} ${jobLabels(p).join('・')}" onclick="openPerson('${p.id}')">${nameHtml(p)}${jobBadges(p)} <span class="corp">${esc(p.corp)}</span></div>`;
       const {c1, c2} = clip(aStart(a), aEnd(a));
-      html += `<div class="tl-bar ${st.cls} ${flashKeys.has(akey(a))?'flash':''}" style="grid-row:${row}; grid-column:${c1+2} / ${c2+3};" title="${esc(p.name)} ${barLabel(a)}（クリックで 分ける/解除）" onclick="openAssignMenu('${a.id}')">${barLabel(a)}</div>`;
+      const isNight = /夜勤/.test(s.name);   // 夜勤サイトへの割当は🌙+濃紺で見分けられるように (v3.5・金子さん要望②)
+      html += `<div class="tl-bar ${st.cls}${isNight && (st.cls==='b-active'||st.cls==='b-planned') ? ' b-night':''} ${flashKeys.has(akey(a))?'flash':''}" style="grid-row:${row}; grid-column:${c1+2} / ${c2+3};" title="${esc(p.name)} ${isNight?'🌙夜勤 ':''}${barLabel(a)}（クリックで 分ける/解除）" onclick="openAssignMenu('${a.id}')">${isNight?'🌙':''}${barLabel(a)}</div>`;
       row++;
     }
   }
@@ -1064,7 +1067,7 @@ function renderBoard(){
     const {c1, c2} = clip(slotNum(e.seg.from, e.seg.fromHalf), slotNum(e.seg.to, e.seg.toHalf==='am'?'am':'pm'));
     // バーの文字は職種でなく時刻を出す (職種は名前の横のバッジで分かる・金子さん 8/8要望②)
     const timeLabel = (e.p.inTime?` 始${e.p.inTime}`:'') + (e.p.outTime?` 終${e.p.outTime}`:'');
-    html += `<div class="tl-bar ${e.past?'b-ended':'b-free'} ${sel?'selected':''} ${flashKeys.has('p|'+e.p.name)?'flash':''}" style="grid-row:${row}; grid-column:${c1+2} / ${c2+3};" title="${esc(e.p.name)} ${segLabel} ${e.p.quals.join('・')}${e.past?'（活動終了）':''}" onclick="selectEntry('${e.p.id}','${e.seg.from}','${e.seg.to}','${e.seg.fromHalf}','${e.seg.toHalf}')">${segLabel}${e.past?' 活動終了':timeLabel}</div>`;
+    html += `<div class="tl-bar ${e.past?'b-ended':'b-free'} ${sel?'selected':''} ${flashKeys.has('p|'+e.p.name)?'flash':''}" style="grid-row:${row}; grid-column:${c1+2} / ${c2+3};" title="${esc(e.p.name)} ${segLabel} ${e.p.quals.join('・')}${e.past?'（活動終了）':''}" onclick="selectEntry('${e.p.id}','${e.seg.from}','${e.seg.to}','${e.seg.fromHalf}','${e.seg.toHalf}')">${e.seg.night?'🌙':''}${segLabel}${e.past?' 活動終了':timeLabel}</div>`;
     row++;
   }
   if(!visEntries.length){
@@ -1192,8 +1195,10 @@ function renderPfRanges(){
       <input type="date" value="${r.from}" onchange="pfRanges[${i}].from=this.value" style="max-width:170px;">
       <span class="small">〜</span>
       <input type="date" value="${r.to}" onchange="pfRanges[${i}].to=this.value" style="max-width:170px;">
+      <label class="small" style="white-space:nowrap; cursor:pointer;"><input type="checkbox" ${r.night?'checked':''} onchange="pfRanges[${i}].night=this.checked"> 🌙夜勤可</label>
       <button class="btn btn-sub btn-sm" onclick="pfRanges.splice(${i},1);renderPfRanges();">✕</button>
-    </div>`).join('');
+    </div>`).join('') +
+    `<p class="small" style="margin-top:2px;">🌙 = この期間は夜勤に入れます。「日中は8/11〜18、夜勤は8/14と8/16だけ」のような場合は、夜勤の日を<b>別の行</b>で追加して🌙を付けてください（日中の期間と重なっていて大丈夫です）。🌙は夜勤に入れる行だけに付け、日中の長い行には付けないでください（付けるとその期間ずっと夜勤可の意味になります）。</p>`;
 }
 function savePerson(){
   const name = document.getElementById('pf-name').value.trim();
@@ -1504,8 +1509,9 @@ function rankCandidates(req, from, to, taken, nightWanted, driverPreferred){
       return isFreeFor(p, r.from > from ? r.from : from, r.to < to ? r.to : to);
     })
     .sort((a,b)=>{
-      const an = nightWanted && /夜勤/.test(a.note) ? 1 : 0;
-      const bn = nightWanted && /夜勤/.test(b.note) ? 1 : 0;
+      const hasNight = p => /夜勤/.test(p.note) || availRanges(p).some(r=>r.night);   // v3.5: 行単位🌙も夜勤可として扱う
+      const an = nightWanted && hasNight(a) ? 1 : 0;
+      const bn = nightWanted && hasNight(b) ? 1 : 0;
       if(an!==bn) return bn-an;
       if(driverPreferred){
         const ad = a.quals.includes('運転可') ? 1 : 0, bd = b.quals.includes('運転可') ? 1 : 0;
@@ -1562,12 +1568,14 @@ function findSamePerson(o){
 /* 期間リストを正規化: 重なり・隣接（翌日つながり）は1本にまとめる
    例) 8/2〜8/4 に 8/2〜8/5 を足すと 8/2〜8/5 の1本になる（「1日伸びた」ケース） */
 function mergeRanges(list){
-  const rs = list.filter(r=>r && r.from && r.to).map(r=>({from:r.from, to:r.to}))
+  // v3.5: 夜勤フラグが同じ行どうしだけ結合する。日中期間の中に夜勤可の単日行が重なって
+  // 共存するのが現場の使い方 (例: 8/11〜8/18 日中 + 8/14・8/16 夜勤可) のため、潰さない
+  const rs = list.filter(r=>r && r.from && r.to).map(r=>({from:r.from, to:r.to, night:!!r.night}))
     .sort((a,b)=>a.from.localeCompare(b.from) || a.to.localeCompare(b.to));
   const out = [];
   for(const r of rs){
-    const last = out[out.length-1];
-    if(last && r.from <= addDays(last.to, 1)){        // 重なる or 隣接 → 伸ばす
+    const last = [...out].reverse().find(x=>x.night===r.night);
+    if(last && r.from <= addDays(last.to, 1)){        // 重なる or 隣接 → 伸ばす (同じ区分のみ)
       if(r.to > last.to) last.to = r.to;
     }else out.push({...r});
   }
@@ -1635,7 +1643,8 @@ function openDupEdit(){
   // 今回の申し出の期間を編集欄に足しておく（そのまま保存すれば反映、不要なら✕で消せる）
   if(o){
     (o.periods||[]).filter(x=>x.from&&x.to).forEach(x=>{
-      if(!pfRanges.some(r=>r.from===x.from && r.to===x.to)) pfRanges.push({from:x.from, to:x.to});
+      const nx = {from:x.from, to:x.to, night: !!o.night_shift_ok};   // v3.5: 夜勤可も一緒に足す
+      if(!pfRanges.some(r=>r.from===nx.from && r.to===nx.to && !!r.night===nx.night)) pfRanges.push(nx);
     });
     renderPfRanges();
   }
@@ -1800,7 +1809,7 @@ function editOffer(){
   document.getElementById('pf-transport').value = o.transport || '';
   pfQuals = (o.quals||[]).filter(q=>QUALS.includes(q));
   if(o.can_drive && !pfQuals.includes('運転可')) pfQuals.push('運転可');
-  pfRanges = (o.periods||[]).filter(p=>p.from&&p.to).map(p=>({from:p.from, to:p.to}));
+  pfRanges = (o.periods||[]).filter(p=>p.from&&p.to).map(p=>({from:p.from, to:p.to, night: !!o.night_shift_ok}));   // v3.5: AIが読んだ夜勤可を🌙チェック済みで開く
   if(!pfRanges.length) pfRanges = [{from:TODAY, to:addDays(TODAY,4)}];
   renderPfQuals(); renderPfRanges();
   document.getElementById('ai-proposal').innerHTML = '';
@@ -1813,7 +1822,7 @@ async function approveOffer(){
   if(!currentOffer) return;
   const o = currentOffer;
   const n = Math.max(1, o.headcount||1);
-  const periods = (o.periods||[]).filter(p=>p.from&&p.to).map(p=>({from:p.from, to:p.to}));
+  const periods = (o.periods||[]).filter(p=>p.from&&p.to).map(p=>({from:p.from, to:p.to, night: !!o.night_shift_ok}));   // v3.5: 新規登録パスと同じく夜勤可を期間行へ
   const quals = (o.quals||[]).filter(q=>QUALS.includes(q));
   if(o.can_drive && !quals.includes('運転可')) quals.push('運転可');
   // AIが読み取った入り/出の時刻は、割り当てたときに自動で入るよう支援者に持たせておく
@@ -1825,21 +1834,30 @@ async function approveOffer(){
   const sel = document.querySelector('#ai-proposal input[name=dupsel]:checked');
   const target = sel && sel.value ? person(sel.value) : null;
   if(target){
-    const before = availRanges(target).map(r=>`${r.from}〜${r.to}`).join('、');
+    const rangeKey = r => `${r.night?'🌙':''}${r.from}〜${r.to}`;   // v3.5: 夜勤フラグの変化も「変更」として扱う
+    const before = availRanges(target).map(rangeKey).join('、');
     // v2.8: 「短縮・変更」の申し出は期間を足すのではなく置き換える（金子さん要望: AI秘書でシフト変更）
-    const merged = o.replace_periods && periods.length
-      ? mergeRanges(periods)
-      : mergeRanges([...availRanges(target).map(r=>({...r})), ...periods]);
-    const added = merged.map(r=>`${r.from}〜${r.to}`).join('、') !== before;
+    // v3.5: 置き換えでも行単位の🌙(夜勤可)は新しい期間の範囲内で引き継ぐ (AIの読み取りは行単位を知らないため)
+    let merged;
+    if(o.replace_periods && periods.length){
+      const nf = periods.map(x=>x.from).sort()[0], nt = periods.map(x=>x.to).sort().slice(-1)[0];
+      const keepNight = availRanges(target).filter(r=>r.night)
+        .map(r=>({from: r.from < nf ? nf : r.from, to: r.to > nt ? nt : r.to, night: true}))
+        .filter(r=>r.from <= r.to);
+      merged = mergeRanges([...periods, ...keepNight]);
+    }else{
+      merged = mergeRanges([...availRanges(target).map(r=>({...r})), ...periods]);
+    }
+    const added = merged.map(rangeKey).join('、') !== before;
     if(added){
       const plans = planAssignClip(target.id, merged);
       if(plans.length){
-        const msg = `「${target.name}」さんの行ける期間を変更します。\n\n変更前: ${availRanges(target).map(r=>fmtD(r.from)+'〜'+fmtD(r.to)).join('、')}\n変更後: ${merged.map(r=>fmtD(r.from)+'〜'+fmtD(r.to)).join('、')}\n\n割当も次のように変わります:\n${assignClipText(plans).join('\n')}\n\nよろしいですか？`;
+        const msg = `「${target.name}」さんの行ける期間を変更します。\n\n変更前: ${availRanges(target).map(r=>(r.night?'🌙':'')+fmtD(r.from)+'〜'+fmtD(r.to)).join('、')}\n変更後: ${merged.map(r=>(r.night?'🌙':'')+fmtD(r.from)+'〜'+fmtD(r.to)).join('、')}\n\n割当も次のように変わります:\n${assignClipText(plans).join('\n')}\n\nよろしいですか？`;
         if(!confirm(msg)){ addMsg('ai', '↩️ 変更をキャンセルしました。内容が違う場合は「正しくは◯◯です」と続けて送ってください。'); persistThread(); return; }
         applyAssignClip(plans);
       }
+      target.avail = merged;   // v3.5: 変更がある時だけ書き換える (「変更なし」表示でフラグだけ書き換わる齟齬の防止)
     }
-    target.avail = merged;
     quals.forEach(q=>{ if(!target.quals.includes(q)) target.quals.push(q); });   // 資格は失わせない
     if(inT) target.inTime = inT;
     if(outT) target.outTime = outT;
@@ -1850,7 +1868,7 @@ async function approveOffer(){
     currentOffer = null;
     flash('p|'+target.name);
     addMsg('ai', added
-      ? `✅ 既存の「${target.name}」さんの日程を更新しました。\n・更新後の期間: ${availRanges(target).map(p=>fmtD(p.from)+'〜'+fmtD(p.to)).join('、')}\n新しい人としては登録していないので、名簿が二重になりません。`
+      ? `✅ 既存の「${target.name}」さんの日程を更新しました。\n・更新後の期間: ${availRanges(target).map(p=>(p.night?'🌙':'')+fmtD(p.from)+'〜'+fmtD(p.to)).join('、')}\n新しい人としては登録していないので、名簿が二重になりません。`
       : `ℹ️ 「${target.name}」さんには既に同じ期間が入っていたため、変更はありませんでした。`);
     persistThread();
     await save();
@@ -1872,7 +1890,7 @@ async function approveOffer(){
       : `${o.organization||'所属未登録'} スタッフ${n>1? i+1 : ''}（氏名未登録）`;
     DATA.people.push({id:uid('p'), name, corp:o.organization||'（所属未登録）', office:'',
       quals:[...quals], note, driveLv:null, lodging:'', rentacar:false,
-      inTime: inT, outTime: outT, transport: o.transport||null, avail: periods.map(p=>({...p}))});
+      inTime: inT, outTime: outT, transport: o.transport||null, avail: periods.map(p=>({...p, night: !!o.night_shift_ok}))});
     flash('p|'+name);
   }
   document.getElementById('ai-proposal').innerHTML = '';
