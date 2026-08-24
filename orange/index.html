@@ -425,7 +425,7 @@
 </div>
 
 <footer>
-  <div id="footer-text">災害支援シフト調整プロトタイプ v3.5（デモ用架空データ）</div>
+  <div id="footer-text">災害支援シフト調整プロトタイプ v3.6（デモ用架空データ）</div>
   <a class="nagara-logo" href="https://nagarainc.com/" target="_blank" rel="noopener" title="株式会社NAGARA（このツールの提供元）"><svg viewBox="208 289 783.3 621" aria-label="NAGARA"><path d="M979.061 417.569C927.432 263.672 714.22 246.103 632.147 374.767C623.686 388.051 623.406 404.974 631.264 418.645L632.621 420.992C644.032 440.8 669.028 447.948 689.266 437.355C690.429 436.752 691.592 436.171 692.754 435.59C769.983 397.632 860.194 454.902 860.194 540.958V680.968C860.194 715.696 835.692 745.774 801.589 752.383C801.287 752.448 800.964 752.512 800.663 752.577C783.073 755.871 765.354 747.453 756.44 731.951C706.146 644.647 647.218 542.314 598.818 458.347C590.766 443.62 573.37 413.78 556.792 385.317C494.118 277.71 344.634 260.162 260.344 351.838C244.584 368.976 231.838 389.278 223.398 412.38C222.365 415.222 221.267 418.021 220.169 420.82C201.265 469.112 210.028 713.263 210.028 714.469C210.222 736.666 214.571 761.641 221.59 781.47C274.317 938.339 493.149 952.742 572.186 818.481C579.958 805.283 580.066 788.92 572.423 775.657C560.818 755.505 535.219 748.551 514.851 759.79C513.732 760.414 512.634 760.995 511.514 761.577C433.618 802.204 340.457 744.568 340.457 656.704V524.853C340.457 484.377 370.406 449.843 410.581 444.848C410.947 444.804 411.291 444.761 411.636 444.718C428.408 442.738 444.728 451.07 453.167 465.71C517.564 577.473 586.503 697.18 651.955 810.816C714.134 918.768 865.189 933.774 945.625 838.633C958.457 823.454 968.942 806.079 976.284 786.745C977.382 783.86 978.544 780.997 979.729 778.133C1000.38 728.248 986.403 535.554 990.128 484.011C990.192 482.956 990.235 481.879 990.235 480.824C989.999 458.67 986.102 437.377 979.104 417.569H979.061Z" fill="#004AAD"/> <path d="M521.095 756.904C495.517 772.471 465.483 781.449 433.36 781.449C340.048 781.449 264.435 705.814 264.435 612.502C264.435 530.559 322.803 462.222 400.246 446.807C365.368 455.892 340.414 487.908 340.414 524.832V656.66C340.414 744.503 433.575 802.139 511.471 761.533C512.59 760.952 513.71 760.349 514.808 759.746C516.853 758.605 518.963 757.658 521.095 756.904Z" fill="#617CC3"/> <path d="M938.154 586.515C938.154 668.739 879.42 737.248 801.589 752.362C835.671 745.752 860.172 715.696 860.172 680.946V540.958C860.172 458.089 776.506 401.895 701.345 431.779C722.121 422.65 745.072 417.59 769.207 417.59C862.519 417.59 938.132 493.226 938.132 586.515H938.154Z" fill="#617CC3"/></svg><span>NAGARA</span></a>
 </footer>
 
@@ -680,9 +680,9 @@ function clearDates(){
   document.getElementById('f-to').value = '';
   renderBoard();
 }
-function selectEntry(pid, from, to, fromHalf, toHalf){
+function selectEntry(pid, from, to, fromHalf, toHalf, night){
   if(selEntry && selEntry.pid===pid && selEntry.from===from && selEntry.to===to && selEntry.fromHalf===fromHalf) selEntry = null;
-  else selEntry = {pid, from, to, fromHalf, toHalf};
+  else selEntry = {pid, from, to, fromHalf, toHalf, night: night===true || night==='1'};   // v3.6: 🌙緑バーからの割当は自動で夜勤に
   renderBoard();
 }
 function assignTo(sid){
@@ -701,7 +701,9 @@ function assignTo(sid){
   if(from < s.from){ s.from = from; widened = 'from'; }
   if(to > s.to){ s.to = to; widened = widened ? 'both' : 'to'; }
   // AI秘書が読み取った時刻があれば、割当にそのまま引き継ぐ
+  // v3.6: 🌙付きの緑バーから割り当てた場合と夜勤サイトへの割当は、自動で夜勤フラグを立てる
   DATA.assignments.push({id:uid('a'), personId:p.id, siteId:sid, from, to, fromHalf, toHalf,
+    night: !!selEntry.night || /夜勤/.test(s.name),
     fromTime: p.inTime || null, toTime: p.outTime || null, records:[]});
   flash(`a|${p.name}|${s.name}|${from}|${to}`);
   if(widened) flash('s|'+s.name);
@@ -741,9 +743,10 @@ function openAssignMenu(aid){
       <div class="flex" style="flex-wrap:wrap; gap:6px; align-items:center; margin-top:6px;">
         <input type="date" id="ed-to" value="${a.to}" style="max-width:160px;">
         <input type="time" id="ed-totime" value="${a.toTime||''}" style="max-width:120px;"><span class="small">まで</span>
+        <label class="small" style="white-space:nowrap; cursor:pointer;"><input type="checkbox" id="ed-night" ${(a.night || /夜勤/.test(s.name))?'checked':''}> 🌙夜勤</label>
         <button class="btn btn-main btn-sm" onclick="editAssignment()">💾 保存</button>
       </div>
-      <p class="small" style="margin-top:4px;">時刻を空にすると午前/午後の表示に戻ります（ご本人の打刻・実績が記入済みの割当は、そちらを優先して表示します）。夜勤（夕方〜翌朝）は<b>終了日は夜勤に入る日のまま</b>にして、終了時刻に翌朝の時刻を入れてください（例: 8/17の夜勤 → 終了日 8/17・終了時刻 9:00）。日付を変えると、その側の午前/午後の区分は全日に戻ります。</p>
+      <p class="small" style="margin-top:4px;">時刻を空にすると午前/午後の表示に戻ります（ご本人の打刻・実績が記入済みの割当は、そちらを優先して表示します）。夜勤（夕方〜翌朝）は<b>終了日は夜勤に入る日のまま</b>にして、終了時刻に翌朝の時刻を入れてください（例: 8/17の夜勤 → 終了日 8/17・終了時刻 9:00）。日付を変えると、その側の午前/午後の区分は全日に戻ります。<b>🌙夜勤</b>にチェックを入れて保存すると、バーが紺色🌙になり名簿にも🌙が付きます。🌙付きの緑バーから割り当てた場合と支援先名に「夜勤」が入る場合は自動でチェックされます（違っていたらここで外して保存してください）。</p>
     </div>
     ${opts.length ? `
     <div class="form-row"><label>✂️ 途中で分ける — 選んだ時点から後ろがこの支援先から外れて「動かせる人」（緑バー）に戻ります。緑バーを選んで別の支援先に割り当ててください。</label>
@@ -760,7 +763,7 @@ function openAssignMenu(aid){
       <button class="btn btn-sub btn-sm" onclick="closeAssignModal()">閉じる</button>
     </div>`;
   // v3.4: 開いた時点の値を控える (保存時に他の操作による変更と食い違ったら巻き戻さない)
-  menuSnapshot = {from:a.from, to:a.to, fromHalf:a.fromHalf, toHalf:a.toHalf, fromTime:a.fromTime||null, toTime:a.toTime||null};
+  menuSnapshot = {from:a.from, to:a.to, fromHalf:a.fromHalf, toHalf:a.toHalf, fromTime:a.fromTime||null, toTime:a.toTime||null, night:!!a.night};
   document.getElementById('assign-modal').classList.add('show');
   updateSplitPreview();
 }
@@ -771,16 +774,21 @@ function updateSplitPreview(){
   if(!a || !sel || !el) return;
   const cut = Number(sel.value) - 1;
   const t = (document.getElementById('split-time')||{}).value || null;
-  el.innerHTML = `→ 前半: ${fmtD(a.from)}〜<b>${fmtD(slotToDate(cut))} ${t ? t+'まで' : (slotHalf(cut)==='am'?'午前まで':'午後まで')}</b>　後半: ${fmtD(slotToDate(cut+1))} ${slotHalf(cut+1)==='am'?'午前':'午後'}から（緑バーに戻ります）`;
+  el.innerHTML = `→ 前半: ${fmtD(a.from)}〜<b>${fmtD(slotToDate(cut))} ${t ? t+'まで' : (slotHalf(cut)==='am'?'午前まで':'午後まで')}</b>　後半: ${fmtD(slotToDate(cut+1))} ${slotHalf(cut+1)==='am'?'午前':'午後'}から（緑バーに戻ります）`
+    + (a.night ? `<br>※ この割当の🌙夜勤は後半に自動では引き継がれません。再割当後に「期間と時刻を直す」の🌙で付け直してください（🌙付きの緑バーから割り当てた場合は自動で付きます）。` : '');
 }
 /* v3.4: 「期間と時刻を直す」に未保存の入力があれば確認してから閉じる */
 function closeAssignModal(){
   const a = DATA.assignments.find(x=>x.id===menuAssignId);
   const ef = document.getElementById('ed-from');
   if(a && ef){
+    const s = site(a.siteId);
+    const nightDefault = !!a.night || /夜勤/.test(s ? s.name : '');   // チェックの初期値と同じ計算 (v3.6)
+    const edNight = document.getElementById('ed-night');
     const dirty = ef.value!==a.from || document.getElementById('ed-to').value!==a.to
       || (document.getElementById('ed-fromtime').value||null)!==(a.fromTime||null)
-      || (document.getElementById('ed-totime').value||null)!==(a.toTime||null);
+      || (document.getElementById('ed-totime').value||null)!==(a.toTime||null)
+      || (edNight && edNight.checked!==nightDefault);
     if(dirty && !confirm('「期間と時刻を直す」に保存していない変更があります。保存せずに閉じますか？')) return;
   }
   closeModal('assign-modal');
@@ -815,7 +823,8 @@ function editAssignment(){
   // メニューを開いた後に他の操作 (他の端末の保存の取り込み等) で値が変わっていたら、古い画面からの巻き戻し保存を止める
   if(menuSnapshot && (a.from!==menuSnapshot.from || a.to!==menuSnapshot.to
       || (a.fromTime||null)!==menuSnapshot.fromTime || (a.toTime||null)!==menuSnapshot.toTime
-      || a.fromHalf!==menuSnapshot.fromHalf || a.toHalf!==menuSnapshot.toHalf)){
+      || a.fromHalf!==menuSnapshot.fromHalf || a.toHalf!==menuSnapshot.toHalf
+      || !!a.night!==menuSnapshot.night)){
     alert('この割当は開いている間に別の操作で変更されました。最新の内容を表示し直しますので、お手数ですがもう一度入力してください。');
     openAssignMenu(a.id); return;
   }
@@ -834,6 +843,8 @@ function editAssignment(){
       && !confirm(`⚠️ 入力した期間（${fmtD(nf)}〜${fmtD(nt)}）は、${p.name}さんの「行ける期間」（${availText(p)}）の外を含みます。\n日付の入力間違いではありませんか？このまま保存しますか？`)) return;
   a.from = nf; a.to = nt; a.fromHalf = nfh; a.toHalf = nth;
   a.fromTime = nft; a.toTime = ntt;
+  const edNight = document.getElementById('ed-night');
+  if(edNight) a.night = edNight.checked;   // v3.6: 夜勤フラグ (🌙チェック)
   // 支援先の期間から外れる場合は支援先側を自動で広げる (assignTo と同じ)
   if(a.from < s.from){ s.from = a.from; flash('s|'+s.name); }
   if(a.to > s.to){ s.to = a.to; flash('s|'+s.name); }
@@ -901,6 +912,7 @@ function mergeAssignment(){
     const head = c.from, tail = c.tail;
     head.to = tail.to; head.toHalf = tail.toHalf;
     head.toTime = tail.toTime || null;   // v3.4: 結合後の終端はtail側なので時刻も無条件にtail側を採用 (古い切れ目時刻の残留防止)
+    if(tail.night) head.night = true;    // v3.6: どちらかが夜勤なら結合後も夜勤扱い
     head.records = [...(head.records||[]), ...(tail.records||[])];
     markDeletedAssignment(tail.id);
     DATA.assignments = DATA.assignments.filter(x=>x.id !== tail.id);
@@ -968,7 +980,7 @@ function renderBoard(){
   const sb = document.getElementById('sel-banner');
   if(selEntry){
     const p = person(selEntry.pid);
-    sb.innerHTML = `<div class="sel-banner">👉 <b>${esc(p.name)}</b>（${fmtRangeH({from:selEntry.from, fromHalf:selEntry.fromHalf, to:selEntry.to, toHalf:selEntry.toHalf})}）を選択中 — 割り当てたい<b>支援先の行</b>をクリックしてください
+    sb.innerHTML = `<div class="sel-banner">👉 <b>${esc(p.name)}</b>（${selEntry.night?'🌙':''}${fmtRangeH({from:selEntry.from, fromHalf:selEntry.fromHalf, to:selEntry.to, toHalf:selEntry.toHalf})}）を選択中${selEntry.night?' — <b>🌙夜勤として割り当てます</b>':''} — 割り当てたい<b>支援先の行</b>をクリックしてください
       <button class="btn btn-sub btn-sm right" onclick="selEntry=null;renderBoard();">選択をやめる</button></div>`;
   }else sb.innerHTML = '';
 
@@ -1040,7 +1052,7 @@ function renderBoard(){
       if(!p) continue;   // 支援者が削除済みの孤児割当は表示しない (描画エラー防止・v3.1)
       html += `<div class="tl-name" style="grid-row:${row}; grid-column:1;" title="${esc(p.name)} ${esc(p.corp)} ${jobLabels(p).join('・')}" onclick="openPerson('${p.id}')">${nameHtml(p)}${jobBadges(p)} <span class="corp">${esc(p.corp)}</span></div>`;
       const {c1, c2} = clip(aStart(a), aEnd(a));
-      const isNight = /夜勤/.test(s.name);   // 夜勤サイトへの割当は🌙+濃紺で見分けられるように (v3.5・金子さん要望②)
+      const isNight = a.night || /夜勤/.test(s.name);   // v3.6: 割当単位の夜勤フラグを優先 (サイト名の「夜勤」判定は後方互換)
       html += `<div class="tl-bar ${st.cls}${isNight && (st.cls==='b-active'||st.cls==='b-planned') ? ' b-night':''} ${flashKeys.has(akey(a))?'flash':''}" style="grid-row:${row}; grid-column:${c1+2} / ${c2+3};" title="${esc(p.name)} ${isNight?'🌙夜勤 ':''}${barLabel(a)}（クリックで 分ける/解除）" onclick="openAssignMenu('${a.id}')">${isNight?'🌙':''}${barLabel(a)}</div>`;
       row++;
     }
@@ -1067,7 +1079,7 @@ function renderBoard(){
     const {c1, c2} = clip(slotNum(e.seg.from, e.seg.fromHalf), slotNum(e.seg.to, e.seg.toHalf==='am'?'am':'pm'));
     // バーの文字は職種でなく時刻を出す (職種は名前の横のバッジで分かる・金子さん 8/8要望②)
     const timeLabel = (e.p.inTime?` 始${e.p.inTime}`:'') + (e.p.outTime?` 終${e.p.outTime}`:'');
-    html += `<div class="tl-bar ${e.past?'b-ended':'b-free'} ${sel?'selected':''} ${flashKeys.has('p|'+e.p.name)?'flash':''}" style="grid-row:${row}; grid-column:${c1+2} / ${c2+3};" title="${esc(e.p.name)} ${segLabel} ${e.p.quals.join('・')}${e.past?'（活動終了）':''}" onclick="selectEntry('${e.p.id}','${e.seg.from}','${e.seg.to}','${e.seg.fromHalf}','${e.seg.toHalf}')">${e.seg.night?'🌙':''}${segLabel}${e.past?' 活動終了':timeLabel}</div>`;
+    html += `<div class="tl-bar ${e.past?'b-ended':'b-free'} ${sel?'selected':''} ${flashKeys.has('p|'+e.p.name)?'flash':''}" style="grid-row:${row}; grid-column:${c1+2} / ${c2+3};" title="${esc(e.p.name)} ${segLabel} ${e.p.quals.join('・')}${e.past?'（活動終了）':''}" onclick="selectEntry('${e.p.id}','${e.seg.from}','${e.seg.to}','${e.seg.fromHalf}','${e.seg.toHalf}','${e.seg.night?'1':''}')">${e.seg.night?'🌙':''}${segLabel}${e.past?' 活動終了':timeLabel}</div>`;
     row++;
   }
   if(!visEntries.length){
@@ -1624,6 +1636,7 @@ function applyAssignClip(plans){
     for(const g of pl.segs.slice(1)){
       const na = {id:uid('a'), personId:a.personId, siteId:a.siteId, from:g.from, to:g.to,
         fromHalf:'am', toHalf: g.to === orig.to ? orig.toHalf : 'pm',
+        night: !!a.night,   // v3.6: 分かれた断片も元の夜勤フラグを引き継ぐ
         fromTime:null, toTime: g.to === orig.to ? orig.toTime : null, records:[]};
       DATA.assignments.push(na);
       flash(akey(na));
@@ -1643,8 +1656,8 @@ function openDupEdit(){
   // 今回の申し出の期間を編集欄に足しておく（そのまま保存すれば反映、不要なら✕で消せる）
   if(o){
     (o.periods||[]).filter(x=>x.from&&x.to).forEach(x=>{
-      const nx = {from:x.from, to:x.to, night: !!o.night_shift_ok};   // v3.5: 夜勤可も一緒に足す
-      if(!pfRanges.some(r=>r.from===nx.from && r.to===nx.to && !!r.night===nx.night)) pfRanges.push(nx);
+      const nx = {from:x.from, to:x.to};   // v3.6: 夜勤可(能力)は期間行の🌙にしない
+      if(!pfRanges.some(r=>r.from===nx.from && r.to===nx.to && !r.night)) pfRanges.push(nx);
     });
     renderPfRanges();
   }
@@ -1809,7 +1822,9 @@ function editOffer(){
   document.getElementById('pf-transport').value = o.transport || '';
   pfQuals = (o.quals||[]).filter(q=>QUALS.includes(q));
   if(o.can_drive && !pfQuals.includes('運転可')) pfQuals.push('運転可');
-  pfRanges = (o.periods||[]).filter(p=>p.from&&p.to).map(p=>({from:p.from, to:p.to, night: !!o.night_shift_ok}));   // v3.5: AIが読んだ夜勤可を🌙チェック済みで開く
+  // v3.6: 「夜勤可(能力)」を全期間の🌙(実勤務予定)にしない。夜勤可はメモに残り候補優先で使われる。
+  // 実際に夜勤に入る日は、operator が🌙の行を明示的に付ける (現場運用と同じ)
+  pfRanges = (o.periods||[]).filter(p=>p.from&&p.to).map(p=>({from:p.from, to:p.to}));
   if(!pfRanges.length) pfRanges = [{from:TODAY, to:addDays(TODAY,4)}];
   renderPfQuals(); renderPfRanges();
   document.getElementById('ai-proposal').innerHTML = '';
@@ -1822,7 +1837,7 @@ async function approveOffer(){
   if(!currentOffer) return;
   const o = currentOffer;
   const n = Math.max(1, o.headcount||1);
-  const periods = (o.periods||[]).filter(p=>p.from&&p.to).map(p=>({from:p.from, to:p.to, night: !!o.night_shift_ok}));   // v3.5: 新規登録パスと同じく夜勤可を期間行へ
+  const periods = (o.periods||[]).filter(p=>p.from&&p.to).map(p=>({from:p.from, to:p.to}));   // v3.6: 夜勤可(能力)は期間行の🌙にしない (日中割当まで夜勤表示になるため)。夜勤可はメモへ
   const quals = (o.quals||[]).filter(q=>QUALS.includes(q));
   if(o.can_drive && !quals.includes('運転可')) quals.push('運転可');
   // AIが読み取った入り/出の時刻は、割り当てたときに自動で入るよう支援者に持たせておく
@@ -1890,7 +1905,7 @@ async function approveOffer(){
       : `${o.organization||'所属未登録'} スタッフ${n>1? i+1 : ''}（氏名未登録）`;
     DATA.people.push({id:uid('p'), name, corp:o.organization||'（所属未登録）', office:'',
       quals:[...quals], note, driveLv:null, lodging:'', rentacar:false,
-      inTime: inT, outTime: outT, transport: o.transport||null, avail: periods.map(p=>({...p, night: !!o.night_shift_ok}))});
+      inTime: inT, outTime: outT, transport: o.transport||null, avail: periods.map(p=>({...p, night:false}))});   // v3.6: 明示false (サーバーのメモ由来フォールバックで全期間🌙になるのを防ぐ)
     flash('p|'+name);
   }
   document.getElementById('ai-proposal').innerHTML = '';
@@ -2013,7 +2028,9 @@ function applyProposal(){
     const fromHalf = (from === parsed.from && parsed.fromHalf === 'pm') ? 'pm' : 'am';
     const toHalf = (to === parsed.to && parsed.toHalf === 'am') ? 'am' : 'pm';
     if(from<=to && isFreeFor(p, from, to, fromHalf, toHalf)){
-      DATA.assignments.push({id:uid('a'), personId:pid, siteId:s.id, from, to, fromHalf, toHalf, records:[]});
+      DATA.assignments.push({id:uid('a'), personId:pid, siteId:s.id, from, to, fromHalf, toHalf,
+        night: !!(r && r.night) || /夜勤/.test(s.name),   // v3.6: 手動割当(assignTo)と同じ規則 — 🌙の行ける期間からの割当は夜勤
+        records:[]});
       flash(`a|${p.name}|${s.name}|${from}|${to}`);
       n++;
     }
@@ -2084,11 +2101,14 @@ function dmatRows(){
       for(const a of as){
         const din = ((a.records||[]).find(r=>r.date===a.from)||{}).inTime;
         const dout = ((a.records||[]).find(r=>r.date===a.to)||{}).outTime;
+        const asite = site(a.siteId);
         rows.push({p, from:a.from, to:a.to, fromHalf:a.fromHalf, toHalf:a.toHalf,
+          night: !!a.night || /夜勤/.test(asite ? asite.name : ''),   // v3.6: 名簿にも夜勤を出す
           fromTime: din || a.actualFromTime || a.fromTime, toTime: dout || a.actualToTime || a.toTime, confirmed:true});
       }
     }else{
       for(const r of availRanges(p)) rows.push({p, from:r.from, to:r.to, fromHalf:'am', toHalf:'pm',
+        night: !!r.night,   // v3.6: 未割当行も🌙(夜勤可)を名簿に出す (調整ボードの緑バーと揃える)
         fromTime:null, toTime:null, confirmed:false});
     }
   }
@@ -2157,7 +2177,7 @@ function renderDmat(){
   const outside = rows.filter(r=>!(r.to >= days[0] && r.from <= days[days.length-1]));
   let row = 3;
   for(const r of inWin){
-    const label = `${dtText(r.from, r.fromHalf, r.fromTime)}〜${dtText(r.to, r.toHalf, r.toTime)}`;
+    const label = `${r.night?'🌙':''}${dtText(r.from, r.fromHalf, r.fromTime)}〜${dtText(r.to, r.toHalf, r.toTime)}`;
     html += `<div class="tl-name" style="grid-row:${row}; grid-column:1;" title="${esc(r.p.name)} ${jobLabels(r.p).join('・')} ${label}">${esc(r.p.name)}${jobBadges(r.p)} <span class="dmat-t">${label}</span></div>`;
     const s = slotNum(r.from, r.fromHalf==='pm'?'pm':'am');
     const e = slotNum(r.to, r.toHalf==='am'?'am':'pm');
@@ -2175,9 +2195,9 @@ function renderDmat(){
 }
 function dmatCopy(){
   const rows = dmatRows();
-  const txt = 'お名前\t資格\t活動開始\t活動終了\n' +
+  const txt = 'お名前\t資格\t活動開始\t活動終了\t夜勤\n' +
     rows.map(r=>[r.p.name, jobOf(r.p),
-      dtText(r.from,r.fromHalf,r.fromTime), dtText(r.to,r.toHalf,r.toTime)].join('\t')).join('\n');
+      dtText(r.from,r.fromHalf,r.fromTime), dtText(r.to,r.toHalf,r.toTime), r.night?'夜勤':''].join('\t')).join('\n');
   navigator.clipboard.writeText(txt).then(()=>alert('名簿をコピーしました。メールやメッセージにそのまま貼り付けられます。'))
     .catch(()=>prompt('コピーしてお使いください', txt));
 }
