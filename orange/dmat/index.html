@@ -27,6 +27,7 @@
   .nagara-logo svg{width:26px; height:21px;}
   .nagara-logo span{color:#004AAD; font-weight:800; font-size:14px; letter-spacing:.04em;}
   .nagara-logo:hover{opacity:1;}
+  .nav-short{display:none;}   /* v3.7: ナビ5ボタンをスマホで1行に収める短縮表記 */
   .nagara-logo::before{content:'システム開発協力'; color:var(--sub); font-size:11px; margin-right:2px;}
   /* v3.6.1: 運営事務局 KOTOBUKI 表記 (災害救助法の適用関係・金子さん依頼 8/24) */
   .kotobuki-logo{display:inline-flex; align-items:center; gap:6px; text-decoration:none; margin-top:8px; opacity:.92;}
@@ -170,6 +171,7 @@
   @media(max-width:700px){
     :root{--namecol:132px;}
     body{font-size:15px;}
+    .nav-full{display:none;} .nav-short{display:inline;}   /* v3.7: 5ボタンナビの短縮表記 (折り返し押し間違い防止) */
     header{padding:10px 12px; gap:6px;}
     header h1{font-size:16px;}
     header .tag{font-size:10px; padding:2px 8px;}
@@ -253,9 +255,11 @@
       <button class="btn btn-sub btn-sm right" id="btn-reset" onclick="resetData()">デモデータを初期化</button>
     </div>
     <div class="chips" id="view-nav">
-      <button class="btn btn-sub btn-sm" onclick="shiftView(-7)">◀ 前の1週間</button>
+      <button class="btn btn-sub btn-sm" onclick="shiftView(-7)"><span class="nav-full">◀◀ 1週間</span><span class="nav-short">◀◀</span></button>
+      <button class="btn btn-sub btn-sm" onclick="shiftView(-1)"><span class="nav-full">◀ 前の1日</span><span class="nav-short">◀ 1日</span></button>
       <button class="btn btn-sub btn-sm" onclick="resetView()">今日</button>
-      <button class="btn btn-sub btn-sm" onclick="shiftView(7)">次の1週間 ▶</button>
+      <button class="btn btn-sub btn-sm" onclick="shiftView(1)"><span class="nav-full">次の1日 ▶</span><span class="nav-short">1日 ▶</span></button>
+      <button class="btn btn-sub btn-sm" onclick="shiftView(7)"><span class="nav-full">1週間 ▶▶</span><span class="nav-short">▶▶</span></button>
       <span class="small" id="view-label"></span>
     </div>
     <div id="sel-banner"></div>
@@ -272,9 +276,11 @@
       🟠 支援中　🔵 これから　⬜ 活動終了
     </div>
     <div class="chips">
-      <button class="btn btn-sub btn-sm" onclick="dmatShift(-7)">◀ 前の1週間</button>
-      <button class="btn btn-sub btn-sm" onclick="dmatReset()">今日から2週間</button>
-      <button class="btn btn-sub btn-sm" onclick="dmatShift(7)">次の1週間 ▶</button>
+      <button class="btn btn-sub btn-sm" onclick="dmatShift(-7)"><span class="nav-full">◀◀ 1週間</span><span class="nav-short">◀◀</span></button>
+      <button class="btn btn-sub btn-sm" onclick="dmatShift(-1)"><span class="nav-full">◀ 前の1日</span><span class="nav-short">◀ 1日</span></button>
+      <button class="btn btn-sub btn-sm" onclick="dmatReset()"><span class="nav-full">今日から2週間</span><span class="nav-short">今日</span></button>
+      <button class="btn btn-sub btn-sm" onclick="dmatShift(1)"><span class="nav-full">次の1日 ▶</span><span class="nav-short">1日 ▶</span></button>
+      <button class="btn btn-sub btn-sm" onclick="dmatShift(7)"><span class="nav-full">1週間 ▶▶</span><span class="nav-short">▶▶</span></button>
       <span class="small" id="dmat-view-label"></span>
       <button class="btn btn-sub btn-sm right" onclick="dmatCopy()">📋 テキストでコピー</button>
     </div>
@@ -389,6 +395,12 @@
         <select id="pf-drivelv"><option value="">—</option><option value="1">Lv1 近場のみ</option><option value="2">Lv2</option><option value="3">Lv3 一般道OK</option><option value="4">Lv4</option><option value="5">Lv5 長距離・山道OK</option></select></div>
       <div class="form-row"><label>メモ（夜勤可・経験など）</label><textarea id="pf-note" rows="3" placeholder="例）夜勤可・災害支援経験あり"></textarea></div>
       <div class="form-row"><label>移動方法</label><input type="text" id="pf-transport" placeholder="例）自家用車で現地入り／レンタカー予定／新幹線＋バス"></div>
+      <div class="form-row"><label>時刻（任意）— 初日の開始・最終日の終了</label>
+        <div class="flex" style="align-items:center; gap:6px; flex-wrap:wrap;">
+          <input type="time" id="pf-intime" style="max-width:120px;"><span class="small">開始</span>
+          <input type="time" id="pf-outtime" style="max-width:120px;"><span class="small">終了</span>
+        </div>
+        <p class="small" style="margin-top:4px;">「動かせる人」の緑バーに「始◯◯ 終◯◯」と表示され、割り当てるとシフトの予定時刻に引き継がれます（v3.7）</p></div>
     </div>
     <div class="form-row"><label>行ける期間（複数可）</label>
       <div id="pf-ranges"></div>
@@ -430,7 +442,7 @@
 </div>
 
 <footer>
-  <div id="footer-text">災害支援シフト調整プロトタイプ v3.6.1（デモ用架空データ）</div>
+  <div id="footer-text">災害支援シフト調整プロトタイプ v3.7（デモ用架空データ）</div>
   <a class="kotobuki-logo" href="https://www.kotobuki-care.global/" target="_blank" rel="noopener" title="株式会社KOTOBUKI（運営事務局）"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAARIAAABgCAYAAADRqv1dAAAzKklEQVR42u19eZhcVZn3733PraquTjrd1Z2la+lulhawQVwaQYUxwWF3BESJCiOKoiiLLDKDo9+Y5HO+cWZEcF9Q3Ec0KOOOuJE4o6LQEhCaJU2S7q5b1Vl7SW9Vdc/7fn/UreSmUp10QmJC5v6ep56kq+49+3nPux8gRIgQIUKECBEiRIgQIUKECBEiRIgQIUKECBEiRIgQIUKECBEiRIgQIUKECBEiRIgQIUKECBEiRIgQIUKECBEiRIgQIUKECBEiRIgQIZ6HWAawAlT9vQKkgAlHKESIECFChAhx8FDhQvKNjUcrEEWZAyH1OZTBpqaT3UTiHytcS9W7NbmYECFCHDjw4Ug0FHCqNj8DgBLdmW1MfKL8GBgAEaCk9K9QnA8ASwJ9UsAQIFR+PkSIEP9bCAkBSoBHgKrfvlUVoqK0KUa4auOCBXMJsATY/sbGY5qYXquKn/mEpEKMmACba27uGmlsTAQ5mxAhQhyhhKSyybc0N6e3Nib+4b8bGxMEiAJmif+MAAPzmSNSKlW+giF69xwiJdJnAKDHL4cA2dTYfKMReXiCuSGc6hAh/pdwJArQhLWTHvChl7J5eKCp6dUE2LW+RcYhHSIAqnQuAKwH6gi4eFiV1DpPAkA34AGgTY2JzywwdIcFrk4PDw/4Yk4o4oQIgSNfqWoAwE0kzi01t+i2psTkQGPjxZXfB5ubTys2t2i+qWmlAk6uublLm1vUbUr82RdlsB6o29iY+IG2zFe3qemDAPAwEHlgd71LiBAhjnRiMtCY+Jw2t+j2RLMONjS/ovL9hsbGo58BYpXntzQ2XzIwb16n/24015j4oU9EPl/hWsJRDRHi4MI5TIhHUMRSBQxGh28YamyiONHLTYRGCbAAqBFoKjU1XzikeoySegp5JMEm7utFii70mI2e/fqdoyPX+lzK9Ib6+clEzL5vUnA6R50LFm3ePK6+xSdcAiFCHOF+I0FkG5vP2tqU+MNIolmnE8066X+KiWbdmmjWrU2Jh/qbmi4KvvM4EM0nEv8wnGgemUo0a7ap6RrfO5bDUQ4RAgfS2nroiAUBunHBgrlckBeWHJ3wgNGYMaOLNm8er4gqBBSzjYlb5jJ9jACMqwoAqSrOzCGiCICtKte1j4x8NptItDmq31/E5uXbRMa2Ey44anj4dz6XIuHUhwhxZBASBqAD8+YdU8e8ai5xpgRgWrVEqk8r9KLW0dF1g/MSV8839IURVSvlBpsZyrMGwBwiM25xWsnoVCNoTUH1gWnCje3Dw4/7XrGlir9KOP0hQjzPCUmQK9nS3DxPRF6tSqcR4YUC1WnHeZ9T0HkxI38RgL3ys7yX8uwcIjMu+lh6dPgl43MWLmyY2LQxnOYQIY5gQhIkJrV+cxsTP2xkunBU1aNZKoYFkAYiHrc4Jz227Zf5hubT5jraMQoMOiIbPeZSARg7dnh4NJz+ECHw/HJICwTZ8UrAqP9ZBZiHgYgCsfUdHXUDQFzRGcs1N3cZwmvHVJX2wbpEgEQABcsblgGsrB+by+a788G/B/GzdYpH46p3Kjrq/DaFviUhQjwfOJL9UXAONSauamT60rZ94Eb8uiROxJMqa9MjIydsnDNngXGcV5YANswbVSRfbGjIt2ezU+H0hwjxPBNtNtYvaI05mDvi2GjUozlE3lwQzYFy3JLUs1CdskYdpZiFWBCdX0989oSq0L5zThIDaAK6pH1k5LczmZdDhWuIEM8DQlLhRNympo/PIX7HlGpcgVgUgCGCqeQCqGoMAZhUYBq6Xw1UQKM+Y1NU+mcV+h+guCW9ffsolWNxcJg5BVabtCuWKRsYkuBQaeC3Ws8DAC0GzOryd1rj+0o56tdN2NUiVl1HpZ5gGyRQNtcQlb1AmRL4v1atweo2ItCeStuqn6uuL/jbnvrCiwFePXM/91huYOxmGqNK+cE5ra4TVeXzDPM90xg5e2i3d8QRkpWAWQpYtynx/RTzJUMikPLg2go34CtbCbuvJKbnoMNRlG29dUTYrloCMMzQray01iH9xVQ8/tV0Pj95GHm4MmqLf4SZ21f920xl7G/ds2nH/ta5P3Xtrc49tWU24zjT+6YGwTgQ/cAhmu/nHUdCADCITF20ceJjDuHyCFFTJEB+C6oo+KcOHeD2qH9qMmAcnwtyANQTYaPIKsTrXpvK56cOgZhDALSlpaWhvq7uMhJ5eCCf71kMOKsBL5NKvZkAGczlVlZe6EinL5BKuhWRXw3m87+s/JbJZC6HtZLN5+/2Tyuvvb09SdZ+EKp39edyayrfJ5PJEyLGvE5VS1DNkec9PLBp07qORYuOspHIpSRilZnI2sf8OnYs3ra2tnMgcg4RGSV60PO8H+fz+Um/DeeS6gkAppl5vrV2OJvLfSGdTl9GItZT/X3Ucf5JRVoC664ezFu4VPpw/8aNG4Lcjj821wK4EETTELlHmb+WzWYLAKS1tbUjxvxGITpKiZ4E8J1sNrsNAGUymQRUb4ZqPTOPCLAqm83+FgBSqdSrDNFFqmqZOWdVH3Zd98HKpmxbtOhEikQuAJAA8ASYfzYwMDAMgDpaW09Qx7lUVT2oDqvIE9mhod8GOCbtSKVeTI5ztpRKvxnI53v8sTnVAJdb/z0iElWdQ0QSicVuKxQKF5JqKZvLfScwp2+B6puIqIGAVWD+TKUdmUzmw6qac133S11dXdHe3t5iRzp9pgJLC553y8aNGyf2k4g9P8y/m+rnJxGzLxPBCQIcrdBjGNRVz9ThlZ3R9luU8RMh7YlBUT+/iSrgpJjNJugrW7dte9BPMWDxV+Y+WltbO2KOs0FVpyzwStd1HwVA7anUQ0q0YNB1O45vaWmYrKu7xxhzrrV2M1QLxpiMFbk/Eou9ad26daNtqdQfjeOcKp539kAu9ysAlEqlXlMXjf7KK5UuHXDd73V2dsb6+voKbanU25xI5GteqZQloAXMpNZeCGDKiUb/2/O8CQAxY4wj1l494Lp3AnDa0uk7HWOu9KzdpMAgAS8GkSuqF7qu+1hbKnWnE4m8q1QqWWImiBRi9fWt01NTgwAeN6rXqTErVaRIRF3loCp9hoACA2/dUO67A8Amk8m2CPPP2JgTrbVPQjXiRCKdnud9ZtB1r88kk5exMV8nwLEizxJRCxFZq3qp67oPpNPpkyPMj1qRrQA8Y8wia+0HB133o23p9P91HOefRQREBFWFWPvewVzuC23p9E3MfLuIQFVHmLkJwJhY+55sPn93Jpm8LBKN/qdXKj0OogZjTEfJ2ncHN3Qmnf5lNBI5q1gsPmsikZP6+/un0+n0GxyiG6xq3BCdIuWVukaBqKieZ4h+B9WhwVzu1AULFsyti0S+axznAs/aJwhgY8wLrbWPK9HibDY7kkmlthhjEuJ55w7m878AQJlU6v2O43xscnq6ddOmTRv/2oSE/4qmX7Nwckt+4fDwT1tHhz+eGh2+Lj06ckGpYc4LiyoXimpftLzJdV+JiAEoCnCciOtrfOYQmXlEThNRtIkoVgfIkNi7DdETPtd0SNhDIlIrMkbMcSb6cceCBa1+0OIYgCkAmKiru9VxnHOt510z6LoLB3O5Nk/1PGY+t1go/Jtf1DZVhTLfn0wmz0B5TOqtyO7ysuqIiHjK/IqBXK5eVaeVeRkcZ9o/aa8ddN2ItXaDqt7in45vchznSs/azw26birruqew47QBmGCinwAwIHpSVT0wv2QwmzWDudzcvr6+MVLdTqql/lzukYHBwRcMuu6JotqrqmsGXff4Adc92SciFT2KGuZPszEneiKXDLpu12Au9wIplV7GwL3pdDrDxnxNgYcKnndUNpfrZMdJKvCgIfrRMccc0xixdlTLuoIPDbpuq7X2GVW9we//s6rqWWvfUvS841VkCsDrjj766EXMfLuo/qZk7cJ5TU2LqFQ6GqqrHMf5diqVOo6JNvhjd96g6x5lrR0j4LUA0NvbW0ylUscTsKRULLrGmGOttZcDgOu63+/PZl+ddd2XW9UnVPWHg6770qzrnpjL5QahOgoiFwDqotHljuNcoNa+Ieu6Jw26bpe19j2O45xEqrf6Y5QDADLm/kwyebFPMKZExHMcxztio399scHWMgP7Ztgf5xsT3Q1My4qqFrO8WsLXg1AJKBWAbaQyCkWxWt/ChCkFhg2wnpR6SPi3qe1bnz7kShFmIWCuFfkaAa/XaPRHAE5VIm+HmKf6Fq9UenAwl/t8RYmYzWbvz6RSXyKidwC4RomMFellwI0Yc19LS0tKiKwDOLYG10mAQ6ofbE+lRom5yYoMi0iRmR0Ab2tLp5MAEkr0J78Nb/M8b7sS3QLA+tzNUDqdfkfEmAfT6fSrlWhjOfeU3tSWTg8rML/kedeCaEJVGwCgC4j2lkMURqE6J6BUtP7/pbm5eR4B51vP+3k2l/uvin6iP5d7BADaUqmb2ZiIlErXDQ0N9fttmW5vbf1Hjkaf8AqFC0tE90VVHaielUmlikSUhur/AIAQbTeqDhGdzqoZNibued6DpULhAsdxoKo3Dg0NbR4aGjIANhyTSFzhzZmzzQDvFObvOUQOW3tLWyq1hYjqVOThwKn8diJitfZiIfopqX4AwNcCh3aln/UAuLOzM9LX11dQoEjlGDKo6jtK1v4h67r3+n3XQdf9Yls6fZMClwK4FURxEVkN1ZRxnP9sbW09CszDAJyy29WRm0aAKqLF5nktL1fSMxT6MoEeI0ACRC0AFo6VRZvZEhE7l8hMqd6rXunq9Pj4loPt23IwCAmrsojcZ4E7Y5HI79tSqTtVdUdeFiKaB9UHASAD1GV3ntxrmTmaTCbjpCpKNBWNx19XnJ5eG6+r+74C3wTtvqbUGFZVQPVKJVKoPmxUP6yqjhIBRKcx85lQVfG8DwIgqKYEGHNdd2ox4Kzu60N3d3dk48aNWVW1rLpQfTEBqucoUATRcENDgylMTY0TEAGA+E4r0XYQNQcsPzvWSENDQ71aGxHVynxGFgP0bCYTyWazU8TcoKrWAbZ0d3dHRnt6sBhwBuvrXa9YtKraboyJ+RWdbYx5o6qOk8jNAIhERMrj8l4ismLtjwql0h2xaHSFlJHz94Xp7u7mnp6esUw8XgLRPADkc343OsbA87ynTSRyGwDu6upyxkZG3q4iOWa2otpjHOf8TDJ5Vjafv78b4J5yX5nKdgBpbGyUACdG/nw3KvBMpe8dAPqBaQWegeqrK4k2FPidEq00RGsijrMSIr9SIj1UhOSvIdqQAljf0VHnNiZ+yCx/ijNur2f6+3rmV9UzvzAKLNwPYY6nVRXAq40T+cLWxsTNuebmrj151fpZ0pzDKQJYAVXVhblc7g+e591sjHkXEZ1JwKS/aP5EROenUqmWbFncmQIgxPwGEZnO5/PTSsRQjff19RWKnncuAYsN8EmxVkQksstkiFgiUhU5b2Fra9NANntqfy73iEcU8zmkq8Xz/gZECqJrACiIeiPGpNtTqbNWl0WGQk9PT4lU30pEhq39I4lEAQh53uJsLnds1nVP6evrG1OgoESFXReExvwAyiDzKACov79/i4r0MdFrM5lMGsD0asDLZrNTnc3N86zqaiYyRaK39/T0lPqAwmrAK01NLWFmQ8CDIsJEJEx0uVVdQkT1PjelzGz8fl4Ui8fnDbjuRZs3bx4n1ceMMcyqlyHQx0wy+eZIJBID0Q/9TSqs+pqStbcaY463pdI7AMj4yMg5xphWENVZop+D6G9UFSC6FQB6fB0clbmhUtUp6ynRHH8wfsNEF6XT6QyA6X5gOpVKtTDRK0H0RIDotruu+2jJ2iuYaAmIPgxgPB6P8xFJSNQXbabHxyMEPWsuEaZUMaWKcVWZVJXifiiFCCAPIAbmzyV6Q5zp43Wij7mNic/4Lvg77rPxM9PLmeXs9N5hlkaAiNkA4EHXvcNa+23HcZwd+57ogyCqd5ifakunl7en0+9qS6d/5xhzGoAPAhCoxonIAKChoaEnBXg9iBLEzD4bvQMi4oCIHGMKPT09pc7OzmhlHRARq2rDYD7/P9bab5lI5MpkMtnOIv8mZf3HL9vS6c+m0+n3taXTdxljPmo9717f4tJMRKyxGAGgzs7OmL9xpgA0+5tJ/B7Pg2qihtK/4gfxfmZOkOrjmVTqjkw6/S/tbW2rpuPxL7uuu6rked+MOM6K9lTq65lM5vJMOv1xdpwfWGv/MJDL/YaIEkTEQtSazWZXeyK3R6LRK49KpY4XIktE7KkO9/X1FbrKBI2VeaXneX+KRCKfyqRSX8+kUle2pdN3OZHIt71S6XvZbPbnRJRiIvaAyWw2+x/W835qjPlsJpNJC9H7VGSYHedFJc87RoCXicjTjuOc2ZZMXlThvLQ8H4mqPdJAfiY/K3I9AM8Qbcik09/JpFK3M9FfmHk+iD7iv5Ki8piy67rftKpXMXNUVaOlUsk5IglJ5VqJF27dup2VL55U/YVV/KWk6KeyaZb3x+xbMe16gDemWhgWmZ4CZKHha1/V1HS+Tyxm7t/KlQbLljGWaflziEQbAONKtKnisMWRyLXW8/5SWXiu6z6qnneGAo8C+BCI7gRRS9Hz3jrounf4YzzqcyraDURc1/0ZVK+A6pNU1l0gGo1qWV9E4yKy0bfOkM9ei6oWRKQfwDYATMb8k4r0GOYbBvL5P0updLoC3wKwlIHbiOhsEVkWq6+/zOc6h1Vkved5JQCa7uurWME2EvBYFcHoJeDpGvNjAfBgLvcja+1FIHqaiN5JwLuhWmLVTwCgbC53hbX2ChC9ECKfIeAdIvLp2NTUeeXrj2hSRJ7yx8TEYrF/8ax90APeQyKiIr3GmFEA1FsmXJrNZqeU6PySyBeI6A3M/BUAF1jP+z+Dudyb/PZtVdX1LDIPAFvg/ar6JFT/DwFdovr/+vv7hzZu3FhwXXetEt0GYJ0yXx44Nv6sqo8AQE9Pj/gEfBCACwD5fP6pQqn0cgXuJuB8IrqJicZK1r41m83+3C/jF774I11dXdFsNnuXFfk8E00xc+xwCch9rmIM+wF5FTHCaI1OPdPcPG+oKdGzLdEsblPC5poSOpuP25SwblPCyzcldFuiWccSzTrhZ0ubSDTrSFOi5M5rPrviEFebCtWQIw+NbMkdHR2tAV0VAUBnZ2estbV1QTWxb2lpachkMs3VB0EqlWo5ZtGihTUOiFp94paWloYav3GFiwiio6OjrnrDJ5PJ+lqd6erqilY/2+3rR2rozHg2B9zi2no8qqrTzPAM1Wg37c0VIpPJxNvb24+u9VCt/iSTyfoFCxbMraqXd+g5ymO4twPdVPe9u7s70tHR0bQXd40d/Uwmk/MP1c0QdKCIxyqAztyDe+4zQGx+U1NrSfh4IT2DgYtBONHbB0c0BTDXdyobVS0C2g/QAClcw8g5wMCkyB8yo6NrZvRYVSUQaeftD73RxOZcr6oFLU3989qbTvkjliljBclh4CSoM2ws2Qdvy+fq9VjLi5Kq6nRmcG8/EDBVLvimSjlb62+ZoS1UwzUfeyBwdg/t2NMY7e1v7IPnLtVoh91Df/6qfiMH1SFNAdrcML+TWV5UIjlegA5SSoK0FaCFBF1YR1xfB2AawJTqPokyTlnm/oMwfZ2s/fXCsbH+WrEzMxGRS1euNPcsvVSOv+PRc6i+4ecqHthEYafHx8h6L376ppf0Y9lywooVcogJx0wLf3++35eFTLPcbNiH959LXbMhAvvS932pkwKxSPs7X7MlYrSXd7EP7dbnnflXARrMZOoiYxOvY9bXbFScrmSPryOK1IPLxwUBFgRPFR4Ik6oyudMMxvuia3GIMCH2xvbhsYd8WRGXvvHD0bPW5XV6wQBvm1pEWHiULL30RIsnnlCsWO4bbMq4p2IzwCPXEaAyPVESTKozt3meHd/2LoA+tBgPmNXYL0Iy01ju6cQ2eyDm3gxMWXVgmVZ9TwHuRfbA3O2t/v1FdX91hlM/uOi1ShQJBgTqLBhVsxig1ftmA9C9jI/6wXZmde3f7Sw2ubMPY7RbYN9iAKtrBwZihuDEqhxfu+c2rp5vvw55rk6Z9ByIiEOAl29sfHurE/lqQRRFKAqqKPl5QSqDRbuG7vP+mkkjZa5k4zj0LXeNjPz3RwDZa++XKS/GKh5PNVBPoluOX/+7eonNXcds5qv1VImsiTewnRq7Z+2NL33zpSvV3LOU7CEM0tsbu6/78F4tFvlQcr+8j23Zk1hxIEWow2F8/hoBgYclR2IVoBzzbzZ79ocAXmoJ9QqwqkaJKKJAxPiEo5wygGaVGqCKCO0I4S4BNkqUZNA9y4HUXZ8fSM6x25eraCesHQdjA4ifZDVPeCg925c8OY+lZFcHNp7e/sgVJt4w306OWSIyUCg7EbZadgLa9MSq/SGupi2dvoqI5olI5XRVZmYqlVYGAtKCnIDNZDLnMXCyiARDyYWIomTMFypBWlWekTgqlTpemM9Q4GSotitQT2V/jwkS6VeiNUr0+2w22xd4V6vC7DWTyVzGQEZE5ABwJsrM7Fj7nXX5/ECt/gKwzc3N8+rr61/FwKkq8gIwt6iqQ6olJdrEwFNC9GBdXd2DfX19hdlE+84wjjOZyqYNkCWR3g253NOBMH6pUe6LGDg/UK5y2dQ2mM1m797TZk4mk/XM/C7SSkaLXViFr+Ryua0BLkzak8nTYczpu9Vl7TPZfP4HVXUxAEkmk/Mjxry9PH07OVFjTMwT+b3ruquCc19jvoWZjQD3ZbPZvzwXvZrzHN3egeHhAQAX66JFc0anpmJjAGJeLGqjpVjE2qh1nJgViXjlpXZ8lPEtb1cWPEg8hAAnBnCUaDf+lwATBTBG1AfAxoqjxznNyavs2GYgEgWZSDk4tlQEl3TquNxjg7hjTT+ALIAJBZoAXKiFyTJnpKIciUe8iZG8pciXFy9TZzzVQ1ipZrFPUFZjieBEEJ5YrjV0JwRAu7q6zPbR0f9g5nkU8CYlIojjPAFgQ4AQGAC2PZk8HcBPmYjJmKBJGF6pdNfAwMD2KgJg21Ops0B0iwXOZKKo7wq5M1yRCDCmvEJEptsymV+R6h0DrvubqlOs7Gms+gE25kVEdKBihyBlM/VAdX+TyeR8Y8zNBLyVgQyIEOw3eOf+Z1UUpqfXtqXTX5mcnv7s1q1bt8/AOTAAIdW3Gcd58770wxJ5bZlMD6l+fMB176naROVyRc4wkci/V8+pijwK4O496WGinjdPYrFPMNega8XifQC2Brg0UeYLHWP+MVgXM0Os/TWAH1S52BMAdohWMvOZ1e2z1m5X1VOqUvwoAbcy88nVdWipNAbg0BCSqlQBROXQ5YkdP0zu/uzGpqZbI8TGC8TTiO8sVkdk4gCPqaKk6C+qDihhM6kWleAwiBzQtinFH0199G5apqQ30Krj7njkc87cxDUytR0yPeGfYOSAOU5O5DgyznHEZscVflIYh1qv7NFmogroJla8Zd2NJw2sC7R19b4T1i0iUq/lmAn2OQtWkWLVwreZTCatqvcQQJ61Rd8RzGPmOq9U+tlgLndVUOHX1dUVHRsd/QSI3usvZMjOgDza5Y7CnYSijon+ToG/a89kvhitq7vBP+GDu21YRDzdh/imPUCIiEm1WLW+vExr63nE/EUmaldViKrAjy3BzpiiXXRARPQCYv5ofTx+Zby19V1+uH5NMYSIxqyIp+UxcQKDENQlWVX1/LIZZdH8NGJemUmllmdzuRU1NtJUVbnWd/wb3iuLyiyiuk1U51VzgobZq9GHieq6FDBENFJDFPPaUqlPszFnep5X8Nuk/hxYT2RJPp9/JtAf9se4er49Ldc1dchjbXzORKt9RZYDtNzfDBvQ4dQ3jf2kiehvN6sKl31LFICtA5w4kZlUfWYM+k1S/cmi0dGnqGzYqY1RACtAVHZBvvb4Tz/2sJK5leMNxwOAFKeg1rNatCAQlHaeGqRqUCbJpGJJtZQgNncf98nHnlaRrzLroFjUk6F2BU4ico4lNhNcnP7wkze/9AksW8a1rDq+zsgJTJzUSgDX3d0d2TQ0dA8zJ6Xsrh71Wcw6Vd1ggSsCJ5V2dHTUjY2O/shhPtuK2HJUADiQJUtqZAYjAOqzsDDMVxenpo7p7Ox8XV9fn4fZmQJmUuTNqPzTQGe7urpMb29v0Q/5/0/fa9Mj7EiMxzWUjjs2vqqKqgoRHQdjfplOpy92Xfe+WqemqhomcjSwpqn8/fSOTVIO+4+pKvwxhKpaVQUzL29ra/vp4ODgw8E+a5lPCpZLAIyqmn3QIzrVhKSWz5KqclUfiPwE6dWEOZ1Ov5uZrxMRj4gqvj8eM8este/M5/N/rjxbfa82BfpRCeCUA+B7wgfSgzX4Wb5Tx+HFm0a/2Uj0t1tUSwywlC+zogSRo4SBSZVrp+YOv6R1ZORfFo2OriFgetlOx7YdnwcAx4+XIYAU5aAzevr6k79a2LLpJeJNvkmLUz8EaNjUzTUciRpADfkTSoCDIF+nCiKOEpkkR+NLTP3cr8OJ/8bE5/zExOd9zonPu4aMOdc0NF/iMf61rOVesl9j1tnZaQDYTfn855n5lT5HUTlJVFULsPZSX3auiDRiPe8LPhEp+s9XCIUlgPzYEcf/mIBytbJYjC1H9p5dmJz8LAC7eOd+T5jye7FAGQ4zO/4pV3Oqq5/1P1FTfi8KlMPqM62tLyfmr2sZNrCI1fdANVV1coAwsh/NaokoysB3M5lMZ+C3PcFjZhDRl9lxji1ZewKIXmhVL1fVASLSQOpHJSKFyEWHs0doZ2enA8BrSybPYOCzvi7FBPrreCKfyeZyX6lFRJ7P0b9EgM03Jj7XRPTGbaoln7pKohy1OzEB/eSkyG0do6PDGAEeAJwl/kIiQFbMrhbFSjX9S2kawEoAK0+4vTcpXDwV1t5Gkdix6hW0HJZTiyEXVSmKeMWyqZhAUCgRLFShRBH2igag3wLAwhOX7I+mnPr6+grpdPoGZn6nBFhwAJaZHbH2qsGhoYeDnEZbMnk2E73NzysSVNqVlWQiW9Xa1QqsVYCY6AWqusQYk/C5kUqfo1bEI+Z3tqdSd6/O5X4NgJXok9badj9jF1cpNl9ERK8PiGrqRwJnReQrMzEkZMzaHSw48+eJyKkSnZR8Yq4if1Sih1HOp7KQiE4jopf40a0a4AA8Zm4Qaz8F4IJ92OyTvsIaADYB6GtLpTxi/q7uFK0qaD6cTTR9fX3FTCaThupKf0wrCtPK+vmtm8vdeKisUM7BTPqcbUx8tInpvdtUCwo4DUQsAKYU3y14vDw9vvUpYAcBsfudmHkpWUAJK8F4AvrUzZQH8MPO2x+ZciKx+2dMllTma4mcqCEVX0BjkHFA7ERAgC1Ob7ejWz+29uaXfBzLlvG+moaFOQJAM8nkuUx0R62TxFr7qWwu97XAScI+kfxAhevapUgiFpGvOKXSB9dv2vUmwfb29qRa+1EieluACPhiOKkl+gCAXwNANpu9a6Z2d2QyF2NXQiI+l7JhwHWX7a3f6XT6HMPcXdVfoXKkck5E3pHN5++vfq8tlVpKRF8goiYtyyAEwBERIebzM5nMy7PZ7EOz0en48r8DwOno6EAkEtHS5OQzAfEwIPHqusORgGiZ6HJnZ2ekMDn5PTYmGRhToXIumpwpld4UsEDp856QVNIW5uclljYzfWCrajFOFIsAmFb8zhOsaB3b9ssDQkCqPfWXwmKZcvcXNTI3B3XN2gdtYWIbO5Fm9UpaJdYoOVFSr1SQ4vR6AuaCOArY7WK9PIHWwvBDxanpn234h+5+APvs8UoAWGR0wYIFrcz87SqvycpJsiqby90UOEnKuUPb2o6FyN9U1BwB7sWItfcO5nLvrDGHOjAwkAfw9rZUqoGNuSSw6FhEANVXdyxadJRvko4sBnT17mvCE5FGNqYW7Y1gVxEFVc5NBKDEqn9fZXKuEIVJT/W1uXx+TQ0HKRnM5Vam0+nNBvhFVcxQmQiJvBnAQ7PiSlQLPmH2+vv7K4TqFVzOnVIhkCwiJXacewOOXIzDy19Epicn7zTGvCLAzVbG1mORpf2bNw8dSp+YgybaKGtdAQQHiFrVnhLh4wtHhu+GH0x3aVl88Z6znlcBLActxipejSWCFSSVcPWTv7HGTm+lSRA1oywX004iEoGqbgTZc9YO/+jxJF5XN6+tzsy1E9M9V59S2i1SeOlSux8xSCrM8+oike8Qc3OtkyTieW+u2mymbL2VVzrMkcA76i/6ojLfGtCBeDXm1FrgnyDyuqqAQGuMiQpwmm+S1tW158AjmpHzUr/O3QiJT0R08eLFzrq1a0/183fwLiKcyNdy5WTUUQDFGuVHXdd9IJNK/dAY84bAxiFVBameHvAONXtytCQg05FKvdQjihJRglRfBeAG39dnh6+GVf2nwYGB9VXE/HChIlszqdSVxpgrqkRi8Q+Vawbz+d8dCr3IQSUklSTKqZGRb2QbGx+LqUbmj5Vd2gnAd/0rKp4Ls+e7vfs61/KXFaez4z//5FEcmdM+Mrjp4cSzw4VcImFod3bRmtgcx5vY9tW1N3U/Vo7BOWUyHwjsW7x8lSlvjlWyH0Skwi5bUv0UMR/rL94KQYCqjpC1F/miyW4nCQPHVRlWlIhYVJ/wHc1ohoXjAaBcLre2LZV6iphfVKXngO4s+6Bg/fr1C0CU9EWInVYrVQjwk714uFba+lMAb6gmDgq0JZPJ+nw+P9kNUM8M1lcRAYjeKsBbjc+IEjNkpy+0APCstTdlc7nPoRzVWzqMOBH2M+X9LQFv9nVeZqcbDBlr7Sez5RSch5SIHPRUi5nR0TXVIs/S58x6UcV2Rx3LV8UizY0NRJEUq3Yr6BItll6jXIo3tEQfd7XxNQzkiJ1kOZUrVUogtR6UzO+wTLnszeobicteMTOd1PsKw8zHVvtp+JSwaJk37sEKm6glLpNIfhbu5mXrJ9FGBl5UrSMiosaD6bZtrZ3LfqKeXTYGALZ2c9VlWbU4HlGioWpC5P9d738m0d0N9PTsLaZGfJOv+BvQCYhmTMyXt6VSWwdzue8eyHtirMhzupep0l8matcZnP9UdehwsTTxwb5pz89WRs/5ugc/+VDnJx99xfGfe+qR4z6x5rFoIvEUK68l1TVUN+cujsVfCyBuJ8emncaFJ7Hl81TlXorVQxFID0AwUpxShh3ACpLVWCI7zMmBIL8Dsp5U+wMOQztEHiZayET3LVq0aM4Mi2G6hsxf2Uh7C2ar/B6fQcdcPJjz7nleySeeu7ms+H4PNAuCVE81Ng8RefF4fFacA5VhiMgY5ogxps4nJDuUuAy8io35TiaV+rdZ6EcqItPcGmkddnnGi0YbZhr/fQgshIpktazr2SWlgoiIMeaj6dbWS3xOyjliCQkBsjRwq94BKdMTIRN5idO08CQTresAUaOqeDK1fVqmthdUxeNorE4mRgG2j1rgHpneLjuSSqsq2EDVjnslM+R7z+lBUrgzqV4vqv/DzMHgORZVa5hPjBrzjcAJTYGxG6wiFuw7X3QFEgvNmOimpaWlgYATZHcLBeBn4zpImTUhIltANFzlsi6+C/1L9+ILwr77/il+8mqt4tq2rlu3bjsA9PT06Mwe8AQVudeqXqAiF1prX289731Q/ZVvfi63VVVExHOMuTWTybwFgPg+P6hx+JHP3Rzd3t6eqJU8aQenQ3SMf4DYaoVyidnOzuDHUKJfKdH1XPa1t9VKWDbm65lM5qSq61GPyOTPBwYrSKBKa9//0j+VJoa77fjwN9UrbeFIHZz6eY6pb6wzcxpjJhp3oDToTY2/9Zkbux9bN/zSZ7U49ReOxglQAZGwE1VS9K275cWbK4mODgohKesFhtmYpSoyHHC4qpwqHhtzSTqZXBFYCOr7t/RUKStJy8RnoUP0Nr+cKHb1FDX+dxKPRt/GzC1VC9moKgzw533IcbGvhIT9ZMpP0a6RyuXs9czvwc7crJFA27mip1i0aNEcAv7eN/8GgxlVVf+yF9FohxioRE+6rnvfYC7342w+/4NsPv/pAdc9W1W/GiDsDIBEVUjkBgCopIkUok1VpuKKwrpJPO/cwM2wwaxoDgAha5cS7X4TraqO+3E2sx3/hOu6XxJrv+VfF+IFiRoRzSWRe33CdsgsTs8fQlJxPoPSszef8uenrz/pCquxLlh7jkyOv9dOjHzATk1cI6JnYWLriX3v7/4WvvhwBMuhRNGnYRwoSFRVKRIjMH8DRFpRqh6s41mYGwcGBvJCdFmN/CGOfxp+OJVKLQ1YQ0DRaI+obvBPzx2bUcpXxP17Op0+E0DB3wyVfBIWQCGdTr+GmP+1yimtzBGIrI/U1/8ZB+9isEp9P0Lg5PcJiRjmE9vS6S/79ZcCbRcApY6OjrqoMd9gYzLVfjAASIl+NFu9gJ9Q2QCIBf5lAb5YpX8pEzKio1taWhoq+jFrba+UPYp5F9G0vIP/JZVKtfhzEMxvUshkMq8G899XKUiFypn5n83lctv2MQ0Ax+rrrxJrH/SJiQ2MqcfGvEA979sBTo+O1HttDmxa2GXKOPEe6lt63GYAv/Q/2M1ki24Bkeodj7ST2HJAQzQe8SZGN0Qc82Wo0mrAYsVBpNQiJQCUzWZ/nk4mb3Qc55NVZjyjquIwfzWVSj2Ty+XWVC59akun7ySif/X1DRy4+6SBVe9vS6e/IMB/MfMAyldNdChwCYCrfe/HYPiLEJFDRF/yg/cOlqbfAkCkru5bpULhwwAaAjoJFhFh5ivbUqkuEH1Oif7MzJPW2gYDnCaedx0zv6jGJiSx1i2WSv8VCAMwswkorRJBRFXngmrdWw8zZ84cZ+vWrQBghoaG+jOp1B+Z6AwpEzVTIYhMdCwDq9Pp9IdNofCHKaLt8Xh8oVp7EVSXE1G0avzLHr0iP/LrndX4+xpm8T1b3ygiD1HZIlYhso7P2Z7Xlk7fNui6txxpLvIHV8yp5F+9B7w4kENk9YlLFEsh3cM93HM1lY77eM95HK07zRYmPTLGAKqifGXvdSeNY+F++YfsF3PiE4dPtaVSJ7Ex79rFP6IsBtU7RN9PpVKn9vX1DQMwk9PTn4nHYu9i5qMDlh/yF2iEma8n1eu1EglM5HCZ60DVIrZE5Fhr108VCp/ZjwRD+8qImXXr1m3KpFIfMcbc5p/q0SBXRcynEdFpIgLxvBITRYgZqEQH78ote0QUVeBDmzdvHp+t45V/N5AX2FTeokWLFpryHTC1srhtGRgYGNvF3Ez0URD9DDvbRBViQkQnGuD7Gottj6mOi+e1GGOiNcZfCGBr7Ygplb64P8mmOjs7o319fW4qlXqjAVbtErZQISbM729LpR4f3NVLOiQksxN1YKtD/hcve8BZffWZpeM+0XMyOXXfFLGWiA07MbKFibc9e9PLVu2nkxmeQ6yEBWCOyeWueTadPsEw/03Q61RVLTMfwyJ3Azi3q6vL6e3t3Z5Op9+iqquIqM4Pg3cC0b02IJfviJitUtx6PncyrUSXBXJ7HMy8tBaAyeZyt7elUqcbY15vy5zZDn2O31ZFOVQ+4itpbVUGdgFgDXPUinx1MJf7+iyJCPuiy7lt6XSdAuzrwtIELCGihZW6g4RKRH7ml13ZhMZ13fva0unPGmOutdbu1gf//QYu3wCIwJxQYCyImBmq1+6vB6ofte3kcrnfZ1Kp9xhj7qrmbEXEguiL6XT6Kdd1H/xreroyjjQsW8arV5zpHXfbw2eQE/+1qjQTGwfGGbdT2y9Ze9PLvrF42QPOQSAiMsNnF5PsasCLRKOXisigr9X3/OdIRIqG+exMKnV7b29vsaurK+q67h8FuEBVN/rysfoXZGswZUDgdDLBZ5jZUWCzVf27fVpcOyNkd/3MXjEtAKihqenNVuTbzBzxlc1eUMYPtD2oWLU+F8XMHLHWfmnQda/ag59HdVvJ5xhezsy3GOabjTE3GaKlABZKmSBX0iGUmDkq1mYjnvfvVdyCADCDrnu9tfauQB9sVUZ39YmKBvrk+XFRhsqxUTdns9lv7yGnis6wfrTK2dDJ5nJfsSK3++uhFMxvS2WudOXRCxcuquGlW7OOA2FVPbIIyTJlrFghx31qzWsoXv9TFa+FI3GG6iNeYfL0te8/5b8WL3vAWb3izIPB8sWJiH09xI5/A1G1Oxbm+vXrNyrRG1S1EHiefbkajuPcmEkmrwsQkwdK1p6mIt8lIpidIffV5kfy3SfYf4ZUZGWxVDo1V474nfUJpSKVdkX9fyubKLYvCZZ7e3uLg657uYpcrcBgJd1BjfbvaLufGsFAtU9FrhjM5d5dRXCqN2G0qq3klw8pJ4Eqf8pWDrA/5n49EVFdQyLn+l7G1UmpBQAGXfcqFXm3AgOV9lX1gar64PhpGX9vVc/0LzObcfxFNTLDeEdrcHtO1nXfL9b+vELcKmsOABuitlIk8tOqu3ZAQCxYdqUuVXX+d4s21dbW5dDu1MORsUl802lsmSeTo9DS9DfGtqx7b37FhZMHi4jE43HdPjraJyJTGgi8I1VDRBM1F0I2+1AmmXwnjPlIlXVCYa0S8w2ZTGZVb2/v4wAiQ0ND/QDe3NbWdpuKvImAM1X1GP96Sqq4yKjqMAHPiuoqJVqZdd2H9jHJsfop+EZFZIOqepX0D6RqoLph329sBQ247p0dHR0r1fMuBdHrVPXFUF0EohiV7bqVRER5VV0D4AdFz/v+xnLmPZ6BiFT+zle1dQ9xfFrZWeMKPA2RnzTkcnf3luN+anE8O6xOA677pWMSiZWl+vqLCPg7AbpJNQmieKUPALZreYz+IMC92Wz2/r2Mf8V8tDnYBwKsiDhaThNai/sicpzLxNofA0gF0i5AywmPUrFI5CYAHwlkjesXkYWVNVqpg5lHn6s7AAFHlliDFSv0uE+uOZfrmy7SydFfP33Di78HALh0pcE9B08n0t3dHZmamtptPHt7e709JS4GEOnq6qJqwjQ6OsoTExMmn89PYteoYQkkGJ4fVV0gkcgcAOBSaaJItDmfz2/Zy+Vas+JWu7q6nHg8rsF+Lejtlf0MH9hlI3V0dNRheroVxjRZ5oiqFmIiIzxnzsZA0ufZEkDT1dVlqts6E9Gfmpqi3t7e4n5k9d+lLd3d3ZF8Pt8aJWr2ygmdpowxW/r7+4f2I1P9Ln0ItFNmUJru4Jy6urqi1X3v7e2V41ta4k+XdWI7GIeuri6uMRYeDq/7sA9HRqWStO2wBO/nO7PhJJ3DUHSlWbbLBJTKOMhXUexrPZU+mFmMv3k+XXAXijbY3Ydk8RMLaPWJSxRE9hDfWqh7U0juTczYw8VHVONiKQ0o+w5Fn/Ym6ng17uat1kvYv8Km2t969tYH3cMFZ/vTB53F+pjtGjrQ8xkiRIgQIUKECBEiRIgQIUKECBEiRIgQIUKECBEiRIgQIUKECBEiRIgQIUKECBEiRIgQIUKECBEiRIgQIUKECBEiRIgQIUKECBEiRIgQIUKECBEiRIgQIUKECBEiRIgQIUKECBEiRIgQIUKECBHiyMT/B/250N/aT0wHAAAAAElFTkSuQmCC" alt="株式会社KOTOBUKI"></a>
   <a class="nagara-logo" href="https://nagarainc.com/" target="_blank" rel="noopener" title="株式会社NAGARA（このツールの提供元）"><svg viewBox="208 289 783.3 621" aria-label="NAGARA"><path d="M979.061 417.569C927.432 263.672 714.22 246.103 632.147 374.767C623.686 388.051 623.406 404.974 631.264 418.645L632.621 420.992C644.032 440.8 669.028 447.948 689.266 437.355C690.429 436.752 691.592 436.171 692.754 435.59C769.983 397.632 860.194 454.902 860.194 540.958V680.968C860.194 715.696 835.692 745.774 801.589 752.383C801.287 752.448 800.964 752.512 800.663 752.577C783.073 755.871 765.354 747.453 756.44 731.951C706.146 644.647 647.218 542.314 598.818 458.347C590.766 443.62 573.37 413.78 556.792 385.317C494.118 277.71 344.634 260.162 260.344 351.838C244.584 368.976 231.838 389.278 223.398 412.38C222.365 415.222 221.267 418.021 220.169 420.82C201.265 469.112 210.028 713.263 210.028 714.469C210.222 736.666 214.571 761.641 221.59 781.47C274.317 938.339 493.149 952.742 572.186 818.481C579.958 805.283 580.066 788.92 572.423 775.657C560.818 755.505 535.219 748.551 514.851 759.79C513.732 760.414 512.634 760.995 511.514 761.577C433.618 802.204 340.457 744.568 340.457 656.704V524.853C340.457 484.377 370.406 449.843 410.581 444.848C410.947 444.804 411.291 444.761 411.636 444.718C428.408 442.738 444.728 451.07 453.167 465.71C517.564 577.473 586.503 697.18 651.955 810.816C714.134 918.768 865.189 933.774 945.625 838.633C958.457 823.454 968.942 806.079 976.284 786.745C977.382 783.86 978.544 780.997 979.729 778.133C1000.38 728.248 986.403 535.554 990.128 484.011C990.192 482.956 990.235 481.879 990.235 480.824C989.999 458.67 986.102 437.377 979.104 417.569H979.061Z" fill="#004AAD"/> <path d="M521.095 756.904C495.517 772.471 465.483 781.449 433.36 781.449C340.048 781.449 264.435 705.814 264.435 612.502C264.435 530.559 322.803 462.222 400.246 446.807C365.368 455.892 340.414 487.908 340.414 524.832V656.66C340.414 744.503 433.575 802.139 511.471 761.533C512.59 760.952 513.71 760.349 514.808 759.746C516.853 758.605 518.963 757.658 521.095 756.904Z" fill="#617CC3"/> <path d="M938.154 586.515C938.154 668.739 879.42 737.248 801.589 752.362C835.671 745.752 860.172 715.696 860.172 680.946V540.958C860.172 458.089 776.506 401.895 701.345 431.779C722.121 422.65 745.072 417.59 769.207 417.59C862.519 417.59 938.132 493.226 938.132 586.515H938.154Z" fill="#617CC3"/></svg><span>NAGARA</span></a>
 </footer>
@@ -523,6 +535,8 @@ async function save(){
         // 他の端末の変更との衝突など。サーバーの最新を取り込み直して仕切り直す (直前の1操作はやり直しをお願いする)
         setSync('⚠️ 他の端末の変更と重なったため保存できませんでした。最新の内容に更新しました — お手数ですが直前の操作をもう一度お願いします', true);
         closeModal('assign-modal');   // v3.4: 開きっぱなしの編集メニューが取り込んだ最新を上書きしないよう閉じる
+        closeModal('person-form-modal'); closeModal('site-modal');   // v3.7: 支援者/支援先フォームも同様 (古い値での巻き戻し保存防止)
+        editingPersonId = null; editingPersonName = null;
         await load();
         return;
       }
@@ -592,7 +606,7 @@ function aEnd(a){ return slotNum(a.to, a.toHalf==='am'?'am':'pm'); }
 function fmtRangeH(a){ return `${fmtD(a.from)}${a.fromHalf==='pm'?'午後':''}〜${fmtD(a.to)}${a.toHalf==='am'?'午前':''}`; }
 /* 割当バーの表示。時刻があれば時刻、なければ午前/午後を必ず出す（DMAT名簿と同じ粒度で読めるように） */
 function barLabel(a){
-  // v3.3: 表示は 打刻 → 旧実績 → AI由来の予定 → 午前/午後 の順 (手入力の予定は廃止・データは温存)
+  // v3.3: 表示は 打刻 → 旧実績 → 予定 → 午前/午後 の順 (予定にはAI由来に加え、v3.4の割当編集・v3.7の支援者既定時刻の手入力も入る。打刻優先は不変)
   const din = ((a.records||[]).find(r=>r.date===a.from)||{}).inTime || a.actualFromTime || a.fromTime;
   const dout = ((a.records||[]).find(r=>r.date===a.to)||{}).outTime || a.actualToTime || a.toTime;
   const f = `${fmtD(a.from)} ${din ? din : (a.fromHalf==='pm'?'午後':'午前')}`;
@@ -706,7 +720,7 @@ function assignTo(sid){
   let widened = null;
   if(from < s.from){ s.from = from; widened = 'from'; }
   if(to > s.to){ s.to = to; widened = widened ? 'both' : 'to'; }
-  // AI秘書が読み取った時刻があれば、割当にそのまま引き継ぐ
+  // AI秘書が読み取った時刻・または支援者フォームの既定時刻 (v3.7) を割当に引き継ぐ
   // v3.6: 🌙付きの緑バーから割り当てた場合と夜勤サイトへの割当は、自動で夜勤フラグを立てる
   DATA.assignments.push({id:uid('a'), personId:p.id, siteId:sid, from, to, fromHalf, toHalf,
     night: !!selEntry.night || /夜勤/.test(s.name),
@@ -1146,7 +1160,7 @@ function openPerson(pid){
     </div>`;
   document.getElementById('person-modal').classList.add('show');
 }
-/* v3.3: 時刻はご本人の打刻に一本化 (金子さん承認)。savePersonTimes は撤去済み */
+/* v3.3: 時刻は打刻に一本化し savePersonTimes を撤去 → v3.7: 待機中の人の既定時刻入力のみ限定復活 (金子さん8/27依頼)。表示は引き続き打刻優先 */
 function closeModal(id){ document.getElementById(id).classList.remove('show'); }
 document.querySelectorAll('.modal-bg').forEach(m=>m.addEventListener('click', e=>{
   if(e.target!==m) return;
@@ -1192,6 +1206,8 @@ function openPersonForm(pid){
   document.getElementById('pf-note').value = p ? (p.note||'') : '';
   document.getElementById('pf-drivelv').value = p && p.driveLv ? String(p.driveLv) : '';
   document.getElementById('pf-transport').value = p ? (p.transport||'') : '';
+  document.getElementById('pf-intime').value = p ? (p.inTime||'') : '';    // v3.7: 待機中の人の時刻 (金子さん8/27依頼)
+  document.getElementById('pf-outtime').value = p ? (p.outTime||'') : '';
   pfQuals = p ? [...p.quals] : [];
   pfColor = p ? (p.color || null) : null;
   pfRanges = p ? availRanges(p).map(r=>({...r})) : [{from:TODAY, to:addDays(TODAY,4)}];
@@ -1231,6 +1247,8 @@ function savePerson(){
     color: pfColor,
     avail: ranges,
     transport: document.getElementById('pf-transport').value.trim() || null,
+    inTime: document.getElementById('pf-intime').value || null,    // v3.7
+    outTime: document.getElementById('pf-outtime').value || null,
   };
   if(fields.driveLv && !fields.quals.includes('運転可')) fields.quals.push('運転可');
   // 新規追加時のみ、同名の既存者がいれば確認する (二重登録の防止)
@@ -1660,14 +1678,21 @@ function openDupEdit(){
   currentOffer = null;
   openPersonForm(p.id);
   // 今回の申し出の期間を編集欄に足しておく（そのまま保存すれば反映、不要なら✕で消せる）
+  let timesNote = '';
   if(o){
     (o.periods||[]).filter(x=>x.from&&x.to).forEach(x=>{
       const nx = {from:x.from, to:x.to};   // v3.6: 夜勤可(能力)は期間行の🌙にしない
       if(!pfRanges.some(r=>r.from===nx.from && r.to===nx.to && !r.night)) pfRanges.push(nx);
     });
+    // v3.7: 今回の申し出の時刻もフォームへ (approveOfferと同じ正規化・既存値は申し出がある時だけ上書き)
+    const inT = /^\d{1,2}:\d{2}$/.test(o.in_time||'') ? o.in_time.padStart(5,'0') : null;
+    const outT = /^\d{1,2}:\d{2}$/.test(o.out_time||'') ? o.out_time.padStart(5,'0') : null;
+    if(inT) document.getElementById('pf-intime').value = inT;
+    if(outT) document.getElementById('pf-outtime').value = outT;
+    if(inT || outT) timesNote = `\n今回の時刻（開始 ${inT||'—'}／終了 ${outT||'—'}）も入れてあります。保存すると前の時刻から変わります。`;
     renderPfRanges();
   }
-  addMsg('ai', `✏️ 「${p.name}」さんの編集画面を開きました。\n今回いただいた期間を下に足してあります。日程が延びた場合は、既存の行の日付を直して「保存する」を押してください。`);
+  addMsg('ai', `✏️ 「${p.name}」さんの編集画面を開きました。\n今回いただいた期間を下に足してあります。日程が延びた場合は、既存の行の日付を直して「保存する」を押してください。${timesNote}`);
   persistThread();
 }
 /* 職種を名前の横に出すための短縮ラベル（クリックせず一目で分かるように） */
@@ -1776,7 +1801,7 @@ function showOfferProposal(o){
   mergeTargetId = null;
   const periods = (o.periods||[]).filter(p=>p.from&&p.to).map(p=>`${fmtD(p.from)}〜${fmtD(p.to)}`).join('、');
   addMsg('ai',
-    `${o.replace_periods?'🔁 日程の「変更」として読み取りました（行ける期間を今回の内容に置き換えます）':'🙋 支援の「申し出」として読み取りました'}\n・お名前: ${o.person_name||'（記載なし）'}\n・所属: ${o.organization||'（記載なし）'}\n・人数: ${o.headcount||1}名\n・行ける期間: ${periods||'（記載なし）'}${o.quals&&o.quals.length?`\n・資格: ${o.quals.join('、')}`:''}${o.can_drive?'\n・🚗 運転可':''}${o.night_shift_ok?'\n・夜勤可':''}${o.transport?`\n・🚙 移動: ${o.transport}`:''}${o.notes?`\n・特記: ${o.notes}`:''}`);
+    `${o.replace_periods?'🔁 日程の「変更」として読み取りました（行ける期間を今回の内容に置き換えます）':'🙋 支援の「申し出」として読み取りました'}\n・お名前: ${o.person_name||'（記載なし）'}\n・所属: ${o.organization||'（記載なし）'}\n・人数: ${o.headcount||1}名\n・行ける期間: ${periods||'（記載なし）'}${o.quals&&o.quals.length?`\n・資格: ${o.quals.join('、')}`:''}${o.can_drive?'\n・🚗 運転可':''}${o.night_shift_ok?'\n・夜勤可':''}${(o.in_time||o.out_time)?`\n・⏰ 時刻: 開始 ${o.in_time?(/^\d{1,2}:\d{2}$/.test(o.in_time)?o.in_time:o.in_time+'（形式外・保存されません）'):'—'} ／ 終了 ${o.out_time?(/^\d{1,2}:\d{2}$/.test(o.out_time)?o.out_time:o.out_time+'（形式外・保存されません）'):'—'}`:''}${o.transport?`\n・🚙 移動: ${o.transport}`:''}${o.notes?`\n・特記: ${o.notes}`:''}`);
   const dupes = findSamePerson(o);
   const dupHtml = dupes.length ? `
       <div class="dup-warn">
@@ -1826,6 +1851,9 @@ function editOffer(){
   document.getElementById('pf-corp').value = o.organization || '';
   document.getElementById('pf-note').value = [o.night_shift_ok?'夜勤可':null, o.notes||null].filter(Boolean).join('・').slice(0,1000);
   document.getElementById('pf-transport').value = o.transport || '';
+  // v3.7: AIが読んだ時刻もフォームへ (approveOfferと同じ正規化。カードに⏰が出るのにフォームで消える齟齬の防止)
+  document.getElementById('pf-intime').value = /^\d{1,2}:\d{2}$/.test(o.in_time||'') ? o.in_time.padStart(5,'0') : '';
+  document.getElementById('pf-outtime').value = /^\d{1,2}:\d{2}$/.test(o.out_time||'') ? o.out_time.padStart(5,'0') : '';
   pfQuals = (o.quals||[]).filter(q=>QUALS.includes(q));
   if(o.can_drive && !pfQuals.includes('運転可')) pfQuals.push('運転可');
   // v3.6: 「夜勤可(能力)」を全期間の🌙(実勤務予定)にしない。夜勤可はメモに残り候補優先で使われる。
