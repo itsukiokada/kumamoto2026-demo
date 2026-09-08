@@ -316,7 +316,7 @@
   <!-- ============ 活動履歴（誰が・いつ・どこで・何時から何時まで） ============ -->
   <section id="tab-history" class="tabpane">
     <div class="notice">
-      これまでの<b>活動の記録</b>です（日ごと×お一人ずつ）。時刻はご本人の打刻。県への報告やバックアップには「<b>Excelで出力</b>」をお使いください（明細と、支援先ごとのシフト表の2シートで出ます）。
+      これまでの<b>活動の記録</b>です（日ごと×お一人ずつ・<b>本日まで</b>）。時刻はご本人の打刻。県への報告には「<b>Excelで出力</b>」をお使いください（活動明細と、支援先ごとのシフト表の2シートで出ます）。<span class="small">※未来の予定・待機中の方は含みません（調整ボードでご覧ください）</span>
     </div>
     <div class="chips">
       <span class="small">期間:</span>
@@ -2308,6 +2308,16 @@ async function saveReport(aid){
 }
 
 /* ---------------- 活動履歴 (誰が・いつ・どこで・何時から何時まで) ---------------- */
+/* 県報告の「所有資格」: 登録があれば正式名称、無ければメモから拾った職種
+   （資格未登録でもメモにPT/ST等を書いていた期間の救済。調整ボードのバッジと同じ判定） */
+function qualText(p){
+  const j = (p.quals||[]).filter(q=>q!=='運転可');
+  return j.length ? j.join('・') : jobLabels(p).join('・');
+}
+/* 枠取り用のダミー行（「休み」「休み２」等）は県提出物に載せない */
+function isPlaceholderPerson(p){
+  return /^(休み|休憩|空き|未定|枠)/.test((p.name||'').trim());
+}
 function historyRows(){
   const T = jstToday();
   const fF = document.getElementById('h-from').value || null;
@@ -2321,7 +2331,7 @@ function historyRows(){
       if((!fF || d >= fF) && (!fT || d <= fT)){
         const rec = (a.records||[]).find(r=>r.date===d) || {};
         rows.push({date: d, name: p.name, corp: p.corp, site: s ? s.name : '—',
-          pid: p.id, siteId: a.siteId, quals: (p.quals||[]).filter(q=>q!=='運転可').join('・'),   // v3.8: Excel出力用
+          pid: p.id, siteId: a.siteId, quals: qualText(p), night: !!a.night,   // v3.8: Excel出力用
           in: rec.inTime || (d===a.from ? a.actualFromTime : null) || null,
           out: rec.outTime || (d===a.to ? a.actualToTime : null) || null,
           punched: !!(rec.inTime || rec.outTime)});
@@ -2402,7 +2412,11 @@ function zipStore(files){
   let p = 0; for(const a of all){ out.set(a, p); p += a.length; }
   return out;
 }
-function xesc(s){ return String(s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+/* XMLで使えない制御文字を落としてからエスケープする。
+   1文字でも混ざるとブックが壊れる（Excelは修復ダイアログ・表計算ソフトによっては黙って行が欠ける）。
+   氏名や所属はLINE文面のAI読み取り由来なので、混入経路が実在する。タブ・改行は正当なので残す */
+function xesc(s){ return String(s).replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g,'')
+  .replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 function colName(n){ let s=''; while(n>0){ const m=(n-1)%26; s = String.fromCharCode(65+m) + s; n = (n-m-1)/26; } return s; }
 /* Excelの日付シリアル値 (1899-12-30 起点) */
 function xlDate(iso){ return Math.round((new Date(iso+'T00:00:00Z').getTime() - Date.UTC(1899,11,30)) / 86400000); }
@@ -2492,16 +2506,24 @@ ${sheets.map((s,i)=>`<Override PartName="/xl/worksheets/sheet${i+1}.xml" Content
 }
 /* 活動履歴 → xlsx (明細シート + 支援先ごとのシフト表) */
 function historyExcel(){
-  const rows = historyRows();
+  // 枠取り用のダミー行は県提出物から外す（「休み」「休み２」等）
+  const rows = historyRows().filter(r=>!isPlaceholderPerson({name: r.name}));
   if(!rows.length){ alert('この期間の活動記録がありません。期間の指定をご確認ください。'); return; }
+  const asc = [...rows].sort((x,y)=>x.date.localeCompare(y.date) || x.site.localeCompare(y.site) || x.name.localeCompare(y.name,'ja'));
 
-  /* --- シート1: 明細（従来のテキストコピーと同じ並び） --- */
-  const s1 = [[
-    xc('A1','日付',S.HEAD,true), xc('B1','お名前',S.HEAD,true), xc('C1','所属',S.HEAD,true),
-    xc('D1','支援先',S.HEAD,true), xc('E1','活動開始',S.HEAD,true), xc('F1','活動終了',S.HEAD,true),
-  ]];
-  rows.forEach((r,i)=>{
-    const n = i+2;
+  /* --- 明細シート: 1行目に表題（チーム名・対象期間・出力日時）を入れて提出物として成立させる --- */
+  const dates0 = [...new Set(rows.map(r=>r.date))].sort();
+  const span = `${fmtD(dates0[0])}〜${fmtD(dates0[dates0.length-1])}`;
+  const stamp = new Date().toLocaleString('ja-JP');
+  const title = `${TEAM}　活動履歴（対象期間: ${span}／出力: ${stamp}）`;
+  const s1 = [
+    [xc('A1', title, S.GROUP, true), ...[2,3,4,5,6].map(c=>xc(`${colName(c)}1`,'',S.GROUPB))],
+    [
+      xc('A2','日付',S.HEAD,true), xc('B2','お名前',S.HEAD,true), xc('C2','所属',S.HEAD,true),
+      xc('D2','支援先',S.HEAD,true), xc('E2','活動開始',S.HEAD,true), xc('F2','活動終了',S.HEAD,true),
+    ]];
+  asc.forEach((r,i)=>{   // シフト表と同じ古い順に揃える
+    const n = i+3;
     s1.push([
       xc(`A${n}`, xlDate(r.date), S.DATE), xc(`B${n}`, r.name, S.CELL, true), xc(`C${n}`, r.corp, S.SMALL, true),
       xc(`D${n}`, r.site, S.CELL, true), xc(`E${n}`, xlTime(r.in), S.TIME), xc(`F${n}`, xlTime(r.out), S.TIME),
@@ -2509,7 +2531,9 @@ function historyExcel(){
   });
 
   /* --- シフト表: 縦=支援先ごとの支援者 / 横=日付 --- */
-  const dates = [...new Set(rows.map(r=>r.date))].sort();
+  // 活動のあった日だけでなく、最初の日から最後の日まで全ての日を列にする（抜けた日が消えると県報告で読み違える）
+  const dates = [];
+  for(let d = dates0[0]; d <= dates0[dates0.length-1]; d = addDays(d,1)) dates.push(d);
   const WD = ['日','月','火','水','木','金','土'];
   const nCol = 4 + dates.length;
   // 支援先ごとに (支援者 → 日付 → 表示) を集める。支援先の並びは調整ボードと同じ
@@ -2518,9 +2542,12 @@ function historyExcel(){
   for(const r of rows){
     if(!groups.has(r.siteId)) groups.set(r.siteId, {name: r.site, people: new Map()});
     const g = groups.get(r.siteId);
-    if(!g.people.has(r.pid)) g.people.set(r.pid, {name: r.name, quals: r.quals, corp: r.corp, cells: new Map()});
+    if(!g.people.has(r.pid)) g.people.set(r.pid, {name: r.name, quals: r.quals, corp: r.corp, night: false, cells: new Map()});
     const pp = g.people.get(r.pid);
-    const txt = (r.in || r.out) ? `${r.in||'—'}〜${r.out||'—'}` : '○';
+    if(r.night) pp.night = true;
+    // 夜勤で日付をまたぐ場合、終了が 00:00 だと「17:00〜00:00」となり実働が負に見える → 翌日である旨を添える
+    const cross = r.in && r.out && r.out <= r.in;
+    const txt = (r.in || r.out) ? `${r.in||'—'}〜${r.out||'—'}${cross?'(翌)':''}` : '○';
     if(!pp.cells.has(r.date)) pp.cells.set(r.date, []);
     pp.cells.get(r.date).push(txt);
   }
@@ -2531,19 +2558,25 @@ function historyExcel(){
 
   const s2 = [];
   const merges = [];
-  // 1行目: 日付
-  const head1 = [xc('A1','日付',S.HEADL,true), xc('B1','',S.HEAD), xc('C1','',S.HEAD), xc('D1','',S.HEAD)];
-  dates.forEach((d,i)=>head1.push(xc(`${colName(5+i)}1`, xlDate(d), S.HEADDATE)));
+  // 1行目: 表題（チーム名・対象期間・出力日時・凡例）
+  const t2 = [xc('A1', `${title}　※セルの「○」は打刻なしで活動した日`, S.GROUP, true)];
+  for(let c=2;c<=nCol;c++) t2.push(xc(`${colName(c)}1`, '', S.GROUPB));
+  s2.push(t2);
+  merges.push(`A1:${colName(Math.min(nCol, 8))}1`);
+  // 2行目: 日付
+  const head1 = [xc('A2','日付',S.HEADL,true), xc('B2','',S.HEAD), xc('C2','',S.HEAD), xc('D2','',S.HEAD)];
+  dates.forEach((d,i)=>head1.push(xc(`${colName(5+i)}2`, xlDate(d), S.HEADDATE)));
   s2.push(head1);
-  // 2行目: 見出し + 曜日
-  const head2 = [xc('A2','お名前',S.HEAD,true), xc('B2','所有資格',S.HEAD,true), xc('C2','所属',S.HEAD,true), xc('D2','支援先',S.HEAD,true)];
-  dates.forEach((d,i)=>head2.push(xc(`${colName(5+i)}2`, WD[new Date(d+'T00:00:00Z').getUTCDay()], S.HEAD, true)));
+  // 3行目: 見出し + 曜日
+  const head2 = [xc('A3','お名前',S.HEAD,true), xc('B3','所有資格',S.HEAD,true), xc('C3','所属',S.HEAD,true), xc('D3','支援先',S.HEAD,true)];
+  dates.forEach((d,i)=>head2.push(xc(`${colName(5+i)}3`, WD[new Date(d+'T00:00:00Z').getUTCDay()], S.HEAD, true)));
   s2.push(head2);
-  let rn = 3;
+  let rn = 4;
   for(const [sid, g] of gs){
     const people = [...g.people.values()].sort((a,b)=>a.name.localeCompare(b.name,'ja'));
     // 支援先の区切り行（大区分）
-    const grow = [xc(`A${rn}`, `${/夜勤/.test(g.name)?'🌙':'🏥'} ${g.name}（${people.length}名）`, S.GROUP, true)];
+    const night = /夜勤/.test(g.name) || people.some(p=>p.night);   // v3.6の割当単位フラグも見る（支援先名だけに頼らない）
+    const grow = [xc(`A${rn}`, `${night?'🌙':'🏥'} ${g.name}（${people.length}名）`, S.GROUP, true)];
     for(let c=2;c<=nCol;c++) grow.push(xc(`${colName(c)}${rn}`, '', S.GROUPB));
     s2.push(grow);
     merges.push(`A${rn}:D${rn}`);
@@ -2565,18 +2598,24 @@ function historyExcel(){
   const cols1 = [12, 16, 30, 24, 11, 11];
   const cols2 = [16, 16, 26, 24, ...dates.map(()=>12)];
   const xlsx = buildXlsx([
-    {name:'シート1', xml: sheetXml(s1, {cols: cols1, freeze:{x:0,y:1}})},
-    {name:'シフト表', xml: sheetXml(s2, {cols: cols2, freeze:{x:4,y:2}, merges})},
+    {name:'活動明細', xml: sheetXml(s1, {cols: cols1, freeze:{x:0,y:2}})},
+    {name:'シフト表', xml: sheetXml(s2, {cols: cols2, freeze:{x:4,y:3}, merges})},
   ]);
-  const blob = new Blob([xlsx], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  const team = (TEAM||'活動履歴').replace(/[\\/:*?"<>|]/g,'');
-  const span = dates.length ? `${dates[0].replace(/-/g,'')}-${dates[dates.length-1].replace(/-/g,'')}` : jstToday().replace(/-/g,'');
-  a.href = url; a.download = `活動履歴_${team}_${span}.xlsx`;
-  document.body.appendChild(a); a.click(); document.body.removeChild(a);
-  setTimeout(()=>URL.revokeObjectURL(url), 5000);
-  setSync(`✓ Excelを出力しました（${rows.length}件・支援先${gs.length}か所）`);
+  try{
+    const blob = new Blob([xlsx], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const team = (TEAM||'活動履歴').replace(/[\\/:*?"<>|\s]/g,'');
+    const fspan = `${dates[0].replace(/-/g,'')}-${dates[dates.length-1].replace(/-/g,'')}`;
+    a.href = url; a.download = `活動履歴_${team}_${fspan}.xlsx`;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(()=>URL.revokeObjectURL(url), 5000);
+    setSync(`✓ Excelを出力しました（${rows.length}件・支援先${gs.length}か所）`);
+  }catch(e){
+    // 端末の制約でダウンロードできない場合の逃げ道（成功表示だけ出して終わらせない）
+    alert('この端末ではファイルの保存ができませんでした。PCのブラウザでお試しいただくか、下のテキストをコピーしてお使いください。');
+    historyCopy();
+  }
 }
 
 function historyCopy(){
